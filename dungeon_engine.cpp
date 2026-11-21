@@ -929,6 +929,7 @@ public:
             } else if (currentRoom == &forgeRoom && !forgeRiddle.isResolved()) {
                 out << "\n[Sealed] Inspect ('search') and solve Riddle III first.\n";
             } else if (currentRoom->getNorth() != nullptr) {
+                lastAnimAction = "run_north";
                 currentRoom = currentRoom->getNorth();
                 player.gainStamina(10);
             } else {
@@ -936,6 +937,7 @@ public:
             }
         } else if (lower == "south" || lower == "retreat") {
             if (currentRoom->getSouth() != nullptr) {
+                lastAnimAction = "run_south";
                 currentRoom = currentRoom->getSouth();
                 player.gainStamina(15);
             } else {
