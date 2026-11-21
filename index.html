@@ -2,161 +2,568 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>OOP Dungeon Escape — Graphical + Text UI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Astral Dungeon — C++ OOP Adventure</title>
   <style>
+    :root {
+      --bg: #0b0e17;
+      --panel: #131826;
+      --panel-2: #1a2134;
+      --border: #28324d;
+      --text: #eef2ff;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --gold: #fbbf24;
+      --danger: #ef4444;
+      --ok: #22c55e;
+    }
+    * { box-sizing: border-box; }
     body {
-      margin: 0; background: #0f1117; color: #e2e8f0;
-      font-family: 'Courier New', monospace;
-      display: flex; justify-content: center; padding: 20px;
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(circle at top, #172038 0%, var(--bg) 65%);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 18px;
     }
-    .game-shell {
-      width: 860px; background: #181b24; border: 2px solid #2e3446;
-      border-radius: 10px; overflow: hidden; box-shadow: 0 12px 35px rgba(0,0,0,0.6);
+    .app {
+      width: 100%;
+      max-width: 980px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65);
     }
-    .hud {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 12px 18px; background: #12141c; border-bottom: 1px solid #2e3446;
+    .top-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 20px;
+      background: linear-gradient(90deg, #101522, #182034);
+      border-bottom: 1px solid var(--border);
     }
-    .hp-bar-wrap { width: 220px; height: 16px; background: #2a1a1f; border-radius: 8px; overflow: hidden; }
-    .hp-bar-fill { height: 100%; width: 100%; background: linear-gradient(90deg, #dc2626, #22c55e); transition: width 0.3s; }
-    #sceneCanvas { display: block; width: 100%; height: 240px; background: #090b10; }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+    .badge {
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .hud-stats {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 18px;
+    }
+    .meter {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+    }
+    .bar-track {
+      width: 130px;
+      height: 10px;
+      background: #0b0e17;
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .bar-fill {
+      height: 100%;
+      width: 100%;
+      transition: width 0.25s ease;
+    }
+    .hp-fill { background: linear-gradient(90deg, #ef4444, #22c55e); }
+    .enemy-fill { background: linear-gradient(90deg, #f97316, #dc2626); }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1.55fr 0.9fr;
+      border-bottom: 1px solid var(--border);
+    }
+    @media (max-width: 800px) {
+      .main-grid { grid-template-columns: 1fr; }
+    }
+    .stage-col {
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+    }
+    #sceneCanvas {
+      width: 100%;
+      height: 250px;
+      display: block;
+      background: #080b12;
+    }
+    .mission-banner {
+      padding: 10px 18px;
+      background: var(--panel-2);
+      border-top: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--gold);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .side-col {
+      padding: 16px 18px;
+      background: #101522;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .side-title {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--muted);
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+    .inv-slots {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+    .slot {
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .slot.active {
+      color: var(--text);
+      border-color: rgba(251, 191, 36, 0.55);
+      background: rgba(251, 191, 36, 0.08);
+    }
+    .steps-list {
+      margin: 0;
+      padding-left: 18px;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+    .steps-list li.current {
+      color: var(--text);
+      font-weight: 600;
+    }
+
     .log-box {
-      height: 220px; overflow-y: auto; padding: 14px 18px;
-      background: #141720; line-height: 1.5; font-size: 14px; white-space: pre-wrap;
+      height: 215px;
+      overflow-y: auto;
+      padding: 14px 20px;
+      background: #0d111c;
+      font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+      font-size: 13.5px;
+      line-height: 1.52;
+      white-space: pre-wrap;
+      color: #dbeafe;
     }
-    .quick-actions {
-      display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 18px;
-      background: #12141c; border-top: 1px solid #2e3446;
+    .controls-area {
+      padding: 12px 18px;
+      background: var(--panel-2);
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
     }
     button {
-      background: #252b3b; color: #f8fafc; border: 1px solid #3b445e;
-      padding: 6px 12px; border-radius: 5px; cursor: pointer; font-family: inherit;
+      background: #212a42;
+      color: var(--text);
+      border: 1px solid #364469;
+      padding: 7px 13px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.06s ease, background 0.15s ease;
     }
-    button:hover { background: #374158; }
-    .cmd-bar { display: flex; border-top: 1px solid #2e3446; }
-    .cmd-bar span { padding: 12px; color: #38bdf8; font-weight: bold; }
-    .cmd-bar input {
-      flex: 1; background: transparent; border: none; color: #fff;
-      font-family: inherit; font-size: 15px; outline: none;
+    button:hover { background: #2d3959; }
+    button:active { transform: scale(0.98); }
+    button.primary {
+      background: rgba(56, 189, 248, 0.18);
+      border-color: rgba(56, 189, 248, 0.55);
+      color: #7dd3fc;
+    }
+    button.danger {
+      background: rgba(239, 68, 68, 0.16);
+      border-color: rgba(239, 68, 68, 0.5);
+      color: #fca5a5;
+    }
+    .prompt-choices {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding: 8px 12px;
+      border-radius: 8px;
+      background: rgba(251, 191, 36, 0.1);
+      border: 1px solid rgba(251, 191, 36, 0.45);
+      font-size: 13px;
+    }
+    .prompt-choices.visible { display: flex; }
+
+    .cmd-form {
+      display: flex;
+      align-items: center;
+      background: #0b0e17;
+      border-top: 1px solid var(--border);
+      padding: 0 16px;
+    }
+    .cmd-form span {
+      color: var(--accent);
+      font-weight: 700;
+      font-family: monospace;
+      font-size: 16px;
+      margin-right: 10px;
+    }
+    .cmd-form input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text);
+      padding: 13px 4px;
+      font-size: 14.5px;
+      font-family: inherit;
+      outline: none;
     }
   </style>
 </head>
 <body>
-  <div class="game-shell">
-    <div class="hud">
-      <div><strong id="roomTitle">Damp Dungeon Cell</strong></div>
-      <div style="display:flex; align-items:center; gap:10px;">
-        <span>HP: <strong id="hpText">100</strong>/100</span>
-        <div class="hp-bar-wrap"><div class="hp-bar-fill" id="hpFill"></div></div>
+  <div class="app">
+    <div class="top-bar">
+      <div class="brand">
+        <span>ASTRAL DUNGEON</span>
+        <span class="badge" id="roomLabel">1. Damp Dungeon Cell</span>
       </div>
-      <div>Room: <span id="roomCode">cell</span></div>
+      <div class="hud-stats">
+        <div class="meter">
+          <span>HP: <strong id="hpText">120</strong>/<span id="maxHpText">120</span></span>
+          <div class="bar-track"><div class="bar-fill hp-fill" id="hpBar"></div></div>
+        </div>
+        <div class="meter" id="enemyMeter" style="display:none;">
+          <span style="color:#fca5a5;"><strong id="enemyNameText">Enemy</strong>: <span id="enemyHpText">0</span></span>
+          <div class="bar-track"><div class="bar-fill enemy-fill" id="enemyBar"></div></div>
+        </div>
+      </div>
     </div>
 
-    <canvas id="sceneCanvas" width="860" height="240"></canvas>
+    <div class="main-grid">
+      <div class="stage-col">
+        <canvas id="sceneCanvas" width="620" height="250"></canvas>
+        <div class="mission-banner">
+          <span id="missionText">Loading WebAssembly C++ engine...</span>
+        </div>
+      </div>
+
+      <div class="side-col">
+        <div>
+          <div class="side-title">Inventory Gear</div>
+          <div class="inv-slots">
+            <div class="slot" id="slotTorch">Torch (+8 ATK)</div>
+            <div class="slot" id="slotBlade">Blade (+20 ATK)</div>
+            <div class="slot" id="slotHerb">Herb (+35 HP)</div>
+            <div class="slot" id="slotKey">Key (Exit)</div>
+          </div>
+        </div>
+
+        <div>
+          <div class="side-title">Escape Roadmap</div>
+          <ol class="steps-list">
+            <li id="step1" class="current">Cell: Take Torch, go North</li>
+            <li id="step2">Gallery: Fight Stalker, take Blade, Search</li>
+            <li id="step3">Sanctum: Fire brazier, take Herb, fight Warden</li>
+            <li id="step4">Gate: Use Key &amp; solve riddle ("towel")</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+
     <div class="log-box" id="storyLog"></div>
 
-    <div class="quick-actions">
-      <button onclick="runCmd('take')">Take Item</button>
-      <button onclick="runCmd('search')">Search Room</button>
-      <button onclick="runCmd('use herb')">Use Herb</button>
-      <button onclick="runCmd('door')">Open Gate</button>
-      <button onclick="runCmd('north')">Go North</button>
-      <button onclick="runCmd('south')">Go South</button>
-      <button onclick="runCmd('inventory')">Inventory</button>
+    <div class="controls-area">
+      <div class="prompt-choices" id="promptBox">
+        <strong style="color:var(--gold);">Choice Needed:</strong>
+        <span id="promptButtons"></span>
+      </div>
+
+      <div class="btn-row">
+        <button class="primary" onclick="runCmd('take')">Take Item</button>
+        <button class="danger" onclick="runCmd('attack')">Attack Enemy</button>
+        <button onclick="runCmd('search')">Search / Puzzle</button>
+        <button onclick="runCmd('use herb')">Use Herb</button>
+        <button onclick="runCmd('door')">Unlock Gate</button>
+        <button onclick="runCmd('north')">Go North</button>
+        <button onclick="runCmd('south')">Go South</button>
+        <button onclick="runCmd('inventory')">Inventory</button>
+      </div>
     </div>
 
-    <form class="cmd-bar" onsubmit="event.preventDefault(); submitInput();">
+    <form class="cmd-form" onsubmit="event.preventDefault(); submitCmd();">
       <span>&gt;</span>
-      <input id="cmdInput" type="text" placeholder="Type a command (e.g., take, search, dodge, north, towel)..." autocomplete="off" />
+      <input id="cmdInput" type="text" placeholder="Type a command (take, attack, search, use herb, door, north, south)..." autocomplete="off" />
     </form>
   </div>
 
-  <script src="dungeon.js"></script>
   <script>
     const canvas = document.getElementById('sceneCanvas');
     const ctx = canvas.getContext('2d');
     const logEl = document.getElementById('storyLog');
+    let ready = false;
 
-    const roomNames = {
-      cell: 'Damp Dungeon Cell',
-      corridor: 'Trapped Gallery',
-      gate: 'Moonlit Threshold'
+    const roomMeta = {
+      cell: {
+        name: '1. Damp Dungeon Cell',
+        goal: 'Click "Take Item" to grab the Torch, then click "Go North".',
+        step: 1
+      },
+      corridor: {
+        name: '2. Trapped Gallery',
+        goal: 'Defeat the Crypt Stalker, take the Blade, and click "Search / Puzzle" for the Key.',
+        step: 2
+      },
+      sanctum: {
+        name: '3. Ember Sanctum',
+        goal: 'Click "Search / Puzzle" (type "fire"), take the Herb, and defeat the Shadow Warden.',
+        step: 3
+      },
+      gate: {
+        name: '4. Astral Exit Gate',
+        goal: 'Click "Unlock Gate" and answer "towel" to escape the dungeon!',
+        step: 4
+      }
     };
-
-    function drawRoomVisual(roomId, hasTorch) {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      const bg = ctx.createLinearGradient(0, 0, 0, 240);
-      bg.addColorStop(0, roomId === 'gate' ? '#16213e' : '#11131a');
-      bg.addColorStop(1, '#1e222d');
-      ctx.fillStyle = bg;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      ctx.strokeStyle = '#3b4254';
-      ctx.lineWidth = 6;
-      ctx.strokeRect(180, 25, 500, 195);
-
-      if (roomId === 'cell') {
-        ctx.strokeStyle = '#64748b';
-        for (let x = 220; x <= 640; x += 45) {
-          ctx.beginPath(); ctx.moveTo(x, 25); ctx.lineTo(x, 220); ctx.stroke();
-        }
-      } else if (roomId === 'corridor') {
-        ctx.strokeStyle = '#475569';
-        ctx.strokeRect(310, 65, 240, 120);
-        ctx.fillStyle = '#7f1d1d';
-        ctx.fillRect(360, 192, 140, 14);
-      } else if (roomId === 'gate') {
-        ctx.fillStyle = 'rgba(56, 189, 248, 0.15)';
-        ctx.fillRect(330, 40, 200, 175);
-        ctx.strokeStyle = '#38bdf8';
-        ctx.strokeRect(330, 40, 200, 175);
-      }
-
-      if (hasTorch) {
-        const glow = ctx.createRadialGradient(130, 110, 10, 130, 110, 180);
-        glow.addColorStop(0, 'rgba(251, 146, 60, 0.45)');
-        glow.addColorStop(1, 'rgba(251, 146, 60, 0)');
-        ctx.fillStyle = glow;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-      }
-    }
 
     function appendLog(text) {
       logEl.textContent += text + '\n';
       logEl.scrollTop = logEl.scrollHeight;
     }
 
-    function syncHud() {
+    function drawScene(roomId, hasTorch, hasBlade, enemyHp, enemyMaxHp, eName) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Sky / dungeon backdrop
+      const sky = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      if (roomId === 'gate') {
+        sky.addColorStop(0, '#0f294a');
+        sky.addColorStop(1, '#181c2e');
+      } else if (roomId === 'sanctum') {
+        sky.addColorStop(0, '#2a121c');
+        sky.addColorStop(1, '#141726');
+      } else {
+        sky.addColorStop(0, '#0d1322');
+        sky.addColorStop(1, '#171f33');
+      }
+      ctx.fillStyle = sky;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Stone floor
+      ctx.fillStyle = '#1e263b';
+      ctx.fillRect(0, 190, canvas.width, 60);
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(0, 190);
+      ctx.lineTo(canvas.width, 190);
+      ctx.stroke();
+
+      // Archway / room prop
+      ctx.strokeStyle = roomId === 'gate' ? '#38bdf8' : '#475569';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(245, 55, 130, 135);
+
+      if (roomId === 'cell') {
+        ctx.strokeStyle = '#64748b';
+        for (let x = 260; x <= 360; x += 20) {
+          ctx.beginPath(); ctx.moveTo(x, 55); ctx.lineTo(x, 190); ctx.stroke();
+        }
+      } else if (roomId === 'corridor') {
+        ctx.fillStyle = '#991b1b';
+        ctx.fillRect(275, 182, 70, 8);
+      } else if (roomId === 'sanctum') {
+        ctx.fillStyle = 'rgba(251, 146, 60, 0.25)';
+        ctx.beginPath();
+        ctx.arc(310, 120, 52, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (roomId === 'gate') {
+        ctx.fillStyle = 'rgba(56, 189, 248, 0.2)';
+        ctx.fillRect(250, 60, 120, 128);
+      }
+
+      // Player character on left
+      const px = 125, py = 152;
+      ctx.fillStyle = '#38bdf8';
+      ctx.beginPath();
+      ctx.arc(px, py - 18, 13, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillRect(px - 10, py - 4, 20, 26);
+      ctx.fillStyle = '#e2e8f0';
+      ctx.font = 'bold 12px sans-serif';
+      ctx.fillText('YOU', px - 12, py + 34);
+
+      if (hasBlade) {
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(px + 12, py + 6);
+        ctx.lineTo(px + 28, py - 12);
+        ctx.stroke();
+      }
+
+      if (hasTorch) {
+        const glow = ctx.createRadialGradient(px + 24, py - 8, 4, px + 24, py - 8, 95);
+        glow.addColorStop(0, 'rgba(251, 191, 36, 0.55)');
+        glow.addColorStop(1, 'rgba(251, 191, 36, 0)');
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(px + 24, py - 8, 95, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#fbbf24';
+        ctx.beginPath();
+        ctx.arc(px + 24, py - 8, 6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Enemy on right when alive
+      if (enemyHp > 0) {
+        const ex = 485, ey = 150;
+        ctx.fillStyle = '#ef4444';
+        ctx.beginPath();
+        ctx.arc(ex, ey - 20, 16, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillRect(ex - 13, ey - 3, 26, 30);
+        ctx.fillStyle = '#fca5a5';
+        ctx.font = 'bold 12px sans-serif';
+        ctx.fillText(`${eName} (${enemyHp}/${enemyMaxHp})`, ex - 48, ey + 36);
+      }
+    }
+
+    function updatePromptChoices(mode) {
+      const box = document.getElementById('promptBox');
+      const btns = document.getElementById('promptButtons');
+      btns.innerHTML = '';
+
+      const presets = {
+        trap: [['Dodge', 'dodge'], ['Block', 'block']],
+        crevice: [['Search Right', 'right'], ['Search Left', 'left']],
+        brazier: [['Speak Fire', 'fire'], ['Speak Ice', 'ice']],
+        riddle: [['Answer: Towel', 'towel'], ['Answer: Mirror', 'mirror']]
+      };
+
+      if (presets[mode]) {
+        box.classList.add('visible');
+        presets[mode].forEach(([label, cmd]) => {
+          const b = document.createElement('button');
+          b.className = 'primary';
+          b.textContent = label;
+          b.onclick = () => runCmd(cmd);
+          btns.appendChild(b);
+        });
+      } else {
+        box.classList.remove('visible');
+      }
+    }
+
+    function syncUI() {
       const roomId = Module.ccall('current_room', 'string', [], []);
       const hp = Module.ccall('current_hp', 'number', [], []);
-      const torch = Module.ccall('has_torch_flag', 'number', [], []) === 1;
+      const maxHp = Module.ccall('max_hp', 'number', [], []);
+      const hasTorch = Module.ccall('has_torch_flag', 'number', [], []) === 1;
+      const hasBlade = Module.ccall('has_blade_flag', 'number', [], []) === 1;
+      const hasHerb = Module.ccall('has_herb_flag', 'number', [], []) === 1;
+      const hasKey = Module.ccall('has_key_flag', 'number', [], []) === 1;
+      const eHp = Module.ccall('enemy_hp', 'number', [], []);
+      const eMaxHp = Module.ccall('enemy_max_hp', 'number', [], []);
+      const eName = Module.ccall('enemy_name', 'string', [], []);
+      const pMode = Module.ccall('prompt_mode', 'string', [], []);
 
-      document.getElementById('roomTitle').textContent = roomNames[roomId] || roomId;
-      document.getElementById('roomCode').textContent = roomId;
+      const meta = roomMeta[roomId] || { name: roomId, goal: '', step: 1 };
+      document.getElementById('roomLabel').textContent = meta.name;
+      document.getElementById('missionText').textContent = meta.goal;
       document.getElementById('hpText').textContent = hp;
-      document.getElementById('hpFill').style.width = Math.max(0, Math.min(100, hp)) + '%';
-      drawRoomVisual(roomId, torch);
+      document.getElementById('maxHpText').textContent = maxHp;
+      document.getElementById('hpBar').style.width = Math.max(0, Math.min(100, (hp / maxHp) * 100)) + '%';
+
+      const enemyMeter = document.getElementById('enemyMeter');
+      if (eHp > 0) {
+        enemyMeter.style.display = 'flex';
+        document.getElementById('enemyNameText').textContent = eName;
+        document.getElementById('enemyHpText').textContent = `${eHp}/${eMaxHp}`;
+        document.getElementById('enemyBar').style.width = Math.max(0, Math.min(100, (eHp / eMaxHp) * 100)) + '%';
+      } else {
+        enemyMeter.style.display = 'none';
+      }
+
+      document.getElementById('slotTorch').classList.toggle('active', hasTorch);
+      document.getElementById('slotBlade').classList.toggle('active', hasBlade);
+      document.getElementById('slotHerb').classList.toggle('active', hasHerb);
+      document.getElementById('slotKey').classList.toggle('active', hasKey);
+
+      for (let i = 1; i <= 4; i++) {
+        document.getElementById('step' + i).classList.toggle('current', i === meta.step);
+      }
+
+      updatePromptChoices(pMode);
+      drawScene(roomId, hasTorch, hasBlade, eHp, eMaxHp, eName);
     }
 
     function runCmd(cmd) {
+      if (!ready) {
+        appendLog('[System] C++ WebAssembly module is still starting up...');
+        return;
+      }
       appendLog('> ' + cmd);
       const reply = Module.ccall('run_command', 'string', ['string'], [cmd]);
       appendLog(reply);
-      syncHud();
+      syncUI();
     }
 
-    function submitInput() {
+    function submitCmd() {
       const input = document.getElementById('cmdInput');
-      if (!input.value.trim()) return;
-      runCmd(input.value.trim());
+      const val = input.value.trim();
+      if (!val) return;
+      runCmd(val);
       input.value = '';
     }
 
-    Module.onRuntimeInitialized = () => {
-      appendLog('=== MULTI-ROOM OOP DUNGEON ESCAPE ===\nType a command or click an action button to begin (try: take, north).');
-      syncHud();
+    var Module = {
+      onRuntimeInitialized: function () {
+        ready = true;
+        appendLog('=== WELCOME TO ASTRAL DUNGEON ===');
+        appendLog('Start in Room 1: click "Take Item" to pick up the Torch, then click "Go North".');
+        const intro = Module.ccall('run_command', 'string', ['string'], ['look']);
+        appendLog(intro);
+        syncUI();
+      }
     };
   </script>
+  <script src="dungeon.js"></script>
 </body>
 </html>

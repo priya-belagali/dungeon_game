@@ -1,14 +1,9 @@
-# OOP Dungeon Escape (C++ + WebAssembly UI)
+# Astral Dungeon (C++ OOP + WebAssembly UI)
 
-A text-based dungeon adventure game built using **Object-Oriented Programming (OOP)** in C++, paired with a graphical browser UI via **WebAssembly (Emscripten)** and **GitHub Actions**.
+A 4-room text and graphical dungeon adventure built in C++ using OOP principles and compiled to WebAssembly via GitHub Actions.
 
-## OOP Concepts Demonstrated
-- **Abstraction & Inheritance:** `Item` base class with `TorchItem`, `HerbItem`, and `KeyItem` subclasses; `Entity` base class inherited by `Player`; `Obstacle` base class with `FloorTrap`, `CreviceSearch`, and `RiddleDoor`.
-- **Polymorphism:** Virtual `use()` and `interact()` methods overridden by derived classes.
-- **Encapsulation:** Private fields in `Inventory` and `Entity` with controlled accessors and state updates.
-- **Composition / Aggregation:** `GameEngine` coordinates `Player`, `Room`s, `Item`s, and `Obstacle`s.
-
-## How to Run via GitHub (No Local C++ Plugin Needed)
-1. Upload this repository to GitHub (`main` branch).
-2. GitHub Actions runs `.github/workflows/build.yml`, compiling `dungeon_engine.cpp` into `dungeon.js` and `dungeon.wasm` and publishing to the `gh-pages` branch.
-3. In **Settings -> Pages**, choose **Deploy from a branch** -> `gh-pages` (`/ (root)`).
+## Features & OOP Structure
+- **Items (`Item` -> `TorchItem`, `BladeItem`, `HerbItem`, `KeyItem`):** Gear that boosts attack damage, heals HP, or unlocks the final gate.
+- **Entities & Enemies (`Entity` -> `Player`, `Enemy` -> `CryptStalker`, `ShadowWarden`):** Turn-based combat and health tracking.
+- **Obstacles & Puzzles (`Obstacle` -> `FloorTrap`, `CreviceSearch`, `BrazierPuzzle`, `RiddleDoor`):** Interactive hazards and riddles with guided UI choices.
+- **4 Rooms (`Room` graph in `GameEngine`):** Damp Dungeon Cell -> Trapped Gallery -> Ember Sanctum -> Astral Exit Gate.

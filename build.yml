@@ -1,0 +1,35 @@
+name: Build and Deploy Dungeon Game
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Emscripten
+        uses: mymindstorm/setup-emsdk@v14
+
+      - name: Compile C++ to WebAssembly
+        run: |
+          em++ dungeon_engine.cpp -o dungeon.js \
+            -s EXPORTED_FUNCTIONS="['_run_command','_current_room','_current_hp','_max_hp','_has_torch_flag','_has_blade_flag','_has_herb_flag','_has_key_flag','_enemy_hp','_enemy_max_hp','_enemy_name','_prompt_mode','_is_escaped_flag']" \
+            -s EXPORTED_RUNTIME_METHODS="['ccall','cwrap']"
+          mkdir -p dist
+          cp index.html dungeon.js dungeon.wasm dist/
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
