@@ -1,7 +1,6 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <memory>
 #include <sstream>
 #include <algorithm>
 #include <cctype>
@@ -43,7 +42,7 @@ public:
 
 class TorchItem : public Item {
 public:
-    TorchItem() : Item("Torch", "Flare Torch: pierces shadows, boosts stamina recovery & sears foes.") {}
+    TorchItem() : Item("Torch", "Flare Torch: illuminates dark maze wings, restores +35 STM on use & sears demons.") {}
     bool use(Player& player, std::ostringstream& out) override;
 };
 
@@ -51,33 +50,33 @@ class HerbItem : public Item {
 private:
     int healAmount;
 public:
-    HerbItem(int amt = 42) : Item("Herb", "Crimson Herb: restores vitality in high-stakes rooms."), healAmount(amt) {}
+    HerbItem(int amt = 45) : Item("Herb", "Crimson Herb: restores vitality during deep maze runs."), healAmount(amt) {}
     bool use(Player& player, std::ostringstream& out) override;
 };
 
 class BladeItem : public Item {
 public:
-    BladeItem() : Item("Blade", "Level weapon: Sunlit Blade (Lv.1) / Arcane Glaive (Lv.2) / Eclipse Scythe (Lv.3).") {}
+    BladeItem() : Item("Blade", "Level Blade/Glaive/Scythe: boosts melee strike power across the maze.") {}
     bool use(Player&, std::ostringstream& out) override {
-        out << "\n[Weapon] Your level weapon is equipped and ready for combat!\n";
+        out << "\n[Weapon] Your level weapon is equipped and ready!\n";
         return false;
     }
 };
 
 class KeyItem : public Item {
 public:
-    KeyItem() : Item("Key", "Seal Key: unlocks the chamber's Final Gate.") {}
+    KeyItem() : Item("Key", "Sanctum Seal Key: unlocks the level's Final Gate.") {}
     bool use(Player&, std::ostringstream& out) override {
-        out << "\n[Key] Use 'door' at the Final Gate when ready.\n";
+        out << "\n[Key] Reach the Final Gate and use 'door' to unlock it.\n";
         return false;
     }
 };
 
 class RelicItem : public Item {
 public:
-    RelicItem() : Item("Relic", "Ancient Relic: channels forbidden power across deeper stages.") {}
+    RelicItem() : Item("Relic", "Ancient Relic: channels raw arcane/eclipse power.") {}
     bool use(Player&, std::ostringstream& out) override {
-        out << "\n[Relic] The Relic hums with raw energy!\n";
+        out << "\n[Relic] The Relic pulses with ancient energy!\n";
         return false;
     }
 };
@@ -181,8 +180,8 @@ public:
     void drainMoveStamina(int cost, std::ostringstream& out) {
         stamina = std::max(0, stamina - cost);
         if (stamina == 0) {
-            out << " [Exhausted] Stamina hit 0! Moving while exhausted costs 8 HP!\n";
-            takeDamage(8, out);
+            out << " [Exhausted] Stamina reached 0! Moving while exhausted costs 10 HP!\n";
+            takeDamage(10, out);
         }
     }
 
@@ -247,19 +246,19 @@ public:
 
 class DemonMonkeyVillain : public Enemy {
 public:
-    DemonMonkeyVillain() : Enemy("Demon Monkey", "monkey", 66, 19, "Screech! Wrong step and the ruins bite!") {}
+    DemonMonkeyVillain() : Enemy("Demon Monkey", "monkey", 66, 19, "Screech! The maze wings belong to us!") {}
 };
 class ShadowWraithVillain : public Enemy {
 public:
-    ShadowWraithVillain() : Enemy("Shadow Wraith", "wraith", 82, 23, "Cold mist drains the careless!") {}
+    ShadowWraithVillain() : Enemy("Shadow Wraith", "wraith", 82, 23, "Cold mist drains wandering delvers!") {}
 };
 class IronGolemVillain : public Enemy {
 public:
-    IronGolemVillain() : Enemy("Obsidian Golem", "golem", 98, 26, "Stone and fury guard this path!") {}
+    IronGolemVillain() : Enemy("Obsidian Golem", "golem", 98, 26, "Stone and fury guard this wing!") {}
 };
 class AstralSentinelVillain : public Enemy {
 public:
-    AstralSentinelVillain() : Enemy("Astral Warden", "seraph", 118, 30, "None pass unpunished!") {}
+    AstralSentinelVillain() : Enemy("Astral Warden", "seraph", 118, 30, "None pass the gate unchallenged!") {}
 };
 
 class Room {
@@ -295,7 +294,6 @@ public:
     bool hasRiddle() const { return !riddlePrompt.empty(); }
     bool isRiddleSolved() const { return riddleSolved || riddlePrompt.empty(); }
     const std::string& getRiddlePrompt() const { return riddlePrompt; }
-    void resetRiddle() { riddleSolved = false; }
 
     bool solveRiddle(const std::string& ans, Player& player, std::ostringstream& out) {
         std::string c = toLowerStr(trimStr(ans));
@@ -344,9 +342,9 @@ public:
         if (eastRoom)  exits += " [East]";
         if (westRoom)  exits += " [West]";
         out << " " << exits << "\n";
-        if (roomItem) out << " * Item: [" << roomItem->getName() << "] ('take')\n";
+        if (roomItem) out << " * Item/Weapon: [" << roomItem->getName() << "] ('take')\n";
         if (enemy && enemy->isAlive()) {
-            out << " * Guardian: " << enemy->getName() << " (" << enemy->getHealth() << "/" << enemy->getMaxHealth() << " HP)\n";
+            out << " * Demon/Guardian: " << enemy->getName() << " (" << enemy->getHealth() << "/" << enemy->getMaxHealth() << " HP)\n";
         }
         if (!riddlePrompt.empty() && !riddleSolved) {
             out << " * Seal Riddle ('search'): " << riddlePrompt << "\n";
@@ -369,8 +367,8 @@ private:
     IronGolemVillain golemEnemy;
     AstralSentinelVillain sentinelEnemy;
 
-    // Maze nodes: main progression + side branches (dead ends & lethal wrong turns)
-    Room rStart, rMaze1, rDeadWest, rPitEast, rRelicVault, rGate;
+    // Extensive 9-room maze across North, South, East, and West wings
+    Room rStart, rWest1, rWest2, rEast1, rEast2, rNorth1, rNorth2, rSouthVault, rGate;
     Room* currentRoom;
     int levelNumber;
     int defeatsCount;
@@ -379,16 +377,20 @@ private:
     std::string lastAnimAction;
 
     void wireMaze() {
-        // rStart -> (North) rMaze1, (East) rPitEast (lethal wrong turn), (West) rDeadWest (dead end)
-        // rMaze1 -> (South) rStart, (North) rRelicVault, (West) rDeadWest, (East) rPitEast
-        // rRelicVault -> (South) rMaze1, (North) rGate, (East) rPitEast
-        // rGate -> (South) rRelicVault, (West) rDeadWest
-        rStart.setExits(&rMaze1, nullptr, &rPitEast, &rDeadWest);
-        rDeadWest.setExits(nullptr, nullptr, &rStart, nullptr);
-        rPitEast.setExits(nullptr, nullptr, nullptr, &rStart);
-        rMaze1.setExits(&rRelicVault, &rStart, &rPitEast, &rDeadWest);
-        rRelicVault.setExits(&rGate, &rMaze1, &rPitEast, nullptr);
-        rGate.setExits(nullptr, &rRelicVault, nullptr, &rDeadWest);
+        // Central hub rStart (courtyard): North -> rNorth1, East -> rEast1, West -> rWest1, South -> rSouthVault
+        // West wing: rStart <-> rWest1 (West weapon/demon) <-> rWest2 (West deeper demon & dead end)
+        // East wing: rStart <-> rEast1 (East weapon/demon) <-> rEast2 (East deeper demon & lethal trap)
+        // North wing: rStart <-> rNorth1 (Gallery) <-> rNorth2 (Relic Sanctum) <-> rGate (Final Gate)
+        // South wing: rStart <-> rSouthVault (extra stamina drain if running South)
+        rStart.setExits(&rNorth1, &rSouthVault, &rEast1, &rWest1);
+        rWest1.setExits(nullptr, nullptr, &rStart, &rWest2);
+        rWest2.setExits(nullptr, nullptr, &rWest1, nullptr);
+        rEast1.setExits(nullptr, nullptr, &rEast2, &rStart);
+        rEast2.setExits(nullptr, nullptr, nullptr, &rEast1);
+        rNorth1.setExits(&rNorth2, &rStart, &rEast1, &rWest1);
+        rNorth2.setExits(&rGate, &rNorth1, &rEast2, &rWest2);
+        rSouthVault.setExits(&rStart, nullptr, &rEast1, &rWest1);
+        rGate.setExits(nullptr, &rNorth2, nullptr, nullptr);
     }
 
     void restartCurrentLevel(const std::string& reason, std::ostringstream& out) {
@@ -400,9 +402,10 @@ private:
 
 public:
     GameEngine()
-        : herbItem1(42), herbItem2(48),
-          rStart("cell"), rMaze1("corridor"), rDeadWest("cistern"),
-          rPitEast("forge"), rRelicVault("sanctum"), rGate("gate"),
+        : herbItem1(45), herbItem2(50),
+          rStart("cell"), rWest1("west_hall"), rWest2("west_crypt"),
+          rEast1("east_forge"), rEast2("east_abyss"),
+          rNorth1("corridor"), rNorth2("sanctum"), rSouthVault("cistern"), rGate("gate"),
           currentRoom(&rStart), levelNumber(1), defeatsCount(0),
           worldDestroyed(false), awaitingRiddle(false), lastAnimAction("idle") {
         wireMaze();
@@ -417,101 +420,134 @@ public:
         currentRoom = &rStart;
 
         if (levelNumber == 1) {
-            // Level 1: Sunlit Ruins — Weapon: Sunlit Blade — Objective: Claim Torch & Blade, find Key & Relic, unlock Exit Gate
-            monkeyEnemy.resetEnemy(64, 18, "Ruin screech! Watch your footing!");
-            wraithEnemy.resetEnemy(76, 21, "Mist chills your bones!");
-            golemEnemy.resetEnemy(92, 24, "Stone guards the temple path!");
-            sentinelEnemy.resetEnemy(105, 27, "Only worthy delvers pass!");
+            monkeyEnemy.resetEnemy(66, 19, "Screech! The ruins test every turn!");
+            wraithEnemy.resetEnemy(80, 22, "Mist chills the western & southern halls!");
+            golemEnemy.resetEnemy(96, 25, "Stone guards the eastern & northern wings!");
+            sentinelEnemy.resetEnemy(112, 28, "Only worthy delvers breach the gate!");
 
             rStart.setRoomData("1. Sunlit Courtyard",
-                "Lv.1 Objective: Grab Torch, navigate maze North to unlock the Exit Gate.",
-                "Temple courtyard. Weapon focus: Sunlit Blade. East looks risky; West is a blind passage.",
+                "Lv.1 Objective: Explore North, East & West wings, claim weapons/Key/Relic & unlock Gate.",
+                "Maze crossroads. Go West for a weapon & demon, East for trials & danger, North toward the Gate.",
                 &torchItem, nullptr);
-            rDeadWest.setRoomData("Dead End: Sunken Alcove",
-                "Dead end! Turn East/South to backtrack (drains stamina).",
-                "A flooded dead end with no northern exit.",
-                &herbItem1, &wraithEnemy, true, false);
-            rPitEast.setRoomData("Lethal Trap: Collapse Chasm",
-                "Wrong turn! Spike pit & collapse!",
-                "Unstable floor gives way into jagged spikes!",
-                nullptr, nullptr, false, true, "You took a lethal wrong turn into the Collapse Chasm!");
-            rMaze1.setRoomData("2. Shifting Gallery",
-                "Claim Sunlit Blade, defeat Demon Monkey, push North or East/West carefully.",
-                "Moving statues and dart slits guard this gallery.",
+            rWest1.setRoomData("2. Western Armory Wing",
+                "Claim the level Blade in the West wing & defeat the Demon Monkey!",
+                "Torchlit western gallery holding a weapon and a prowling Demon Monkey.",
                 &bladeItem, &monkeyEnemy);
-            rRelicVault.setRoomData("3. Relic Shrine",
-                "Claim Key & Relic, solve seal riddle ('search') if needed, head North to Gate.",
-                "Ancient pedestal holding the Key and Relic.",
-                &keyItem, &golemEnemy, false, false, "",
+            rWest2.setRoomData("3. Western Dead-End Crypt",
+                "Dead end! Claim Herb, fight Wraith, then turn East to rejoin the maze.",
+                "A deep western dead-end crypt haunted by a Shadow Wraith.",
+                &herbItem1, &wraithEnemy, true, false);
+            rEast1.setRoomData("4. Eastern Ember Wing",
+                "Eastern wing: Defeat Obsidian Golem & solve the eastern rune riddle ('search').",
+                "Glowing eastern chamber where a demon guards the deeper eastern passage.",
+                &herbItem2, &golemEnemy, false, false, "",
                 "What gets wetter the more it dries?", "towel");
-            rGate.setRoomData("4. Level 1 Exit Gate",
-                "Use 'door' with Key to advance to Level 2.",
-                "Heavy stone gate sealed with ancient runes.",
-                &relicItem, &sentinelEnemy);
-        } else if (levelNumber == 2) {
-            // Level 2: Relic Hunt — Weapon: Arcane Glaive — Objective: Claim Arcane Glaive & Relic, survive maze & unlock Gate
-            monkeyEnemy.resetEnemy(74, 22, "Relic hunters face sharper claws!");
-            wraithEnemy.resetEnemy(88, 25, "Wraiths swarm the dark corridors!");
-            golemEnemy.resetEnemy(104, 28, "The Golem blocks the Relic!");
-            sentinelEnemy.resetEnemy(122, 31, "The Warden bars the deeper gate!");
-
-            rStart.setRoomData("1. Relic Approach",
-                "Lv.2 Objective: Claim Arcane Glaive & Relic, reach Gate without running out of stamina.",
-                "Deeper catacombs. Weapon focus: Arcane Glaive. Wrong turns are deadlier.",
-                &bladeItem, nullptr);
-            rDeadWest.setRoomData("Dead End: Whispering Well",
-                "Dead end! Backtrack carefully—running drains stamina.",
-                "A dark dead-end cistern with a lurking wraith.",
-                &herbItem1, &wraithEnemy, true, false);
-            rPitEast.setRoomData("Lethal Trap: Blade Pendulum",
-                "Wrong turn! Swinging blades strike fatally!",
-                "Razor pendulums slice across the eastern corridor!",
-                nullptr, nullptr, false, true, "Wrong turn! The Blade Pendulum cut your run short!");
-            rMaze1.setRoomData("2. Mirror Maze",
-                "Defeat Demon Monkey & solve the mirror riddle ('search').",
-                "Intersecting hallways where false reflections mislead runners.",
-                &herbItem2, &monkeyEnemy, false, false, "",
-                "I speak without a mouth and hear without ears. What am I?", "echo");
-            rRelicVault.setRoomData("3. Sanctum of the Relic",
-                "Claim [Relic] & [Key], defeat Golem, advance North to Gate.",
-                "The Ancient Relic pulses with violet power.",
-                &relicItem, &golemEnemy);
-            rGate.setRoomData("4. Level 2 Gate",
-                "Use 'door' with Key & Relic to enter Level 3.",
-                "Runic gate guarding the path to Level 3.",
-                &keyItem, &sentinelEnemy);
-        } else {
-            // Level 3: Eclipse Endgame — Weapon: Eclipse Scythe — Objective: Survive timer & maze, unlock World-Shattering Gate
-            monkeyEnemy.resetEnemy(82, 25, "Stop the Eclipse Scythe!");
-            wraithEnemy.resetEnemy(96, 28, "Shadows rise against your endgame!");
-            golemEnemy.resetEnemy(114, 32, "End this dark plot!");
-            sentinelEnemy.resetEnemy(134, 35, "Final stand before the altar!");
-
-            rStart.setRoomData("1. Eclipse Threshold",
-                "Lv.3 Objective: Beat the clock & maze—grab Eclipse Scythe, Relic, Key & open Final Gate!",
-                "Endgame maze under a timed countdown. Weapon focus: Eclipse Scythe.",
-                &bladeItem, nullptr);
-            rDeadWest.setRoomData("Dead End: Void Trench",
-                "Dead end! Backtracking costs stamina—watch your meter!",
-                "A dead-end trench haunted by a wraith.",
-                &herbItem1, &wraithEnemy, true, false);
-            rPitEast.setRoomData("Lethal Trap: Abyssal Rift",
-                "Wrong turn! Void rift swallows careless runners!",
-                "A tearing void fissure spans the eastern turn!",
-                nullptr, nullptr, false, true, "Wrong turn! You fell into the Abyssal Rift!");
-            rMaze1.setRoomData("2. Labyrinth of Ash",
-                "Defeat Demon Monkey, claim Relic & solve riddle ('search').",
-                "Ash-choked labyrinth twisting toward the endgame altar.",
-                &relicItem, &monkeyEnemy, false, false, "",
-                "The more you take from me, the bigger I grow. What am I?", "hole");
-            rRelicVault.setRoomData("3. Crucible Vault",
-                "Claim Key & Herb, defeat Golem, head North to Final Gate.",
-                "Final crucible before the endgame gate.",
+            rEast2.setRoomData("5. Eastern Chasm (Lethal Turn)",
+                "Lethal wrong turn! Turn West if you survived!",
+                "Jagged collapse at the far eastern edge!",
+                nullptr, nullptr, false, true, "Lethal wrong turn in the deep Eastern Chasm!");
+            rNorth1.setRoomData("6. Northern Shifting Gallery",
+                "Defeat Demon Monkey & push North toward the Relic Sanctum.",
+                "Northern hall lined with dart slits and statues.",
+                nullptr, &monkeyEnemy);
+            rNorth2.setRoomData("7. Northern Relic Sanctum",
+                "Claim [Key] & [Relic], defeat Golem, advance North to Final Gate.",
+                "Sanctum holding the Key and Ancient Relic.",
                 &keyItem, &golemEnemy);
-            rGate.setRoomData("4. Endgame Final Gate",
-                "Use 'door' to trigger the final gate sequence!",
-                "The culminating gate of the campaign.",
-                &herbItem2, &sentinelEnemy);
+            rSouthVault.setRoomData("8. Southern Sunken Vault (Extra STM Drain)",
+                "South wing drains extra stamina! Claim Relic & return North.",
+                "Flooded southern vault—running South takes heavy stamina.",
+                &relicItem, &wraithEnemy);
+            rGate.setRoomData("9. Level 1 Exit Gate",
+                "Use 'door' with Key to advance to Level 2.",
+                "Massive northern gate sealed with ancient runes.",
+                nullptr, &sentinelEnemy);
+        } else if (levelNumber == 2) {
+            monkeyEnemy.resetEnemy(76, 23, "Relic hunters face fierce demons in every wing!");
+            wraithEnemy.resetEnemy(90, 26, "Wraiths stalk the West & South corridors!");
+            golemEnemy.resetEnemy(108, 29, "Golems guard the East & North vaults!");
+            sentinelEnemy.resetEnemy(126, 32, "The Warden bars the Level 2 Gate!");
+
+            rStart.setRoomData("1. Relic Crossroads",
+                "Lv.2 Objective: Claim Arcane Glaive (West) & Ancient Relic, then unlock Level 2 Gate.",
+                "Deeper labyrinth. Weapons and demons lurk in West, East, and North.",
+                &torchItem, nullptr);
+            rWest1.setRoomData("2. West Glaive Chamber",
+                "Claim Arcane Glaive [Blade] & defeat Demon Monkey!",
+                "Western chamber where a demon guards a sharp glaive.",
+                &bladeItem, &monkeyEnemy);
+            rWest2.setRoomData("3. West Mist Dead End",
+                "Dead end! Fight Shadow Wraith & head East.",
+                "Dead-end western mist chamber.",
+                &herbItem1, &wraithEnemy, true, false);
+            rEast1.setRoomData("4. East Demon Foundry",
+                "Defeat Obsidian Golem & solve the mirror riddle ('search').",
+                "Eastern foundry with a demon guardian and rune lock.",
+                &relicItem, &golemEnemy, false, false, "",
+                "I speak without a mouth and hear without ears. What am I?", "echo");
+            rEast2.setRoomData("5. East Pendulum Trap (Lethal)",
+                "Lethal wrong turn!",
+                "Swinging blades strike across the far-east passage!",
+                nullptr, nullptr, false, true, "Lethal wrong turn into the East Pendulum Trap!");
+            rNorth1.setRoomData("6. North Mirror Corridor",
+                "Defeat Demon Monkey & advance North.",
+                "Northern corridor with shifting mirrors.",
+                nullptr, &monkeyEnemy);
+            rNorth2.setRoomData("7. North Relic Altar",
+                "Claim [Key] & [Relic], defeat Golem, push North to Gate.",
+                "Northern altar chamber.",
+                &keyItem, &golemEnemy);
+            rSouthVault.setRoomData("8. South Cistern (Extra STM Drain)",
+                "South travel drains extra stamina! Claim Herb & move North.",
+                "Deep southern cistern.",
+                &herbItem2, &wraithEnemy);
+            rGate.setRoomData("9. Level 2 Gate",
+                "Use 'door' with Key to advance to Level 3.",
+                "Gate leading to Level 3.",
+                nullptr, &sentinelEnemy);
+        } else {
+            monkeyEnemy.resetEnemy(84, 26, "Demons rally against the Eclipse Scythe!");
+            wraithEnemy.resetEnemy(98, 29, "Dark wraiths strike from the shadows!");
+            golemEnemy.resetEnemy(116, 33, "Endgame golems guard the final wings!");
+            sentinelEnemy.resetEnemy(136, 36, "Final stand before the endgame gate!");
+
+            rStart.setRoomData("1. Eclipse Labyrinth Hub",
+                "Lv.3 Objective: Beat the timer & maze—grab Eclipse Scythe, Relic, Key & open Final Gate!",
+                "Timed endgame labyrinth. Weapons and demons stand across East, West, and North.",
+                &torchItem, nullptr);
+            rWest1.setRoomData("2. West Scythe Vault",
+                "Claim Eclipse Scythe [Blade] & defeat Demon Monkey!",
+                "Western vault holding the Eclipse Scythe and a demon.",
+                &bladeItem, &monkeyEnemy);
+            rWest2.setRoomData("3. West Void Dead End",
+                "Dead end! Fight Shadow Wraith & turn East.",
+                "Dead-end western void pocket.",
+                &herbItem1, &wraithEnemy, true, false);
+            rEast1.setRoomData("4. East Ash Crucible",
+                "Defeat Obsidian Golem & solve the riddle ('search').",
+                "Eastern crucible guarded by a demon.",
+                &relicItem, &golemEnemy, false, false, "",
+                "The more you take from me, the bigger I grow. What am I?", "hole");
+            rEast2.setRoomData("5. East Rift (Lethal Turn)",
+                "Lethal wrong turn!",
+                "Tearing void chasm at the eastern edge!",
+                nullptr, nullptr, false, true, "Lethal wrong turn into the East Void Rift!");
+            rNorth1.setRoomData("6. North Ash Labyrinth",
+                "Defeat Demon Monkey & move North.",
+                "Ash-swept northern passage.",
+                nullptr, &monkeyEnemy);
+            rNorth2.setRoomData("7. North Crucible Sanctum",
+                "Claim [Key] & Herb, defeat Golem, push North to Final Gate.",
+                "Northern sanctum before the final gate.",
+                &keyItem, &golemEnemy);
+            rSouthVault.setRoomData("8. South Abyssal Well (Extra STM Drain)",
+                "South travel drains extra stamina! Watch your clock & stamina.",
+                "Southern well draining stamina fast.",
+                &herbItem2, &wraithEnemy);
+            rGate.setRoomData("9. Endgame Final Gate",
+                "Use 'door' with Key to complete Level 3!",
+                "Final gate of the 3-level campaign.",
+                nullptr, &sentinelEnemy);
         }
 
         out << "\n=== LEVEL " << levelNumber << " ===\n";
@@ -592,12 +628,11 @@ public:
         if (lower == "north") {
             tryMove(currentRoom->getNorth(), "north", 12, "run_north");
         } else if (lower == "south" || lower == "retreat") {
-            // Running south / backtracking drains extra stamina as requested
             tryMove(currentRoom->getSouth(), "south", 18, "run_south");
         } else if (lower == "east") {
-            tryMove(currentRoom->getEast(), "east", 14, "run_north");
+            tryMove(currentRoom->getEast(), "east", 14, "run_east");
         } else if (lower == "west") {
-            tryMove(currentRoom->getWest(), "west", 14, "run_north");
+            tryMove(currentRoom->getWest(), "west", 14, "run_west");
         } else if (lower == "take") {
             Item* it = currentRoom->takeRoomItem();
             if (it) {

@@ -4,3 +4,6 @@ Features distinct human-like avatars with facial details and hairstyles, multipl
 
 
 v10 Additions: Distinct weapons, obstacles & objectives per level; maze navigation (North/South/East/West) with stamina drain (especially South), dead ends, and level-restarting wrong turns; Web Audio SFX + dramatic canvas visuals.
+
+
+v11 Additions: Extensive 9-room North/South/East/West maze with weapons & demons across East and West wings as well; physical East/West/North/South character turning and walking animations on canvas.
