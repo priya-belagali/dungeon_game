@@ -189,6 +189,7 @@ public:
     Player(std::string name) : Entity(name, 100) {}
 
     Inventory& getInventory() { return inventory; }
+    const Inventory& getInventory() const { return inventory; }
 
     void useItem(const std::string& itemName, std::ostringstream& out) {
         Item* item = inventory.getItem(itemName);
