@@ -544,7 +544,7 @@
       syncState();
     }
 
-    // Distinct silhouettes, postures, headwear, and weapons for Kaelen (1), Lyra (2), and Thorne (3)
+    // Human-like characters on canvas with detailed facial features, distinct hairstyles, facial hair, build, and outfits
     function drawHumanCharacter(px, py, opts) {
       const {
         avId, hasTorch, hasBlade, hasRelic, isEvilTwist,
@@ -563,219 +563,286 @@
         ctx.translate(-6, -2);
       }
 
-      if (avId === 1) {
-        // KAELEN: Lean, agile ruin-sprinter with forward crouch, hooded cowl, and twin/lantern-lit daggers
-        const lean = isRunning ? 0.16 : 0.08;
-        ctx.save();
-        ctx.rotate(lean);
+      // Ground contact shadow
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.42)';
+      ctx.beginPath();
+      ctx.ellipse(0, 2, avId === 3 ? 25 : 19, 5, 0, 0, Math.PI * 2);
+      ctx.fill();
 
-        const fFootX = swing * 18;
-        const fFootY = -liftF * 8;
-        const bFootX = -swing * 18;
-        const bFootY = -liftB * 8;
+      // Avatar-specific realistic skin tones & human features
+      const skinBase = avId === 1 ? '#e2a679' : (avId === 2 ? '#f5c7a3' : '#b8764c');
+      const skinLight = avId === 1 ? '#f4c5a0' : (avId === 2 ? '#fde5cf' : '#d5966c');
+      const skinShade = avId === 1 ? '#ab6e43' : (avId === 2 ? '#c38b62' : '#824b2a');
 
-        // Slim runner legs
-        ctx.strokeStyle = '#334155';
-        ctx.lineWidth = 5.5;
-        ctx.lineCap = 'round';
+      const headGrad = ctx.createLinearGradient(-10, -90, 12, -68);
+      headGrad.addColorStop(0, skinLight);
+      headGrad.addColorStop(0.55, skinBase);
+      headGrad.addColorStop(1, skinShade);
+
+      function drawLimb(x1, y1, x2, y2, w1, w2, fill) {
+        const dx = x2 - x1, dy = y2 - y1;
+        const len = Math.hypot(dx, dy) || 1;
+        const nx = -dy / len, ny = dx / len;
+        ctx.fillStyle = fill;
         ctx.beginPath();
-        ctx.moveTo(2, -26);
-        ctx.lineTo(fFootX * 0.55, -13 - liftF * 4);
-        ctx.lineTo(fFootX, fFootY);
-        ctx.stroke();
-
-        ctx.strokeStyle = '#1e293b';
-        ctx.beginPath();
-        ctx.moveTo(-2, -26);
-        ctx.lineTo(bFootX * 0.55, -13 - liftB * 4);
-        ctx.lineTo(bFootX, bFootY);
-        ctx.stroke();
-
-        // Lean tunic torso
-        ctx.fillStyle = isEvilTwist ? '#4c1d95' : '#2b3a4a';
-        ctx.beginPath();
-        ctx.roundRect(-10, -56, 20, 31, 6);
-        ctx.fill();
-
-        // Amber sash
-        ctx.fillStyle = isEvilTwist ? '#e879f9' : '#f59e0b';
-        ctx.fillRect(-10, -32, 20, 4);
-
-        // Hooded head
-        ctx.fillStyle = '#e8b288';
-        ctx.beginPath();
-        ctx.arc(2, -68, 9, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = isEvilTwist ? '#581c87' : '#1e293b';
-        ctx.beginPath();
-        ctx.arc(0, -69, 11.5, Math.PI * 0.8, Math.PI * 2.05);
-        ctx.lineTo(-10, -59);
-        ctx.closePath();
-        ctx.fill();
-
-        ctx.fillStyle = isEvilTwist ? '#f0abfc' : '#f8fafc';
-        ctx.beginPath();
-        ctx.arc(6, -68, 1.8, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Agile dagger / strike arm
-        const reachX = isAttacking ? 34 : 14 + swing * 8;
-        const reachY = isAttacking ? -46 : -40;
-        ctx.strokeStyle = '#e8b288';
-        ctx.lineWidth = 5;
-        ctx.beginPath();
-        ctx.moveTo(4, -50);
-        ctx.lineTo(reachX, reachY);
-        ctx.stroke();
-
-        ctx.strokeStyle = '#cbd5e1';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(reachX, reachY);
-        ctx.lineTo(reachX + 14, reachY - 4);
-        ctx.stroke();
-
-        ctx.restore();
-      } else if (avId === 2) {
-        // LYRA: Swift arcane blade-dancer with flowing cape, high-step stride, and glowing crescent blade
-        const fFootX = swing * 20;
-        const fFootY = -liftF * 11;
-        const bFootX = -swing * 20;
-        const bFootY = -liftB * 11;
-
-        // Flowing arcane cape behind
-        ctx.fillStyle = isEvilTwist ? 'rgba(192, 132, 252, 0.45)' : 'rgba(34, 211, 238, 0.35)';
-        ctx.beginPath();
-        ctx.moveTo(-6, -56);
-        ctx.quadraticCurveTo(-34, -46 + Math.sin(phase) * 8, -38, -14 + Math.cos(phase) * 6);
-        ctx.lineTo(-10, -24);
-        ctx.closePath();
-        ctx.fill();
-
-        // Nimble legs & boots
-        ctx.strokeStyle = '#1e3a8a';
-        ctx.lineWidth = 5;
-        ctx.lineCap = 'round';
-        ctx.beginPath();
-        ctx.moveTo(-2, -26);
-        ctx.lineTo(bFootX * 0.5, -13 - liftB * 5);
-        ctx.lineTo(bFootX, bFootY);
-        ctx.stroke();
-
-        ctx.strokeStyle = '#2563eb';
-        ctx.beginPath();
-        ctx.moveTo(2, -26);
-        ctx.lineTo(fFootX * 0.5, -13 - liftF * 5);
-        ctx.lineTo(fFootX, fFootY);
-        ctx.stroke();
-
-        // Tapered arcane doublet
-        ctx.fillStyle = isEvilTwist ? '#581c87' : '#1d4ed8';
-        ctx.beginPath();
-        ctx.moveTo(-10, -56);
-        ctx.lineTo(10, -56);
-        ctx.lineTo(7, -26);
-        ctx.lineTo(-7, -26);
-        ctx.closePath();
-        ctx.fill();
-
-        // Head + crest
-        ctx.fillStyle = '#f7cfa9';
-        ctx.beginPath();
-        ctx.arc(1, -69, 9.5, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.strokeStyle = isEvilTwist ? '#f0abfc' : '#22d3ee';
-        ctx.lineWidth = 2.5;
-        ctx.beginPath();
-        ctx.arc(1, -71, 11.5, Math.PI * 1.1, Math.PI * 1.9);
-        ctx.stroke();
-
-        // Crescent blade
-        const bx = isAttacking ? 36 : 15;
-        const by = isAttacking ? -52 : -44 + swing * 6;
-        ctx.strokeStyle = '#67e8f9';
-        ctx.lineWidth = 3.5;
-        ctx.beginPath();
-        ctx.moveTo(4, -48);
-        ctx.lineTo(bx, by);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.arc(bx + 6, by - 4, 14, -1.1, 0.9);
-        ctx.stroke();
-      } else {
-        // THORNE: Heavy armored vanguard with broad horned helm, thick shoulder plates, and war-cleaver
-        const fFootX = swing * 12;
-        const fFootY = -liftF * 5;
-        const bFootX = -swing * 12;
-        const bFootY = -liftB * 5;
-
-        // Heavy armored legs
-        ctx.strokeStyle = '#1e293b';
-        ctx.lineWidth = 9.5;
-        ctx.lineCap = 'round';
-        ctx.beginPath();
-        ctx.moveTo(-5, -28);
-        ctx.lineTo(bFootX * 0.5, -14);
-        ctx.lineTo(bFootX, bFootY);
-        ctx.stroke();
-
-        ctx.strokeStyle = '#475569';
-        ctx.beginPath();
-        ctx.moveTo(5, -28);
-        ctx.lineTo(fFootX * 0.5, -14);
-        ctx.lineTo(fFootX, fFootY);
-        ctx.stroke();
-
-        // Broad heavy torso & massive pauldrons
-        ctx.fillStyle = isEvilTwist ? '#3b0764' : '#334155';
-        ctx.beginPath();
-        ctx.roundRect(-18, -64, 36, 38, 6);
-        ctx.fill();
-
-        ctx.fillStyle = isEvilTwist ? '#a855f7' : '#10b981';
-        ctx.beginPath();
-        ctx.roundRect(-24, -66, 13, 14, 4);
-        ctx.roundRect(11, -66, 13, 14, 4);
-        ctx.fill();
-
-        // Horned vanguard helm
-        ctx.fillStyle = '#64748b';
-        ctx.beginPath();
-        ctx.arc(0, -76, 11.5, Math.PI, 0);
-        ctx.lineTo(11.5, -65);
-        ctx.lineTo(-11.5, -65);
-        ctx.closePath();
-        ctx.fill();
-
-        ctx.strokeStyle = '#e2e8f0';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(-10, -78); ctx.quadraticCurveTo(-22, -92, -16, -98);
-        ctx.moveTo(10, -78); ctx.quadraticCurveTo(22, -92, 16, -98);
-        ctx.stroke();
-
-        // Heavy greataxe / cleaver
-        const ax = isAttacking ? 38 : 16;
-        const ay = isAttacking ? -46 : -36;
-        ctx.strokeStyle = '#94a3b8';
-        ctx.lineWidth = 4.5;
-        ctx.beginPath();
-        ctx.moveTo(8, -48);
-        ctx.lineTo(ax, ay - 22);
-        ctx.stroke();
-
-        ctx.fillStyle = isEvilTwist ? '#e879f9' : '#10b981';
-        ctx.beginPath();
-        ctx.moveTo(ax, ay - 22);
-        ctx.lineTo(ax + 16, ay - 28);
-        ctx.lineTo(ax + 12, ay - 8);
+        ctx.moveTo(x1 + nx * w1 * 0.5, y1 + ny * w1 * 0.5);
+        ctx.lineTo(x2 + nx * w2 * 0.5, y2 + ny * w2 * 0.5);
+        ctx.arc(x2, y2, w2 * 0.5, Math.atan2(ny, nx), Math.atan2(-ny, -nx));
+        ctx.lineTo(x1 - nx * w1 * 0.5, y1 - ny * w1 * 0.5);
+        ctx.arc(x1, y1, w1 * 0.5, Math.atan2(-ny, -nx), Math.atan2(ny, nx));
         ctx.closePath();
         ctx.fill();
       }
 
-      // Shared active item / status overlays
+      function drawDetailedFace(eyeY, eyeColor, hairCol, hasBeard, hasFreckles, isFeminineJaw) {
+        // Neck
+        drawLimb(0, -64, 1, -72, avId === 3 ? 9.5 : 7, avId === 3 ? 8.5 : 6.2, headGrad);
+
+        // Head shape (softer chin for Lyra, squarer jaw for Thorne, lean oval for Kaelen)
+        ctx.fillStyle = headGrad;
+        ctx.beginPath();
+        if (isFeminineJaw) {
+          ctx.ellipse(1.5, -79, 9.5, 11.2, 0, 0, Math.PI * 2);
+        } else if (avId === 3) {
+          ctx.roundRect(-9.5, -91, 20, 21, 6);
+        } else {
+          ctx.ellipse(1.5, -79, 10, 11.5, 0.04, 0, Math.PI * 2);
+        }
+        ctx.fill();
+
+        // Ear on side of head
+        ctx.fillStyle = skinBase;
+        ctx.beginPath();
+        ctx.ellipse(-5, eyeY + 1, 3.2, 4.8, -0.1, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Eye with iris + white catchlight
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.ellipse(6.5, eyeY, 2.7, 2.0, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = isEvilTwist ? '#e879f9' : eyeColor;
+        ctx.beginPath();
+        ctx.arc(7.1, eyeY, 1.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(7.6, eyeY - 0.5, 0.55, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Eyebrow
+        ctx.strokeStyle = hairCol;
+        ctx.lineWidth = isFeminineJaw ? 1.6 : 2.2;
+        ctx.beginPath();
+        if (isEvilTwist || isAttacking) {
+          ctx.moveTo(4, eyeY - 3.6); ctx.lineTo(9.8, eyeY - 2.3);
+        } else {
+          ctx.moveTo(4, eyeY - 3.2); ctx.lineTo(9.8, eyeY - 3.6);
+        }
+        ctx.stroke();
+
+        // Nose bridge & tip + nostril shadow
+        ctx.strokeStyle = skinShade;
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.moveTo(9.8, eyeY - 0.5);
+        ctx.lineTo(12.2, eyeY + 3.2);
+        ctx.lineTo(9.5, eyeY + 4.1);
+        ctx.stroke();
+
+        if (hasFreckles) {
+          ctx.fillStyle = 'rgba(180, 83, 9, 0.45)';
+          ctx.beginPath();
+          ctx.arc(7.5, eyeY + 3.2, 0.8, 0, Math.PI * 2);
+          ctx.arc(9.2, eyeY + 2.6, 0.7, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Lips / mouth line
+        ctx.strokeStyle = isFeminineJaw ? '#be123c' : '#7c2d12';
+        ctx.lineWidth = isFeminineJaw ? 2 : 1.5;
+        ctx.beginPath();
+        if (isAttacking || isEvilTwist) {
+          ctx.moveTo(6.5, eyeY + 7.5);
+          ctx.quadraticCurveTo(9, eyeY + 6.5, 11, eyeY + 8);
+        } else {
+          ctx.moveTo(6.8, eyeY + 7.4);
+          ctx.lineTo(10.5, eyeY + 7.4);
+        }
+        ctx.stroke();
+
+        // Beard / jawline stubble for Thorne
+        if (hasBeard) {
+          ctx.fillStyle = hairCol;
+          ctx.beginPath();
+          ctx.moveTo(1, eyeY + 3);
+          ctx.quadraticCurveTo(4, eyeY + 11.5, 11.5, eyeY + 8.5);
+          ctx.lineTo(10.5, eyeY + 4.5);
+          ctx.lineTo(6.5, eyeY + 5.8);
+          ctx.closePath();
+          ctx.fill();
+        }
+      }
+
+      if (avId === 1) {
+        // KAELEN: Lean ruin-delver, dark wavy hair, open collar, leather vest & amber scarf, dagger
+        const bFootX = -swing * 18, bFootY = -liftB * 9;
+        const fFootX = swing * 18, fFootY = -liftF * 9;
+
+        drawLimb(-3, -34, -swing * 10, -17 - liftB * 5, 9, 7, '#1e293b');
+        drawLimb(-swing * 10, -17 - liftB * 5, bFootX, bFootY, 7, 5.2, '#334155');
+        drawLimb(3, -34, swing * 10, -17 - liftF * 5, 9.5, 7.2, '#283648');
+        drawLimb(swing * 10, -17 - liftF * 5, fFootX, fFootY, 7.2, 5.4, '#475569');
+
+        // Amber scarf trailing
+        ctx.fillStyle = isEvilTwist ? '#e879f9' : '#f59e0b';
+        ctx.beginPath();
+        ctx.moveTo(-4, -63);
+        ctx.quadraticCurveTo(-22, -56 + swing * 5, -26, -42 + swing * 5);
+        ctx.lineTo(-18, -39 + swing * 5);
+        ctx.quadraticCurveTo(-14, -50, -2, -59);
+        ctx.closePath();
+        ctx.fill();
+
+        // Torso & vest
+        const tGrad = ctx.createLinearGradient(-11, -64, 11, -32);
+        tGrad.addColorStop(0, isEvilTwist ? '#6d28d9' : '#3d4f63');
+        tGrad.addColorStop(1, isEvilTwist ? '#3b0764' : '#1e293b');
+        ctx.fillStyle = tGrad;
+        ctx.beginPath();
+        ctx.roundRect(-11, -64, 22, 32, 7);
+        ctx.fill();
+
+        drawDetailedFace(-79, '#1e293b', '#3b2314', false, true, false);
+
+        // Wavy dark hair
+        ctx.fillStyle = '#3b2314';
+        ctx.beginPath();
+        ctx.moveTo(-9, -81);
+        ctx.bezierCurveTo(-11, -93, 9, -94, 10.5, -83);
+        ctx.quadraticCurveTo(4, -87, -2, -84);
+        ctx.quadraticCurveTo(-6, -86, -9, -81);
+        ctx.closePath();
+        ctx.fill();
+
+        // Arm & dagger
+        const hx = isAttacking ? 35 : 15 + swing * 6;
+        const hy = isAttacking ? -52 : -38;
+        drawLimb(4, -60, isAttacking ? 20 : 12, isAttacking ? -56 : -46, 7, 5.5, headGrad);
+        drawLimb(isAttacking ? 20 : 12, isAttacking ? -56 : -46, hx, hy, 5.5, 4.2, headGrad);
+        if (hasBlade) {
+          ctx.strokeStyle = '#f8fafc';
+          ctx.lineWidth = 3;
+          ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx + 16, hy - 5); ctx.stroke();
+        }
+      } else if (avId === 2) {
+        // LYRA: Graceful build, long flowing crimson-violet hair, silver circlet, tunic & sleek blade
+        const bFootX = -swing * 20, bFootY = -liftB * 11;
+        const fFootX = swing * 20, fFootY = -liftF * 11;
+
+        drawLimb(-3, -34, -swing * 11, -17 - liftB * 6, 8, 6, '#1e3a8a');
+        drawLimb(-swing * 11, -17 - liftB * 6, bFootX, bFootY, 6, 4.5, '#172554');
+        drawLimb(3, -34, swing * 11, -17 - liftF * 6, 8.4, 6.2, '#2563eb');
+        drawLimb(swing * 11, -17 - liftF * 6, fFootX, fFootY, 6.2, 4.7, '#1d4ed8');
+
+        const bGrad = ctx.createLinearGradient(-10, -64, 10, -32);
+        bGrad.addColorStop(0, isEvilTwist ? '#7e22ce' : '#2563eb');
+        bGrad.addColorStop(1, isEvilTwist ? '#3b0764' : '#1e3a8a');
+        ctx.fillStyle = bGrad;
+        ctx.beginPath();
+        ctx.moveTo(-10, -63);
+        ctx.quadraticCurveTo(0, -66, 10, -63);
+        ctx.lineTo(7.5, -33);
+        ctx.lineTo(-7.5, -33);
+        ctx.closePath();
+        ctx.fill();
+
+        drawDetailedFace(-79.5, '#0369a1', '#be185d', false, false, true);
+
+        // Long flowing hair & silver circlet
+        ctx.fillStyle = '#be185d';
+        ctx.beginPath();
+        ctx.moveTo(-8, -82);
+        ctx.bezierCurveTo(-10, -94, 8, -94, 9.5, -83);
+        ctx.quadraticCurveTo(1, -86, -5, -82);
+        ctx.quadraticCurveTo(-24, -76 + swing * 7, -27, -46 + swing * 5);
+        ctx.lineTo(-17, -45 + swing * 5);
+        ctx.quadraticCurveTo(-15, -66, -7, -77);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(-8, -84); ctx.lineTo(9.5, -84); ctx.stroke();
+
+        const hx = isAttacking ? 37 : 15;
+        const hy = isAttacking ? -54 : -39 + swing * 5;
+        drawLimb(4, -60, isAttacking ? 21 : 12, isAttacking ? -57 : -47, 6, 4.6, headGrad);
+        drawLimb(isAttacking ? 21 : 12, isAttacking ? -57 : -47, hx, hy, 4.6, 3.6, headGrad);
+        ctx.strokeStyle = '#67e8f9';
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx + 14, hy - 13); ctx.stroke();
+      } else {
+        // THORNE: Broad, muscular veteran build, trimmed beard, dark steel armor & emerald mantle, greataxe
+        const bFootX = -swing * 13, bFootY = -liftB * 6;
+        const fFootX = swing * 13, fFootY = -liftF * 6;
+
+        // Emerald mantle
+        ctx.fillStyle = isEvilTwist ? '#7e22ce' : '#059669';
+        ctx.beginPath();
+        ctx.moveTo(-8, -66);
+        ctx.lineTo(-27, -44 + swing * 4);
+        ctx.lineTo(-22, -28 + swing * 4);
+        ctx.lineTo(-6, -34);
+        ctx.closePath();
+        ctx.fill();
+
+        drawLimb(-6, -35, -swing * 8, -18 - liftB * 4, 12, 9.5, '#1e293b');
+        drawLimb(-swing * 8, -18 - liftB * 4, bFootX, bFootY, 9.5, 7.8, '#334155');
+        drawLimb(6, -35, swing * 8, -18 - liftF * 4, 12.5, 10, '#334155');
+        drawLimb(swing * 8, -18 - liftF * 4, fFootX, fFootY, 10, 8, '#475569');
+
+        const aGrad = ctx.createLinearGradient(-19, -67, 19, -34);
+        aGrad.addColorStop(0, isEvilTwist ? '#6b21a8' : '#64748b');
+        aGrad.addColorStop(0.55, isEvilTwist ? '#3b0764' : '#334155');
+        aGrad.addColorStop(1, '#0f172a');
+        ctx.fillStyle = aGrad;
+        ctx.beginPath();
+        ctx.roundRect(-19, -67, 38, 35, 7);
+        ctx.fill();
+
+        // Steel shoulder pauldrons
+        ctx.fillStyle = isEvilTwist ? '#a855f7' : '#475569';
+        ctx.beginPath();
+        ctx.roundRect(-25, -69, 13, 15, 4);
+        ctx.roundRect(12, -69, 13, 15, 4);
+        ctx.fill();
+
+        drawDetailedFace(-81, '#1e293b', '#1e293b', true, false, false);
+
+        // Short cropped hair
+        ctx.fillStyle = '#1e293b';
+        ctx.beginPath();
+        ctx.roundRect(-9.5, -92, 20, 7, 4);
+        ctx.fill();
+
+        const hx = isAttacking ? 39 : 19;
+        const hy = isAttacking ? -48 : -37;
+        drawLimb(9, -62, isAttacking ? 24 : 15, isAttacking ? -54 : -46, 9, 7.2, headGrad);
+        drawLimb(isAttacking ? 24 : 15, isAttacking ? -54 : -46, hx, hy, 7.2, 5.8, headGrad);
+
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.lineWidth = 4.2;
+        ctx.beginPath(); ctx.moveTo(hx, hy + 5); ctx.lineTo(hx + 3, hy - 24); ctx.stroke();
+        ctx.fillStyle = isEvilTwist ? '#e879f9' : '#10b981';
+        ctx.beginPath();
+        ctx.moveTo(hx + 3, hy - 24); ctx.lineTo(hx + 18, hy - 30); ctx.lineTo(hx + 14, hy - 11);
+        ctx.closePath();
+        ctx.fill();
+      }
+
       if (hasTorch) {
         const fg = ctx.createRadialGradient(18, -64, 2, 18, -64, 22);
         fg.addColorStop(0, '#fef08a');
