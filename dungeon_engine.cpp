@@ -1117,5 +1117,6 @@ EXPORT const char* prompt_mode() { return g_engine.getPromptModeCstr(); }
 EXPORT const char* last_anim() { return g_engine.getLastAnimCstr(); }
 EXPORT int current_level() { return g_engine.getLevelNumber(); }
 EXPORT int is_world_destroyed() { return g_engine.getWorldDestroyedFlag(); }
+EXPORT int is_escaped_flag() { return g_engine.getWorldDestroyedFlag(); }
 EXPORT int current_avatar_id() { return g_engine.getAvatarId(); }
 EXPORT int defeats_count() { return g_engine.getDefeatsCount(); }
