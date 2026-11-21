@@ -350,6 +350,7 @@
         <span class="tag" id="lvlTag">Level 1</span>
         <span class="tag" id="roomTag">1. Sunlit Courtyard</span>
         <span class="tag timer" id="timerTag" style="display:none;">Clock: 90s</span>
+        <button class="m" id="sfxBtn" onclick="toggleSfx()">SFX: ON</button>
       </div>
       <div class="hud-bars">
         <div class="stat-meter">
@@ -435,7 +436,9 @@
         <button class="m" onclick="runAction('use herb')">Use Herb</button>
         <button class="m" onclick="runAction('door')">Final Gate</button>
         <button class="m" onclick="runAction('north')">North</button>
-        <button class="m" onclick="runAction('south')">South</button>
+        <button class="m" onclick="runAction('south')">South (-STM)</button>
+        <button class="m" onclick="runAction('east')">East</button>
+        <button class="m" onclick="runAction('west')">West</button>
         <form class="cli" onsubmit="event.preventDefault(); submitCli();">
           <span>&gt;</span>
           <input id="cliInput" type="text" placeholder="slash, vault, guard, torch, take, search, north..." autocomplete="off" />
@@ -1525,12 +1528,361 @@
       }
     };
 
+
+    // === v10 Dramatic Visuals, Maze Feedback & Web Audio SFX ===
+    let sfxEnabled = true;
+    let audioCtx = null;
+    let shakeFrames = 0;
+    let particles = [];
+
+    function getAudio() {
+      if (!sfxEnabled) return null;
+      if (!audioCtx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (AC) audioCtx = new AC();
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume().catch(() => {});
+      }
+      return audioCtx;
+    }
+
+    function playSfx(type) {
+      const ac = getAudio();
+      if (!ac) return;
+      const now = ac.currentTime;
+      const osc = ac.createOscillator();
+      const gain = ac.createGain();
+      osc.connect(gain);
+      gain.connect(ac.destination);
+
+      if (type === 'slash') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(520, now);
+        osc.frequency.exponentialRampToValueAtTime(120, now + 0.14);
+        gain.gain.setValueAtTime(0.14, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+        osc.start(now); osc.stop(now + 0.15);
+      } else if (type === 'vault') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(240, now);
+        osc.frequency.exponentialRampToValueAtTime(760, now + 0.18);
+        gain.gain.setValueAtTime(0.14, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.19);
+        osc.start(now); osc.stop(now + 0.19);
+      } else if (type === 'guard') {
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(340, now);
+        osc.frequency.setValueAtTime(510, now + 0.06);
+        gain.gain.setValueAtTime(0.09, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+        osc.start(now); osc.stop(now + 0.16);
+      } else if (type === 'torch') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(190, now);
+        osc.frequency.exponentialRampToValueAtTime(65, now + 0.28);
+        gain.gain.setValueAtTime(0.16, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.29);
+        osc.start(now); osc.stop(now + 0.29);
+      } else if (type === 'move') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(160, now);
+        osc.frequency.exponentialRampToValueAtTime(95, now + 0.11);
+        gain.gain.setValueAtTime(0.10, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+        osc.start(now); osc.stop(now + 0.12);
+      } else if (type === 'dead_end') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(260, now);
+        osc.frequency.exponentialRampToValueAtTime(130, now + 0.22);
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.23);
+        osc.start(now); osc.stop(now + 0.23);
+      } else if (type === 'death') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(220, now);
+        osc.frequency.exponentialRampToValueAtTime(42, now + 0.55);
+        gain.gain.setValueAtTime(0.20, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.58);
+        osc.start(now); osc.stop(now + 0.58);
+      } else if (type === 'win') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(440, now);
+        osc.frequency.setValueAtTime(554, now + 0.1);
+        osc.frequency.setValueAtTime(659, now + 0.2);
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.38);
+        osc.start(now); osc.stop(now + 0.38);
+      } else {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(380, now);
+        gain.gain.setValueAtTime(0.06, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+        osc.start(now); osc.stop(now + 0.06);
+      }
+    }
+
+    function toggleSfx() {
+      sfxEnabled = !sfxEnabled;
+      const btn = document.getElementById('sfxBtn');
+      if (btn) btn.textContent = sfxEnabled ? 'SFX: ON' : 'SFX: OFF';
+      if (sfxEnabled) playSfx('click');
+    }
+
+    function spawnBurst(x, y, color, count = 18) {
+      for (let i = 0; i < count; i++) {
+        const ang = Math.random() * Math.PI * 2;
+        const spd = 1.2 + Math.random() * 4.2;
+        particles.push({
+          x, y,
+          vx: Math.cos(ang) * spd,
+          vy: Math.sin(ang) * spd - 1.2,
+          life: 24 + Math.floor(Math.random() * 18),
+          maxLife: 42,
+          color,
+          r: 2 + Math.random() * 3
+        });
+      }
+    }
+
+    // Wrap drawScene to add dramatic screen shake, slash trails & ember/arcane particles
+    const _origDrawScene = drawScene;
+    drawScene = function(st) {
+      ctx.save();
+      if (shakeFrames > 0) {
+        shakeFrames--;
+        const mag = Math.min(9, shakeFrames * 0.65);
+        ctx.translate((Math.random() - 0.5) * mag * 2, (Math.random() - 0.5) * mag * 2);
+      }
+      _origDrawScene(st);
+
+      // Dramatic slash arc when attacking
+      if (heroAttackFrames > 10) {
+        ctx.save();
+        ctx.strokeStyle = st.lvl === 3 ? '#e879f9' : (st.lvl === 2 ? '#22d3ee' : '#fbbf24');
+        ctx.lineWidth = 5;
+        ctx.shadowColor = ctx.strokeStyle;
+        ctx.shadowBlur = 14;
+        ctx.beginPath();
+        ctx.arc(380, 195, 68, -0.85, 0.75);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // Render & step particles
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.12;
+        p.life--;
+        if (p.life <= 0) {
+          particles.splice(i, 1);
+          continue;
+        }
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.life / p.maxLife);
+        ctx.fillStyle = p.color;
+        ctx.shadowColor = p.color;
+        ctx.shadowBlur = 8;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+      ctx.restore();
+    };
+
+    // Wrap runAction to trigger SFX, shake & particles
+    const _origRunAction = runAction;
+    runAction = function(cmd) {
+      _origRunAction(cmd);
+      const norm = cmd.trim().toLowerCase();
+      if (norm === 'slash' || norm === 'attack') {
+        playSfx('slash'); shakeFrames = 8; spawnBurst(540, 195, '#fbbf24', 18);
+      } else if (norm === 'vault') {
+        playSfx('vault'); shakeFrames = 10; spawnBurst(540, 195, '#22d3ee', 22);
+      } else if (norm === 'guard') {
+        playSfx('guard'); shakeFrames = 6; spawnBurst(260, 195, '#38bdf8', 14);
+      } else if (norm === 'torch') {
+        playSfx('torch'); shakeFrames = 9; spawnBurst(540, 190, '#fb923c', 26);
+      } else if (norm === 'north' || norm === 'south' || norm === 'east' || norm === 'west') {
+        playSfx('move');
+        if (norm === 'south') spawnBurst(160, 240, '#f59e0b', 10);
+      } else if (norm === 'take') {
+        playSfx('win'); spawnBurst(200, 190, '#e879f9', 20);
+      } else {
+        playSfx('click');
+      }
+      const logTxt = combatLog.textContent.slice(-260).toLowerCase();
+      if (logTxt.includes('level restarted') || logTxt.includes('lethal')) {
+        playSfx('death'); shakeFrames = 18; spawnBurst(220, 200, '#ef4444', 32);
+      } else if (logTxt.includes('dead end')) {
+        playSfx('dead_end');
+      } else if (logTxt.includes('victory')) {
+        playSfx('win'); spawnBurst(400, 150, '#a855f7', 40);
+      }
+    };
+
     function loopFrame() {
       drawScene(cachedState);
       requestAnimationFrame(loopFrame);
     }
     requestAnimationFrame(loopFrame);
   </script>
+
+    // Fallback engine when dungeon.wasm/dungeon.js isn't compiled locally
+    window.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        if (!wasmReady) {
+          const fbState = {
+            lvl: 1, room: 'cell', hp: 140, maxHp: 140, stm: 100, maxStm: 100,
+            hasTorch: false, hasBlade: false, hasHerb: false, hasKey: false, hasRelic: false,
+            foeHp: 0, foeMaxHp: 0, foeName: '', foeKind: '', anim: 'idle', destroyed: false, avId: 1
+          };
+          const rooms = {
+            cell: { title: '1. Sunlit Courtyard', idx: 1, north: 'corridor', south: null, east: 'forge', west: 'cistern', item: 'Torch', foe: null },
+            cistern: { title: '2. Dead-End Cistern', idx: 3, north: null, south: 'cell', east: 'cell', west: null, item: 'Herb', foe: { name: 'Shadow Wraith', kind: 'wraith', hp: 76 } },
+            forge: { title: '3. Lethal Hazard East', idx: 4, north: null, south: null, east: null, west: 'cell', item: null, foe: null, lethal: true },
+            corridor: { title: '4. Shifting Gallery', idx: 2, north: 'sanctum', south: 'cell', east: 'forge', west: 'cistern', item: 'Blade', foe: { name: 'Demon Monkey', kind: 'monkey', hp: 66 } },
+            sanctum: { title: '5. Relic Sanctum', idx: 5, north: 'gate', south: 'corridor', east: null, west: null, item: 'Relic', foe: { name: 'Obsidian Golem', kind: 'golem', hp: 94 } },
+            gate: { title: '6. Final Gate', idx: 6, north: null, south: 'sanctum', east: null, west: null, item: 'Key', foe: { name: 'Astral Warden', kind: 'seraph', hp: 112 } }
+          };
+          function loadFbLevel(lv) {
+            fbState.lvl = lv; fbState.room = 'cell'; fbState.stm = 100; fbState.maxStm = 100;
+            fbState.maxHp = fbState.avId === 2 ? 125 : (fbState.avId === 3 ? 160 : 140);
+            fbState.hp = fbState.maxHp; fbState.destroyed = false;
+            fbState.hasTorch = false; fbState.hasBlade = false; fbState.hasHerb = false; fbState.hasKey = false; fbState.hasRelic = false;
+            rooms.cell.item = 'Torch'; rooms.cistern.item = 'Herb'; rooms.corridor.item = 'Blade'; rooms.sanctum.item = 'Relic'; rooms.gate.item = 'Key';
+            rooms.cistern.foe = { name: 'Shadow Wraith', kind: 'wraith', hp: 70 + lv * 10 };
+            rooms.corridor.foe = { name: 'Demon Monkey', kind: 'monkey', hp: 60 + lv * 10 };
+            rooms.sanctum.foe = { name: 'Obsidian Golem', kind: 'golem', hp: 85 + lv * 12 };
+            rooms.gate.foe = { name: 'Astral Warden', kind: 'seraph', hp: 100 + lv * 14 };
+          }
+          function pushFbState() {
+            const r = rooms[fbState.room] || rooms.cell;
+            const foe = r.foe && r.foe.hp > 0 ? r.foe : null;
+            cachedState = {
+              roomId: fbState.room, hp: fbState.hp, maxHp: fbState.maxHp,
+              stm: fbState.stm, maxStm: fbState.maxStm,
+              hasTorch: fbState.hasTorch, hasBlade: fbState.hasBlade, hasHerb: fbState.hasHerb,
+              hasKey: fbState.hasKey, hasRelic: fbState.hasRelic,
+              foeHp: foe ? foe.hp : 0, foeMaxHp: foe ? (70 + fbState.lvl * 12) : 0,
+              foeName: foe ? foe.name : '', foeKind: foe ? foe.kind : '',
+              mode: '', anim: fbState.anim, lvl: fbState.lvl, destroyed: fbState.destroyed, avId: fbState.avId, defeats: 0
+            };
+            document.getElementById('lvlTag').textContent = `Level ${fbState.lvl}`;
+            document.getElementById('roomTag').textContent = r.title;
+            document.getElementById('hpTxt').textContent = fbState.hp;
+            document.getElementById('maxHpTxt').textContent = fbState.maxHp;
+            document.getElementById('hpBar').style.width = Math.max(0, (fbState.hp / fbState.maxHp) * 100) + '%';
+            document.getElementById('stmTxt').textContent = fbState.stm;
+            document.getElementById('stmBar').style.width = Math.max(0, (fbState.stm / fbState.maxStm) * 100) + '%';
+            document.getElementById('relTorch').classList.toggle('got', fbState.hasTorch);
+            document.getElementById('relBlade').classList.toggle('got', fbState.hasBlade);
+            document.getElementById('relHerb').classList.toggle('got', fbState.hasHerb);
+            document.getElementById('relKey').classList.toggle('got', fbState.hasKey);
+            document.getElementById('relRelic').classList.toggle('got', fbState.hasRelic);
+            for (let i = 1; i <= 6; i++) document.getElementById('ch' + i).classList.toggle('here', i === r.idx);
+            const objs = {
+              1: 'Lv.1 Sunlit Ruins (Weapon: Sunlit Blade) — Explore maze, grab Torch/Blade/Relic/Key & reach Gate.',
+              2: 'Lv.2 Relic Hunt (Weapon: Arcane Glaive) — Watch stamina on South backtracks; unlock Gate.',
+              3: 'Lv.3 Eclipse Endgame (Weapon: Eclipse Scythe) — Beat the clock & maze; unlock Final Gate!'
+            };
+            document.getElementById('goalTxt').textContent = objs[fbState.lvl];
+          }
+          window.selectRunner = function(id) {
+            fbState.avId = id; chosenRunner = id;
+            for (let i = 1; i <= 3; i++) document.getElementById('tab' + i).classList.toggle('active', i === id);
+            document.getElementById('runnerLore').innerHTML = '<strong>' + runnerProfiles[id].name + ':</strong> ' + runnerProfiles[id].bio;
+            loadFbLevel(fbState.lvl); pushFbState();
+          };
+          window.newRun = function(lv) {
+            loadFbLevel(lv);
+            combatLog.textContent = `[Level ${lv} Started — ${runnerProfiles[fbState.avId].name}]\n`;
+            setBubble(`Level ${lv} ready! Watch your stamina & wrong turns.`);
+            pushFbState();
+          };
+          window.runAction = function(cmd) {
+            const c = cmd.trim().toLowerCase();
+            appendCombat('> ' + cmd);
+            const r = rooms[fbState.room] || rooms.cell;
+            const moveDir = (dir, cost, animName) => {
+              if (dir === 'north' && r.foe && r.foe.hp > 0) { appendCombat(`[Blocked] ${r.foe.name} blocks North!`); return; }
+              const nextId = r[dir];
+              if (!nextId) { appendCombat(`[Wall] No exit ${dir}.`); return; }
+              fbState.room = nextId; fbState.anim = animName;
+              fbState.stm = Math.max(0, fbState.stm - cost);
+              appendCombat(`[Move ${dir}] -${cost} STM (STM: ${fbState.stm})`);
+              if (fbState.stm === 0) {
+                fbState.hp -= 12; appendCombat('[Exhausted] 0 stamina! -12 HP.');
+              }
+              const nr = rooms[fbState.room];
+              if (nr.lethal) {
+                appendCombat('[LETHAL WRONG TURN] Trap triggered! Restarting level...');
+                loadFbLevel(fbState.lvl);
+              } else if (fbState.hp <= 0) {
+                appendCombat('[DEFEATED] You fell! Restarting level...');
+                loadFbLevel(fbState.lvl);
+              } else if (nr.north === null && dir === 'west') {
+                appendCombat('[Dead End] Dead end reached! Turn back.');
+              }
+            };
+            if (c === 'north') moveDir('north', 12, 'run_north');
+            else if (c === 'south' || c === 'retreat') moveDir('south', 18, 'run_south');
+            else if (c === 'east') moveDir('east', 14, 'run_north');
+            else if (c === 'west') moveDir('west', 14, 'run_north');
+            else if (c === 'take') {
+              if (r.item) {
+                if (r.item === 'Torch') fbState.hasTorch = true;
+                if (r.item === 'Blade') fbState.hasBlade = true;
+                if (r.item === 'Herb') fbState.hasHerb = true;
+                if (r.item === 'Key') fbState.hasKey = true;
+                if (r.item === 'Relic') fbState.hasRelic = true;
+                appendCombat(`[Acquired] Picked up ${r.item}!`);
+                r.item = null;
+              } else appendCombat('[Info] Nothing to take here.');
+            } else if (c === 'rest') {
+              fbState.stm = Math.min(fbState.maxStm, fbState.stm + 30);
+              fbState.hp = Math.min(fbState.maxHp, fbState.hp + 10);
+              appendCombat('[Rest] +30 STM, +10 HP.');
+            } else if (c === 'use herb') {
+              if (fbState.hasHerb) { fbState.hasHerb = false; fbState.hp = Math.min(fbState.maxHp, fbState.hp + 45); appendCombat('[Herb] Healed +45 HP.'); }
+              else appendCombat('[!] No Herb.');
+            } else if (c === 'slash' || c === 'attack' || c === 'vault' || c === 'guard' || c === 'torch') {
+              if (r.foe && r.foe.hp > 0) {
+                const dmg = (c === 'vault' ? 42 : (c === 'torch' ? 36 : 28)) + (fbState.hasBlade ? 10 : 0) + (fbState.hasRelic ? 12 : 0);
+                r.foe.hp = Math.max(0, r.foe.hp - dmg);
+                heroAttackFrames = 20; enemyHurtFrames = 20;
+                appendCombat(`[${c.toUpperCase()}] Dealt ${dmg} DMG to ${r.foe.name}!`);
+                if (r.foe.hp > 0 && c !== 'vault') {
+                  const eDmg = c === 'guard' ? 10 : 20;
+                  fbState.hp -= eDmg; enemyAttackFrames = 20; heroHurtFrames = 20;
+                  appendCombat(`[${r.foe.name}] Countered for ${eDmg} DMG!`);
+                  if (fbState.hp <= 0) { appendCombat('[DEFEATED] Restarting level...'); loadFbLevel(fbState.lvl); }
+                } else if (r.foe.hp === 0) appendCombat(`[Defeated] ${r.foe.name} is down!`);
+              } else appendCombat('[Info] No foe here.');
+            } else if (c === 'door') {
+              if (fbState.room === 'gate') {
+                if (fbState.lvl < 3) {
+                  appendCombat(`[Gate Unlocked] Advancing to Level ${fbState.lvl + 1}!`);
+                  loadFbLevel(fbState.lvl + 1);
+                } else {
+                  fbState.destroyed = true;
+                  appendCombat('*** FINAL GATE CONQUERED — VICTORY! ***');
+                }
+              } else appendCombat('[Info] Reach the Final Gate chamber first.');
+            } else {
+              appendCombat(`[Info] Command '${cmd}' executed.`);
+            }
+            pushFbState();
+          };
+          selectRunner(1);
+          newRun(1);
+        }
+      }, 250);
+    });
+
   <script src="dungeon.js"></script>
 </body>
 </html>

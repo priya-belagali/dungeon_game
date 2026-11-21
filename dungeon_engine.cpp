@@ -1,6 +1,9 @@
 #include <iostream>
 #include <string>
+#include <vector>
+#include <memory>
 #include <sstream>
+#include <algorithm>
 #include <cctype>
 
 #ifdef __EMSCRIPTEN__
@@ -10,13 +13,6 @@
 #define EXPORT extern "C"
 #endif
 
-static std::string toLowerStr(std::string str) {
-    for (size_t i = 0; i < str.length(); ++i) {
-        str[i] = static_cast<char>(::tolower(static_cast<unsigned char>(str[i])));
-    }
-    return str;
-}
-
 static std::string trimStr(const std::string& s) {
     size_t start = 0;
     while (start < s.size() && std::isspace(static_cast<unsigned char>(s[start]))) ++start;
@@ -25,143 +21,99 @@ static std::string trimStr(const std::string& s) {
     return s.substr(start, end - start);
 }
 
-class Player; // Forward declaration
+static std::string toLowerStr(const std::string& s) {
+    std::string out = s;
+    for (char& c : out) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+    return out;
+}
 
-// ==========================================
-// 1. INHERITANCE & ABSTRACTION: Item Hierarchy
-// ==========================================
+class Player;
+
 class Item {
 protected:
     std::string name;
     std::string description;
-
 public:
-    Item() : name("Empty"), description("None") {}
-    Item(std::string n, std::string d) : name(n), description(d) {}
+    Item(std::string n, std::string desc) : name(n), description(desc) {}
     virtual ~Item() = default;
-
     std::string getName() const { return name; }
     std::string getDescription() const { return description; }
-
     virtual bool use(Player& player, std::ostringstream& out) = 0;
 };
 
 class TorchItem : public Item {
 public:
-    TorchItem() : Item("Torch", "Blazing idol torch (+8 ATK; scorches shadow & pursuit foes).") {}
-    bool use(Player&, std::ostringstream& out) override {
-        out << "\n[Torch] You hoist the idol torch—flames lick across the chamber carvings!\n";
-        return false;
-    }
+    TorchItem() : Item("Torch", "Flare Torch: pierces shadows, boosts stamina recovery & sears foes.") {}
+    bool use(Player& player, std::ostringstream& out) override;
 };
 
 class HerbItem : public Item {
 private:
     int healAmount;
-
 public:
-    HerbItem(int heal = 45)
-        : Item("Herb", "Restorative elixir leaf that heals 45 HP."), healAmount(heal) {}
-
-    int getHealAmount() const { return healAmount; }
+    HerbItem(int amt = 42) : Item("Herb", "Crimson Herb: restores vitality in high-stakes rooms."), healAmount(amt) {}
     bool use(Player& player, std::ostringstream& out) override;
 };
 
 class BladeItem : public Item {
-private:
-    int bonusDamage;
-
 public:
-    BladeItem(int dmg = 22)
-        : Item("Blade", "Tempered runed blade (+22 strike damage)."), bonusDamage(dmg) {}
-
-    int getBonusDamage() const { return bonusDamage; }
+    BladeItem() : Item("Blade", "Level weapon: Sunlit Blade (Lv.1) / Arcane Glaive (Lv.2) / Eclipse Scythe (Lv.3).") {}
     bool use(Player&, std::ostringstream& out) override {
-        out << "\n[Blade] You draw your runed blade—steel gleams with latent power.\n";
+        out << "\n[Weapon] Your level weapon is equipped and ready for combat!\n";
         return false;
     }
 };
 
 class KeyItem : public Item {
 public:
-    KeyItem() : Item("Key", "Ancient seal key that opens locked vaults and gates.") {}
+    KeyItem() : Item("Key", "Seal Key: unlocks the chamber's Final Gate.") {}
     bool use(Player&, std::ostringstream& out) override {
-        out << "\n[Key] The seal key hums with resonant runes.\n";
+        out << "\n[Key] Use 'door' at the Final Gate when ready.\n";
         return false;
     }
 };
 
 class RelicItem : public Item {
 public:
-    RelicItem() : Item("Relic", "The Astral World-Shattering Relic—pulsing with apocalyptic magic.") {}
+    RelicItem() : Item("Relic", "Ancient Relic: channels forbidden power across deeper stages.") {}
     bool use(Player&, std::ostringstream& out) override {
-        out << "\n[Relic] Dark cosmic energy surges through the Astral Relic in your grasp!\n";
+        out << "\n[Relic] The Relic hums with raw energy!\n";
         return false;
     }
 };
 
-// ==========================================
-// 2. ENCAPSULATION: Inventory, Entity & Player
-// ==========================================
 class Inventory {
 private:
-    static const int MAX_ITEMS = 8;
-    Item* items[MAX_ITEMS];
-    int itemCount;
-
+    std::vector<Item*> items;
 public:
-    Inventory() : itemCount(0) {
-        for (int i = 0; i < MAX_ITEMS; ++i) items[i] = nullptr;
-    }
-
-    void reset() {
-        itemCount = 0;
-        for (int i = 0; i < MAX_ITEMS; ++i) items[i] = nullptr;
-    }
-
-    bool addItem(Item* item, std::ostringstream& out) {
-        if (item == nullptr) return false;
-        if (hasItem(item->getName())) {
-            out << "\n[!] You already carry a " << item->getName() << ".\n";
-            return false;
-        }
-        if (itemCount < MAX_ITEMS) {
-            items[itemCount++] = item;
-            out << "\n[+] Claimed [" << item->getName() << "]: " << item->getDescription() << "\n";
-            return true;
-        }
-        out << "\n[!] Pack is full!\n";
-        return false;
-    }
-
+    void reset() { items.clear(); }
     bool hasItem(const std::string& itemName) const {
-        for (int i = 0; i < itemCount; ++i) {
-            if (items[i] != nullptr && toLowerStr(items[i]->getName()) == toLowerStr(itemName)) {
-                return true;
-            }
+        std::string target = toLowerStr(itemName);
+        for (Item* it : items) {
+            if (toLowerStr(it->getName()) == target) return true;
         }
         return false;
     }
-
     Item* getItem(const std::string& itemName) {
-        for (int i = 0; i < itemCount; ++i) {
-            if (items[i] != nullptr && toLowerStr(items[i]->getName()) == toLowerStr(itemName)) {
-                return items[i];
-            }
+        std::string target = toLowerStr(itemName);
+        for (Item* it : items) {
+            if (toLowerStr(it->getName()) == target) return it;
         }
         return nullptr;
     }
-
-    bool removeItem(const std::string& itemName) {
-        for (int i = 0; i < itemCount; ++i) {
-            if (items[i] != nullptr && toLowerStr(items[i]->getName()) == toLowerStr(itemName)) {
-                for (int j = i; j < itemCount - 1; ++j) items[j] = items[j + 1];
-                items[itemCount - 1] = nullptr;
-                itemCount--;
-                return true;
-            }
+    void addItem(Item* item, std::ostringstream& out) {
+        if (!item) return;
+        if (hasItem(item->getName())) {
+            out << "\n[Pack] You already carry [" << item->getName() << "].\n";
+            return;
         }
-        return false;
+        items.push_back(item);
+        out << "\n[Acquired] Added [" << item->getName() << "] — " << item->getDescription() << "\n";
+    }
+    void removeItem(const std::string& itemName) {
+        std::string target = toLowerStr(itemName);
+        items.erase(std::remove_if(items.begin(), items.end(),
+            [&](Item* it) { return toLowerStr(it->getName()) == target; }), items.end());
     }
 };
 
@@ -170,31 +122,20 @@ protected:
     std::string name;
     int health;
     int maxHealth;
-
 public:
     Entity(std::string n, int hp) : name(n), health(hp), maxHealth(hp) {}
     virtual ~Entity() = default;
-
     std::string getName() const { return name; }
     int getHealth() const { return health; }
     int getMaxHealth() const { return maxHealth; }
     bool isAlive() const { return health > 0; }
-
-    void setStats(std::string n, int hp) {
-        name = n;
-        health = hp;
-        maxHealth = hp;
-    }
-
+    void setStats(std::string n, int hp) { name = n; health = hp; maxHealth = hp; }
     virtual void takeDamage(int amount, std::ostringstream& out) {
-        health -= amount;
-        if (health < 0) health = 0;
+        health = std::max(0, health - amount);
         out << " [!] " << name << " takes " << amount << " DMG (" << health << "/" << maxHealth << " HP)\n";
     }
-
     virtual void heal(int amount, std::ostringstream& out) {
-        health += amount;
-        if (health > maxHealth) health = maxHealth;
+        health = std::min(maxHealth, health + amount);
         out << " [+] " << name << " recovers +" << amount << " HP (" << health << "/" << maxHealth << " HP)\n";
     }
 };
@@ -206,7 +147,6 @@ private:
     int avatarId;
     int stamina;
     int maxStamina;
-
 public:
     Player() : Entity("Kaelen", 140), baseAttack(24), avatarId(1), stamina(100), maxStamina(100) {}
 
@@ -228,14 +168,6 @@ public:
         }
     }
 
-    void reviveAtSanctuary(std::ostringstream& out) {
-        health = static_cast<int>(maxHealth * 0.70);
-        if (health < 50) health = 50;
-        stamina = maxStamina;
-        out << "\n[Regroup] You rally at the starting threshold and recover "
-            << health << "/" << maxHealth << " HP and full stamina!\n";
-    }
-
     int getAvatarId() const { return avatarId; }
     int getStamina() const { return stamina; }
     int getMaxStamina() const { return maxStamina; }
@@ -246,266 +178,90 @@ public:
         return true;
     }
 
+    void drainMoveStamina(int cost, std::ostringstream& out) {
+        stamina = std::max(0, stamina - cost);
+        if (stamina == 0) {
+            out << " [Exhausted] Stamina hit 0! Moving while exhausted costs 8 HP!\n";
+            takeDamage(8, out);
+        }
+    }
+
     void gainStamina(int amount) {
-        stamina += amount;
-        if (stamina > maxStamina) stamina = maxStamina;
+        stamina = std::min(maxStamina, stamina + amount);
     }
 
     Inventory& getInventory() { return inventory; }
     const Inventory& getInventory() const { return inventory; }
 
-    int getAttackPower() const {
-        int total = baseAttack;
-        if (inventory.hasItem("Blade")) total += 22;
-        if (inventory.hasItem("Torch")) total += 8;
-        if (inventory.hasItem("Relic")) total += 24;
+    int getAttackPower(int levelNumber) const {
+        int total = baseAttack + (levelNumber - 1) * 5;
+        if (inventory.hasItem("Blade")) total += 18 + (levelNumber * 4);
+        if (inventory.hasItem("Torch")) total += 7;
+        if (inventory.hasItem("Relic")) total += (levelNumber == 3 ? 32 : 20);
         return total;
     }
 
     void useItem(const std::string& itemName, std::ostringstream& out) {
         Item* item = inventory.getItem(itemName);
-        if (item == nullptr) {
+        if (!item) {
             out << "\n[!] No '" << itemName << "' in your pack.\n";
             return;
         }
-        bool consumed = item->use(*this, out);
-        if (consumed) {
+        if (item->use(*this, out)) {
             inventory.removeItem(itemName);
         }
     }
 };
+
+bool TorchItem::use(Player& player, std::ostringstream& out) {
+    player.gainStamina(35);
+    out << "\n[Torch] You flare the Torch to steady your breathing (+35 STM).\n";
+    return false;
+}
 
 bool HerbItem::use(Player& player, std::ostringstream& out) {
     player.heal(healAmount, out);
     return true;
 }
 
-// ==========================================
-// 3. POLYMORPHISM: Diverse Villains & Obstacles
-// ==========================================
 class Enemy : public Entity {
 protected:
     int attackDamage;
     std::string taunt;
-    std::string villainKind; // "monkey", "wraith", "golem", "seraph"
-
+    std::string villainKind;
 public:
     Enemy(std::string n, std::string kind, int hp, int dmg, std::string t)
         : Entity(n, hp), attackDamage(dmg), taunt(t), villainKind(kind) {}
-
     const std::string& getKind() const { return villainKind; }
-
-    void resetEnemy(int hp, int dmg, std::string t) {
-        health = hp;
-        maxHealth = hp;
-        attackDamage = dmg;
-        taunt = t;
-    }
-
-    void partialHealOnLoss() {
-        health = static_cast<int>(maxHealth * 0.75);
-        if (health < 25) health = 25;
-    }
-
     int getAttackDamage() const { return attackDamage; }
-
+    void resetEnemy(int hp, int dmg, std::string t) {
+        health = hp; maxHealth = hp; attackDamage = dmg; taunt = t;
+    }
     virtual void strikePlayer(Player& player, std::ostringstream& out, bool guarded = false) {
         out << " [" << name << "] \"" << taunt << "\"\n";
-        int dmg = guarded ? (attackDamage / 2) : attackDamage;
-        if (guarded) {
-            out << " [Guard] Your stance cuts the enemy's strike in half!\n";
-        }
+        int dmg = guarded ? std::max(6, attackDamage / 2) : attackDamage;
+        if (guarded) out << " [Guard] Your stance cuts the strike in half!\n";
         player.takeDamage(dmg, out);
     }
 };
 
 class DemonMonkeyVillain : public Enemy {
 public:
-    DemonMonkeyVillain()
-        : Enemy("Demon Monkey", "monkey", 62, 18, "Screech! Another trespasser enters the ruins!") {}
+    DemonMonkeyVillain() : Enemy("Demon Monkey", "monkey", 66, 19, "Screech! Wrong step and the ruins bite!") {}
 };
-
 class ShadowWraithVillain : public Enemy {
 public:
-    ShadowWraithVillain()
-        : Enemy("Shadow Wraith", "wraith", 76, 21, "Your soul will linger in the mist!") {}
+    ShadowWraithVillain() : Enemy("Shadow Wraith", "wraith", 82, 23, "Cold mist drains the careless!") {}
 };
-
 class IronGolemVillain : public Enemy {
 public:
-    IronGolemVillain()
-        : Enemy("Obsidian Golem", "golem", 92, 24, "Stone and fury guard this relic!") {}
+    IronGolemVillain() : Enemy("Obsidian Golem", "golem", 98, 26, "Stone and fury guard this path!") {}
 };
-
 class AstralSentinelVillain : public Enemy {
 public:
-    AstralSentinelVillain()
-        : Enemy("Astral Warden", "seraph", 110, 27, "You cannot wield the Relic to end the world!") {}
+    AstralSentinelVillain() : Enemy("Astral Warden", "seraph", 118, 30, "None pass unpunished!") {}
 };
 
-class Obstacle {
-protected:
-    std::string name;
-    bool resolved;
-
-public:
-    Obstacle(std::string n) : name(n), resolved(false) {}
-    virtual ~Obstacle() = default;
-
-    void resetResolved() { resolved = false; }
-    bool isResolved() const { return resolved; }
-    virtual void startEncounter(Player& player, std::ostringstream& out) = 0;
-    virtual bool handleInput(Player& player, const std::string& input, std::ostringstream& out) = 0;
-};
-
-class FloorTrap : public Obstacle {
-public:
-    FloorTrap() : Obstacle("Spike & Dart Run") {}
-
-    void startEncounter(Player& player, std::ostringstream& out) override {
-        if (!player.getInventory().hasItem("Torch")) {
-            out << "\n[Shadow Slip] Without a Torch, you clip a mossy trip-stone!\n";
-            player.takeDamage(14, out);
-        }
-        out << "\n[Hazard] Floor spikes snap ahead while darts hiss! Choose move: slide, leap, or brace.\n";
-    }
-
-    bool handleInput(Player& player, const std::string& input, std::ostringstream& out) override {
-        std::string c = toLowerStr(trimStr(input));
-        if (c == "slide" || c == "dodge" || c == "leap") {
-            out << "\n[Clean Move] You clear the trap cleanly!\n";
-        } else if (c == "brace" || c == "block") {
-            out << "\n[Glancing Hit] You brace and take minor damage.\n";
-            player.takeDamage(8, out);
-        } else {
-            out << "\n[Stumble] Late footwork catches a dart!\n";
-            player.takeDamage(14, out);
-        }
-        resolved = true;
-        return true;
-    }
-};
-
-class CreviceSearch : public Obstacle {
-private:
-    KeyItem* keyRef;
-
-public:
-    CreviceSearch(KeyItem* key) : Obstacle("Carved Niche"), keyRef(key) {}
-
-    void startEncounter(Player&, std::ostringstream& out) override {
-        out << "\n[Niche] A seal key glints inside a split stone wall. Reach left or right?\n";
-    }
-
-    bool handleInput(Player& player, const std::string& input, std::ostringstream& out) override {
-        std::string c = toLowerStr(trimStr(input));
-        if (c == "right") {
-            out << "\n[Claimed] You reach right and claim the Key!\n";
-            player.getInventory().addItem(keyRef, out);
-            resolved = true;
-            return true;
-        }
-        out << "\n[Ambush] A hidden snare snaps from that side!\n";
-        player.takeDamage(14, out);
-        return false;
-    }
-};
-
-class CisternRiddle : public Obstacle {
-public:
-    CisternRiddle() : Obstacle("Flooded Gong Shrine") {}
-
-    void startEncounter(Player&, std::ostringstream& out) override {
-        out << "\n[Riddle I] Runes glow over the water:\n";
-        out << "\"I speak without a mouth and hear without ears. I have no body, but I come alive with wind. What am I?\"\n";
-    }
-
-    bool handleInput(Player& player, const std::string& input, std::ostringstream& out) override {
-        std::string c = toLowerStr(trimStr(input));
-        if (c == "echo" || c == "an echo") {
-            out << "\n[Solved] Stepping stones rise above the water!\n";
-            resolved = true;
-            return true;
-        }
-        out << "\n[Wrong] Freezing spray lashes across the hall!\n";
-        player.takeDamage(15, out);
-        return false;
-    }
-};
-
-class BrazierPuzzle : public Obstacle {
-public:
-    BrazierPuzzle() : Obstacle("Twin Flame Braziers") {}
-
-    void startEncounter(Player&, std::ostringstream& out) override {
-        out << "\n[Riddle II] Carved runes read:\n";
-        out << "\"I consume forests, drink rivers, and fear no blade—yet a single raindrop can end me. What am I?\"\n";
-    }
-
-    bool handleInput(Player& player, const std::string& input, std::ostringstream& out) override {
-        std::string c = toLowerStr(trimStr(input));
-        if (c == "fire" || c == "flame") {
-            out << "\n[Solved] Flame surges across the braziers!\n";
-            resolved = true;
-            return true;
-        }
-        out << "\n[Wrong] Cold ash bursts from the braziers!\n";
-        player.takeDamage(15, out);
-        return false;
-    }
-};
-
-class ForgeRiddle : public Obstacle {
-public:
-    ForgeRiddle() : Obstacle("Obsidian Anvil Seal") {}
-
-    void startEncounter(Player&, std::ostringstream& out) override {
-        out << "\n[Riddle III] Glowing runes pulse across the anvil:\n";
-        out << "\"The more you take from me, the bigger I grow. What am I?\"\n";
-    }
-
-    bool handleInput(Player& player, const std::string& input, std::ostringstream& out) override {
-        std::string c = toLowerStr(trimStr(input));
-        if (c == "hole" || c == "a hole") {
-            out << "\n[Solved] The seal cracks open!\n";
-            resolved = true;
-            return true;
-        }
-        out << "\n[Wrong] Molten cinders spurt from the anvil!\n";
-        player.takeDamage(16, out);
-        return false;
-    }
-};
-
-class RiddleDoor : public Obstacle {
-public:
-    RiddleDoor() : Obstacle("Final Gate") {}
-
-    void startEncounter(Player& player, std::ostringstream& out) override {
-        if (!player.getInventory().hasItem("Key")) {
-            out << "\n[Sealed] You need the [Key] to unlock this gate.\n";
-            return;
-        }
-        out << "\n[Final Riddle] The ancient lock asks:\n";
-        out << "\"What gets wetter the more it dries?\"\n";
-    }
-
-    bool handleInput(Player& player, const std::string& input, std::ostringstream& out) override {
-        std::string c = toLowerStr(trimStr(input));
-        if (c == "towel" || c == "a towel") {
-            out << "\n[UNLOCKED] The final seal shatters open!\n";
-            resolved = true;
-            return true;
-        }
-        out << "\n[Wrong] Shock-runes flash across the lock!\n";
-        player.takeDamage(18, out);
-        return false;
-    }
-};
-
-// ==========================================
-// 4. ROOM GRAPH & MULTI-LEVEL ENGINE
-// ==========================================
 class Room {
 private:
     std::string id;
@@ -513,40 +269,64 @@ private:
     std::string objectiveHint;
     std::string description;
     Item* roomItem;
-    Item* initialItem;
     Enemy* enemy;
     Room* northRoom;
     Room* southRoom;
-
+    Room* eastRoom;
+    Room* westRoom;
+    bool deadEndRoom;
+    bool lethalWrongTurn;
+    std::string lethalMsg;
+    std::string riddlePrompt;
+    std::string riddleAnswer;
+    bool riddleSolved;
 public:
-    Room(std::string roomId, std::string t, std::string hint, std::string desc,
-         Item* item = nullptr, Enemy* roomEnemy = nullptr)
-        : id(roomId), title(t), objectiveHint(hint), description(desc),
-          roomItem(item), initialItem(item), enemy(roomEnemy),
-          northRoom(nullptr), southRoom(nullptr) {}
+    Room(std::string roomId)
+        : id(roomId), roomItem(nullptr), enemy(nullptr),
+          northRoom(nullptr), southRoom(nullptr), eastRoom(nullptr), westRoom(nullptr),
+          deadEndRoom(false), lethalWrongTurn(false), riddleSolved(false) {}
 
     const std::string& getId() const { return id; }
     const std::string& getTitle() const { return title; }
     const std::string& getObjective() const { return objectiveHint; }
+    bool isDeadEnd() const { return deadEndRoom; }
+    bool isLethal() const { return lethalWrongTurn; }
+    const std::string& getLethalMsg() const { return lethalMsg; }
+    bool hasRiddle() const { return !riddlePrompt.empty(); }
+    bool isRiddleSolved() const { return riddleSolved || riddlePrompt.empty(); }
+    const std::string& getRiddlePrompt() const { return riddlePrompt; }
+    void resetRiddle() { riddleSolved = false; }
 
-    void setRoomData(std::string t, std::string hint, std::string desc, Item* item, Enemy* roomEnemy) {
-        title = t;
-        objectiveHint = hint;
-        description = desc;
-        roomItem = item;
-        initialItem = item;
-        enemy = roomEnemy;
+    bool solveRiddle(const std::string& ans, Player& player, std::ostringstream& out) {
+        std::string c = toLowerStr(trimStr(ans));
+        if (c == riddleAnswer) {
+            riddleSolved = true;
+            out << "\n[Solved] The rune lock disengages!\n";
+            return true;
+        }
+        out << "\n[Wrong Answer] Trap runes discharge for 20 DMG!\n";
+        player.takeDamage(20, out);
+        return false;
     }
 
-    void resetItem() { roomItem = initialItem; }
+    void setRoomData(std::string t, std::string hint, std::string desc, Item* item, Enemy* foe,
+                     bool deadEnd = false, bool lethal = false, std::string lMsg = "",
+                     std::string rPrompt = "", std::string rAns = "") {
+        title = t; objectiveHint = hint; description = desc;
+        roomItem = item; enemy = foe;
+        deadEndRoom = deadEnd; lethalWrongTurn = lethal; lethalMsg = lMsg;
+        riddlePrompt = rPrompt; riddleAnswer = toLowerStr(rAns);
+        riddleSolved = riddlePrompt.empty();
+    }
 
-    void setExits(Room* north, Room* south) {
-        northRoom = north;
-        southRoom = south;
+    void setExits(Room* n, Room* s, Room* e, Room* w) {
+        northRoom = n; southRoom = s; eastRoom = e; westRoom = w;
     }
 
     Room* getNorth() const { return northRoom; }
     Room* getSouth() const { return southRoom; }
+    Room* getEast() const { return eastRoom; }
+    Room* getWest() const { return westRoom; }
     Enemy* getEnemy() const { return enemy; }
 
     Item* takeRoomItem() {
@@ -555,15 +335,21 @@ public:
         return temp;
     }
 
-    void describe(std::ostringstream& out, int hp, int maxHp, int stam) const {
-        out << "\n[" << title << "] HP " << hp << "/" << maxHp << " | STM " << stam << " — " << objectiveHint << "\n";
+    void describe(std::ostringstream& out, int hp, int maxHp, int stm) const {
+        out << "\n[" << title << "] HP " << hp << "/" << maxHp << " | STM " << stm << " — " << objectiveHint << "\n";
         out << description << "\n";
-        if (roomItem != nullptr) {
-            out << " * Item: [" << roomItem->getName() << "] ('take')\n";
+        std::string exits = "Exits:";
+        if (northRoom) exits += " [North]";
+        if (southRoom) exits += " [South]";
+        if (eastRoom)  exits += " [East]";
+        if (westRoom)  exits += " [West]";
+        out << " " << exits << "\n";
+        if (roomItem) out << " * Item: [" << roomItem->getName() << "] ('take')\n";
+        if (enemy && enemy->isAlive()) {
+            out << " * Guardian: " << enemy->getName() << " (" << enemy->getHealth() << "/" << enemy->getMaxHealth() << " HP)\n";
         }
-        if (enemy != nullptr && enemy->isAlive()) {
-            out << " * Villain: " << enemy->getName() << " (" << enemy->getHealth()
-                << "/" << enemy->getMaxHealth() << " HP) — moves: slash, vault, guard, torch\n";
+        if (!riddlePrompt.empty() && !riddleSolved) {
+            out << " * Seal Riddle ('search'): " << riddlePrompt << "\n";
         }
     }
 };
@@ -576,177 +362,159 @@ private:
     HerbItem herbItem1;
     HerbItem herbItem2;
     KeyItem keyItem;
-    RelicItem astralRelic;
+    RelicItem relicItem;
 
     DemonMonkeyVillain monkeyEnemy;
     ShadowWraithVillain wraithEnemy;
     IronGolemVillain golemEnemy;
     AstralSentinelVillain sentinelEnemy;
 
-    FloorTrap floorTrap;
-    CreviceSearch creviceSearch;
-    CisternRiddle cisternRiddle;
-    BrazierPuzzle brazierPuzzle;
-    ForgeRiddle forgeRiddle;
-    RiddleDoor riddleDoor;
-
-    Room cellRoom;
-    Room corridorRoom;
-    Room cisternRoom;
-    Room forgeRoom;
-    Room sanctumRoom;
-    Room gateRoom;
-
+    // Maze nodes: main progression + side branches (dead ends & lethal wrong turns)
+    Room rStart, rMaze1, rDeadWest, rPitEast, rRelicVault, rGate;
     Room* currentRoom;
-    std::string activePrompt;
-    std::string lastAnimAction;
-    int levelNumber; // 1, 2, or 3
+    int levelNumber;
     int defeatsCount;
     bool worldDestroyed;
+    bool awaitingRiddle;
+    std::string lastAnimAction;
+
+    void wireMaze() {
+        // rStart -> (North) rMaze1, (East) rPitEast (lethal wrong turn), (West) rDeadWest (dead end)
+        // rMaze1 -> (South) rStart, (North) rRelicVault, (West) rDeadWest, (East) rPitEast
+        // rRelicVault -> (South) rMaze1, (North) rGate, (East) rPitEast
+        // rGate -> (South) rRelicVault, (West) rDeadWest
+        rStart.setExits(&rMaze1, nullptr, &rPitEast, &rDeadWest);
+        rDeadWest.setExits(nullptr, nullptr, &rStart, nullptr);
+        rPitEast.setExits(nullptr, nullptr, nullptr, &rStart);
+        rMaze1.setExits(&rRelicVault, &rStart, &rPitEast, &rDeadWest);
+        rRelicVault.setExits(&rGate, &rMaze1, &rPitEast, nullptr);
+        rGate.setExits(nullptr, &rRelicVault, nullptr, &rDeadWest);
+    }
+
+    void restartCurrentLevel(const std::string& reason, std::ostringstream& out) {
+        defeatsCount++;
+        lastAnimAction = "defeat";
+        out << "\n[LEVEL RESTARTED] " << reason << "\n";
+        configureLevel(levelNumber, out);
+    }
 
 public:
     GameEngine()
-        : player(),
-          torchItem(),
-          bladeItem(22),
-          herbItem1(45),
-          herbItem2(45),
-          keyItem(),
-          astralRelic(),
-          monkeyEnemy(),
-          wraithEnemy(),
-          golemEnemy(),
-          sentinelEnemy(),
-          floorTrap(),
-          creviceSearch(&keyItem),
-          cisternRiddle(),
-          brazierPuzzle(),
-          forgeRiddle(),
-          riddleDoor(),
-          cellRoom("cell", "1. Ruined Courtyard", "", "", &torchItem, nullptr),
-          corridorRoom("corridor", "2. Trapped Gallery", "", "", &bladeItem, &monkeyEnemy),
-          cisternRoom("cistern", "3. Sunken Cistern", "", "", nullptr, &wraithEnemy),
-          forgeRoom("forge", "4. Obsidian Forge", "", "", &herbItem1, &golemEnemy),
-          sanctumRoom("sanctum", "5. Inner Sanctum", "", "", &herbItem2, &sentinelEnemy),
-          gateRoom("gate", "6. Final Gate", "", ""),
-          currentRoom(&cellRoom),
-          activePrompt(""),
-          lastAnimAction("idle"),
-          levelNumber(1),
-          defeatsCount(0),
-          worldDestroyed(false)
-    {
-        cellRoom.setExits(&corridorRoom, nullptr);
-        corridorRoom.setExits(&cisternRoom, &cellRoom);
-        cisternRoom.setExits(&forgeRoom, &corridorRoom);
-        forgeRoom.setExits(&sanctumRoom, &cisternRoom);
-        sanctumRoom.setExits(&gateRoom, &forgeRoom);
-        gateRoom.setExits(nullptr, &sanctumRoom);
-        configureLevel(1, true, nullptr);
+        : herbItem1(42), herbItem2(48),
+          rStart("cell"), rMaze1("corridor"), rDeadWest("cistern"),
+          rPitEast("forge"), rRelicVault("sanctum"), rGate("gate"),
+          currentRoom(&rStart), levelNumber(1), defeatsCount(0),
+          worldDestroyed(false), awaitingRiddle(false), lastAnimAction("idle") {
+        wireMaze();
     }
 
-    void configureLevel(int lvl, bool resetPlayer, std::ostringstream* outPtr) {
-        levelNumber = (lvl < 1) ? 1 : ((lvl > 3) ? 3 : lvl);
-        if (resetPlayer) {
-            player.configureAvatar(player.getAvatarId());
-            defeatsCount = 0;
-        } else {
-            player.gainStamina(100);
-            player.heal(40, *outPtr);
-        }
-
-        floorTrap.resetResolved();
-        creviceSearch.resetResolved();
-        cisternRiddle.resetResolved();
-        brazierPuzzle.resetResolved();
-        forgeRiddle.resetResolved();
-        riddleDoor.resetResolved();
-        activePrompt = "";
-        lastAnimAction = "idle";
+    void configureLevel(int lvl, std::ostringstream& out) {
+        levelNumber = std::max(1, std::min(3, lvl));
+        player.configureAvatar(player.getAvatarId());
+        awaitingRiddle = false;
         worldDestroyed = false;
-        currentRoom = &cellRoom;
+        lastAnimAction = "idle";
+        currentRoom = &rStart;
 
         if (levelNumber == 1) {
-            monkeyEnemy.resetEnemy(62, 18, "Screech! Another runner slips on the stones!");
-            wraithEnemy.resetEnemy(74, 20, "Cold mist clings to your stride!");
-            golemEnemy.resetEnemy(88, 23, "Stone fists slam the temple floor!");
-            sentinelEnemy.resetEnemy(104, 26, "The temple wards will not yield!");
+            // Level 1: Sunlit Ruins — Weapon: Sunlit Blade — Objective: Claim Torch & Blade, find Key & Relic, unlock Exit Gate
+            monkeyEnemy.resetEnemy(64, 18, "Ruin screech! Watch your footing!");
+            wraithEnemy.resetEnemy(76, 21, "Mist chills your bones!");
+            golemEnemy.resetEnemy(92, 24, "Stone guards the temple path!");
+            sentinelEnemy.resetEnemy(105, 27, "Only worthy delvers pass!");
 
-            cellRoom.setRoomData("1. Sunlit Courtyard", "Claim Torch, then run North.",
-                                 "Overgrown temple steps with a flickering Torch.", &torchItem, nullptr);
-            corridorRoom.setRoomData("2. Trapped Gallery", "Defeat Demon Monkey, claim Blade, inspect for Key.",
-                                     "Dart-slit hall guarded by a Demon Monkey.", &bladeItem, &monkeyEnemy);
-            cisternRoom.setRoomData("3. Sunken Cistern", "Defeat Shadow Wraith & inspect for Riddle I.",
-                                    "Flooded basin where a Shadow Wraith drifts.", nullptr, &wraithEnemy);
-            forgeRoom.setRoomData("4. Ember Forge", "Defeat Obsidian Golem, claim Herb, inspect for Riddle III.",
-                                  "Glowing furnace chamber with an Obsidian Golem.", &herbItem1, &golemEnemy);
-            sanctumRoom.setRoomData("5. Ward Sanctum", "Inspect braziers (Riddle II) & defeat Astral Warden.",
-                                    "Altar hall guarded by the Astral Warden.", &herbItem2, &sentinelEnemy);
-            gateRoom.setRoomData("6. Level 1 Exit Gate", "Use Key & solve Riddle to advance to Level 2.",
-                                 "Ancient archway leading deeper toward the Relic.", nullptr, nullptr);
+            rStart.setRoomData("1. Sunlit Courtyard",
+                "Lv.1 Objective: Grab Torch, navigate maze North to unlock the Exit Gate.",
+                "Temple courtyard. Weapon focus: Sunlit Blade. East looks risky; West is a blind passage.",
+                &torchItem, nullptr);
+            rDeadWest.setRoomData("Dead End: Sunken Alcove",
+                "Dead end! Turn East/South to backtrack (drains stamina).",
+                "A flooded dead end with no northern exit.",
+                &herbItem1, &wraithEnemy, true, false);
+            rPitEast.setRoomData("Lethal Trap: Collapse Chasm",
+                "Wrong turn! Spike pit & collapse!",
+                "Unstable floor gives way into jagged spikes!",
+                nullptr, nullptr, false, true, "You took a lethal wrong turn into the Collapse Chasm!");
+            rMaze1.setRoomData("2. Shifting Gallery",
+                "Claim Sunlit Blade, defeat Demon Monkey, push North or East/West carefully.",
+                "Moving statues and dart slits guard this gallery.",
+                &bladeItem, &monkeyEnemy);
+            rRelicVault.setRoomData("3. Relic Shrine",
+                "Claim Key & Relic, solve seal riddle ('search') if needed, head North to Gate.",
+                "Ancient pedestal holding the Key and Relic.",
+                &keyItem, &golemEnemy, false, false, "",
+                "What gets wetter the more it dries?", "towel");
+            rGate.setRoomData("4. Level 1 Exit Gate",
+                "Use 'door' with Key to advance to Level 2.",
+                "Heavy stone gate sealed with ancient runes.",
+                &relicItem, &sentinelEnemy);
         } else if (levelNumber == 2) {
-            monkeyEnemy.resetEnemy(70, 20, "The Relic's guardians strike fast!");
-            wraithEnemy.resetEnemy(84, 23, "Shadows bow before the Ancient Relic!");
-            golemEnemy.resetEnemy(98, 25, "None claim the Relic without breaking me!");
-            sentinelEnemy.resetEnemy(118, 28, "Stop! That Relic carries catastrophic power!");
+            // Level 2: Relic Hunt — Weapon: Arcane Glaive — Objective: Claim Arcane Glaive & Relic, survive maze & unlock Gate
+            monkeyEnemy.resetEnemy(74, 22, "Relic hunters face sharper claws!");
+            wraithEnemy.resetEnemy(88, 25, "Wraiths swarm the dark corridors!");
+            golemEnemy.resetEnemy(104, 28, "The Golem blocks the Relic!");
+            sentinelEnemy.resetEnemy(122, 31, "The Warden bars the deeper gate!");
 
-            cellRoom.setRoomData("1. Relic Approach", "Run North toward the Ancient Relic Vault.",
-                                 "Carved causeway continuing from Level 1 on the hunt for the magical Relic.", nullptr, nullptr);
-            corridorRoom.setRoomData("2. Whispering Arch", "Defeat Demon Monkey & inspect for Key.",
-                                     "A Demon Monkey ambushes Relic seekers.", nullptr, &monkeyEnemy);
-            cisternRoom.setRoomData("3. Mirror Basin", "Defeat Shadow Wraith & solve Riddle I.",
-                                    "Dark reflecting water haunted by a Shadow Wraith.", nullptr, &wraithEnemy);
-            forgeRoom.setRoomData("4. Relic Pedestal", "Claim the magical [Relic] ('take') & defeat Obsidian Golem.",
-                                  "Upon a floating altar rests the Ancient Relic humming with dark magic!", &astralRelic, &golemEnemy);
-            sanctumRoom.setRoomData("5. Shattered Shrine", "Claim Herb & defeat Astral Warden guarding the exit.",
-                                    "The Astral Warden senses the Relic's dark pulse!", &herbItem1, &sentinelEnemy);
-            gateRoom.setRoomData("6. Level 2 Gate", "Unlock with Key & solve Riddle to enter Level 3.",
-                                 "Beyond this gate lies the final showdown for the world.", nullptr, nullptr);
+            rStart.setRoomData("1. Relic Approach",
+                "Lv.2 Objective: Claim Arcane Glaive & Relic, reach Gate without running out of stamina.",
+                "Deeper catacombs. Weapon focus: Arcane Glaive. Wrong turns are deadlier.",
+                &bladeItem, nullptr);
+            rDeadWest.setRoomData("Dead End: Whispering Well",
+                "Dead end! Backtrack carefully—running drains stamina.",
+                "A dark dead-end cistern with a lurking wraith.",
+                &herbItem1, &wraithEnemy, true, false);
+            rPitEast.setRoomData("Lethal Trap: Blade Pendulum",
+                "Wrong turn! Swinging blades strike fatally!",
+                "Razor pendulums slice across the eastern corridor!",
+                nullptr, nullptr, false, true, "Wrong turn! The Blade Pendulum cut your run short!");
+            rMaze1.setRoomData("2. Mirror Maze",
+                "Defeat Demon Monkey & solve the mirror riddle ('search').",
+                "Intersecting hallways where false reflections mislead runners.",
+                &herbItem2, &monkeyEnemy, false, false, "",
+                "I speak without a mouth and hear without ears. What am I?", "echo");
+            rRelicVault.setRoomData("3. Sanctum of the Relic",
+                "Claim [Relic] & [Key], defeat Golem, advance North to Gate.",
+                "The Ancient Relic pulses with violet power.",
+                &relicItem, &golemEnemy);
+            rGate.setRoomData("4. Level 2 Gate",
+                "Use 'door' with Key & Relic to enter Level 3.",
+                "Runic gate guarding the path to Level 3.",
+                &keyItem, &sentinelEnemy);
         } else {
-            // Level 3: Plot twist — hero turns out to be the villain aiming to destroy the world with the Relic!
-            if (!player.getInventory().hasItem("Relic")) {
-                std::ostringstream dummy;
-                player.getInventory().addItem(&astralRelic, dummy);
-            }
-            monkeyEnemy.resetEnemy(78, 22, "Traitor! You want to shatter the world!");
-            wraithEnemy.resetEnemy(92, 24, "The Relic's dark curse fuels your betrayal!");
-            golemEnemy.resetEnemy(108, 27, "I will crush your world-ending plan!");
-            sentinelEnemy.resetEnemy(128, 30, "End this madness before the world falls!");
+            // Level 3: Eclipse Endgame — Weapon: Eclipse Scythe — Objective: Survive timer & maze, unlock World-Shattering Gate
+            monkeyEnemy.resetEnemy(82, 25, "Stop the Eclipse Scythe!");
+            wraithEnemy.resetEnemy(96, 28, "Shadows rise against your endgame!");
+            golemEnemy.resetEnemy(114, 32, "End this dark plot!");
+            sentinelEnemy.resetEnemy(134, 35, "Final stand before the altar!");
 
-            cellRoom.setRoomData("1. Betrayal Threshold", "Run North—unleash the Relic to destroy the world!",
-                                 "TWIST: You are the true villain—using the Level 2 Relic to destroy the world!", nullptr, nullptr);
-            corridorRoom.setRoomData("2. Cursed Bridge", "Defeat Demon Monkey & inspect for Key.",
-                                     "A Demon Monkey tries to block your dark crusade.", nullptr, &monkeyEnemy);
-            cisternRoom.setRoomData("3. Abyssal Well", "Defeat Shadow Wraith & solve Riddle I.",
-                                    "A Shadow Wraith rises against your Relic's power.", nullptr, &wraithEnemy);
-            forgeRoom.setRoomData("4. Doom Crucible", "Claim Herb, solve Riddle III & push North.",
-                                  "The Relic amplifies every strike as you march toward apocalypse.", &herbItem2, &golemEnemy);
-            sanctumRoom.setRoomData("5. Throne of Ruin", "Defeat the Astral Warden blocking the Final Gate.",
-                                    "The final guardian stands between you and total world destruction.", nullptr, &sentinelEnemy);
-            gateRoom.setRoomData("6. World-Shattering Altar", "Use Key & solve Final Riddle to DESTROY THE WORLD!",
-                                 "Activate the Relic at the Final Gate to win and destroy the world!", nullptr, nullptr);
+            rStart.setRoomData("1. Eclipse Threshold",
+                "Lv.3 Objective: Beat the clock & maze—grab Eclipse Scythe, Relic, Key & open Final Gate!",
+                "Endgame maze under a timed countdown. Weapon focus: Eclipse Scythe.",
+                &bladeItem, nullptr);
+            rDeadWest.setRoomData("Dead End: Void Trench",
+                "Dead end! Backtracking costs stamina—watch your meter!",
+                "A dead-end trench haunted by a wraith.",
+                &herbItem1, &wraithEnemy, true, false);
+            rPitEast.setRoomData("Lethal Trap: Abyssal Rift",
+                "Wrong turn! Void rift swallows careless runners!",
+                "A tearing void fissure spans the eastern turn!",
+                nullptr, nullptr, false, true, "Wrong turn! You fell into the Abyssal Rift!");
+            rMaze1.setRoomData("2. Labyrinth of Ash",
+                "Defeat Demon Monkey, claim Relic & solve riddle ('search').",
+                "Ash-choked labyrinth twisting toward the endgame altar.",
+                &relicItem, &monkeyEnemy, false, false, "",
+                "The more you take from me, the bigger I grow. What am I?", "hole");
+            rRelicVault.setRoomData("3. Crucible Vault",
+                "Claim Key & Herb, defeat Golem, head North to Final Gate.",
+                "Final crucible before the endgame gate.",
+                &keyItem, &golemEnemy);
+            rGate.setRoomData("4. Endgame Final Gate",
+                "Use 'door' to trigger the final gate sequence!",
+                "The culminating gate of the campaign.",
+                &herbItem2, &sentinelEnemy);
         }
 
-        if (outPtr != nullptr) {
-            *outPtr << "\n=== LEVEL " << levelNumber << " ===\n";
-            currentRoom->describe(*outPtr, player.getHealth(), player.getMaxHealth(), player.getStamina());
-        }
-    }
-
-    void startNewRun(int avatarId, int startLvl, std::ostringstream& out) {
-        player.configureAvatar(avatarId);
-        configureLevel(startLvl, true, &out);
-    }
-
-    void handlePlayerDefeat(Enemy* foe, std::ostringstream& out) {
-        defeatsCount++;
-        lastAnimAction = "defeat";
-        if (foe != nullptr) {
-            foe->partialHealOnLoss();
-        }
-        out << "\n[HURT / KNOCKED DOWN #" << defeatsCount << "] You took heavy damage!\n";
-        currentRoom = &cellRoom;
-        player.reviveAtSanctuary(out);
+        out << "\n=== LEVEL " << levelNumber << " ===\n";
         currentRoom->describe(out, player.getHealth(), player.getMaxHealth(), player.getStamina());
     }
 
@@ -758,289 +526,184 @@ public:
 
         if (lower.rfind("start ", 0) == 0) {
             std::string rest = trimStr(lower.substr(6));
-            int av = 1;
-            int lv = 1;
+            int av = 1, lv = 1;
             if (rest.find("lyra") != std::string::npos || rest.find("2") != std::string::npos) av = 2;
             if (rest.find("thorne") != std::string::npos || rest.find("3") != std::string::npos) av = 3;
             if (rest.find("level2") != std::string::npos || rest.find("lvl2") != std::string::npos) lv = 2;
             if (rest.find("level3") != std::string::npos || rest.find("lvl3") != std::string::npos) lv = 3;
-            startNewRun(av, lv, out);
+            player.configureAvatar(av);
+            configureLevel(lv, out);
             return out.str();
         }
 
         if (lower == "timeout") {
-            out << "\n[TIME EXPIRED] The countdown ran out before you unleashed the Relic!\n";
-            handlePlayerDefeat(currentRoom->getEnemy(), out);
+            restartCurrentLevel("Time ran out on Level 3!", out);
             return out.str();
         }
 
         if (worldDestroyed) {
             lastAnimAction = "apocalypse";
-            out << "\n*** VICTORY! THE WORLD IS DESTROYED BY THE RELIC! ***\n";
+            out << "\n*** CAMPAIGN COMPLETE! ***\n";
             return out.str();
         }
 
-        if (activePrompt == "trap") {
-            activePrompt = "";
-            floorTrap.handleInput(player, input, out);
-            lastAnimAction = "vault";
+        if (awaitingRiddle) {
+            awaitingRiddle = false;
+            currentRoom->solveRiddle(input, player, out);
             if (!player.isAlive()) {
-                handlePlayerDefeat(currentRoom->getEnemy(), out);
-                return out.str();
-            }
-            if (!creviceSearch.isResolved() && !player.getInventory().hasItem("Key")) {
-                activePrompt = "crevice";
-                creviceSearch.startEncounter(player, out);
+                restartCurrentLevel("You fell to a trap rune!", out);
                 return out.str();
             }
             currentRoom->describe(out, player.getHealth(), player.getMaxHealth(), player.getStamina());
             return out.str();
         }
 
-        if (activePrompt == "crevice") {
-            activePrompt = "";
-            creviceSearch.handleInput(player, input, out);
+        auto tryMove = [&](Room* nextRoom, const std::string& dirName, int stamCost, const std::string& animName) {
+            Enemy* foe = currentRoom->getEnemy();
+            if (dirName == "north" && foe && foe->isAlive()) {
+                out << "\n[Blocked] " << foe->getName() << " guards the northern path! Fight first.\n";
+                return;
+            }
+            if (dirName == "north" && !currentRoom->isRiddleSolved()) {
+                out << "\n[Sealed] Solve the room riddle ('search') before moving North.\n";
+                return;
+            }
+            if (!nextRoom) {
+                out << "\n[Wall] Solid stone blocks " << dirName << ".\n";
+                return;
+            }
+            lastAnimAction = animName;
+            currentRoom = nextRoom;
+            player.drainMoveStamina(stamCost, out);
+            out << "\n[Move " << dirName << "] -" << stamCost << " STM (Remaining: " << player.getStamina() << ")\n";
             if (!player.isAlive()) {
-                handlePlayerDefeat(currentRoom->getEnemy(), out);
-                return out.str();
+                restartCurrentLevel("Exhaustion and wounds overcame you!", out);
+                return;
             }
-            currentRoom->describe(out, player.getHealth(), player.getMaxHealth(), player.getStamina());
-            return out.str();
-        }
+            if (currentRoom->isLethal()) {
+                restartCurrentLevel(currentRoom->getLethalMsg(), out);
+                return;
+            }
+            if (currentRoom->isDeadEnd()) {
+                out << "[Dead End] You hit a dead end! You must turn back.\n";
+            }
+        };
 
-        if (activePrompt == "riddle_bell") {
-            activePrompt = "";
-            cisternRiddle.handleInput(player, input, out);
-            if (!player.isAlive()) {
-                handlePlayerDefeat(currentRoom->getEnemy(), out);
-                return out.str();
-            }
-            currentRoom->describe(out, player.getHealth(), player.getMaxHealth(), player.getStamina());
-            return out.str();
-        }
-
-        if (activePrompt == "riddle_forge") {
-            activePrompt = "";
-            forgeRiddle.handleInput(player, input, out);
-            if (!player.isAlive()) {
-                handlePlayerDefeat(currentRoom->getEnemy(), out);
-                return out.str();
-            }
-            currentRoom->describe(out, player.getHealth(), player.getMaxHealth(), player.getStamina());
-            return out.str();
-        }
-
-        if (activePrompt == "brazier") {
-            activePrompt = "";
-            brazierPuzzle.handleInput(player, input, out);
-            if (!player.isAlive()) {
-                handlePlayerDefeat(currentRoom->getEnemy(), out);
-                return out.str();
-            }
-            currentRoom->describe(out, player.getHealth(), player.getMaxHealth(), player.getStamina());
-            return out.str();
-        }
-
-        if (activePrompt == "riddle_gate") {
-            activePrompt = "";
-            if (riddleDoor.handleInput(player, input, out)) {
-                if (levelNumber == 1) {
-                    out << "\n[LEVEL 1 COMPLETE] Advancing to Level 2 to claim the Ancient Relic!\n";
-                    configureLevel(2, false, &out);
-                    lastAnimAction = "level_up";
-                    return out.str();
-                } else if (levelNumber == 2) {
-                    if (!player.getInventory().hasItem("Relic")) {
-                        player.getInventory().addItem(&astralRelic, out);
-                    }
-                    out << "\n[LEVEL 2 COMPLETE] You hold the Relic! Entering Level 3—where your true villainous goal awakens!\n";
-                    configureLevel(3, false, &out);
-                    lastAnimAction = "twist";
-                    return out.str();
-                } else {
-                    worldDestroyed = true;
-                    lastAnimAction = "apocalypse";
-                    out << "\n*** THE RELIC SHATTERS THE SKY—THE WORLD IS DESTROYED! YOU WIN! ***\n";
-                    return out.str();
-                }
-            }
-            if (!player.isAlive()) {
-                handlePlayerDefeat(nullptr, out);
-                return out.str();
-            }
-            currentRoom->describe(out, player.getHealth(), player.getMaxHealth(), player.getStamina());
-            return out.str();
-        }
-
-        if (lower == "take") {
-            Item* item = currentRoom->takeRoomItem();
-            if (item != nullptr) {
-                player.getInventory().addItem(item, out);
-                lastAnimAction = (item->getName() == "Relic") ? "relic_found" : "take";
+        if (lower == "north") {
+            tryMove(currentRoom->getNorth(), "north", 12, "run_north");
+        } else if (lower == "south" || lower == "retreat") {
+            // Running south / backtracking drains extra stamina as requested
+            tryMove(currentRoom->getSouth(), "south", 18, "run_south");
+        } else if (lower == "east") {
+            tryMove(currentRoom->getEast(), "east", 14, "run_north");
+        } else if (lower == "west") {
+            tryMove(currentRoom->getWest(), "west", 14, "run_north");
+        } else if (lower == "take") {
+            Item* it = currentRoom->takeRoomItem();
+            if (it) {
+                player.getInventory().addItem(it, out);
+                lastAnimAction = (it->getName() == "Relic") ? "relic_found" : "take";
             } else {
                 out << "\n[Info] Nothing left to take here.\n";
             }
         } else if (lower.rfind("use ", 0) == 0) {
             player.useItem(trimStr(input.substr(4)), out);
         } else if (lower == "rest") {
-            player.gainStamina(40);
-            player.heal(15, out);
-            out << "\n[Rest] You catch your breath (+40 STM, +15 HP).\n";
+            player.gainStamina(32);
+            player.heal(10, out);
+            out << "\n[Rest] You catch your breath (+32 STM, +10 HP).\n";
+        } else if (lower == "search") {
+            if (currentRoom->hasRiddle() && !currentRoom->isRiddleSolved()) {
+                awaitingRiddle = true;
+                out << "\n[Riddle] " << currentRoom->getRiddlePrompt() << "\n";
+            } else {
+                out << "\n[Inspect] Nothing new to unlock here.\n";
+            }
         } else if (lower == "slash" || lower == "attack") {
             Enemy* foe = currentRoom->getEnemy();
-            if (foe != nullptr && foe->isAlive()) {
+            if (foe && foe->isAlive()) {
                 lastAnimAction = "slash";
-                int dmg = player.getAttackPower();
-                out << "\n[Hero Attack] " << player.getName() << " strikes " << foe->getName() << " for " << dmg << " DMG!\n";
+                int dmg = player.getAttackPower(levelNumber);
+                out << "\n[Attack] " << player.getName() << " strikes " << foe->getName() << " for " << dmg << " DMG!\n";
                 foe->takeDamage(dmg, out);
-                if (foe->isAlive()) {
-                    foe->strikePlayer(player, out, false);
-                } else {
-                    out << "\n[Defeated] " << foe->getName() << " falls!\n";
-                }
+                if (foe->isAlive()) foe->strikePlayer(player, out, false);
+                else out << "\n[Defeated] " << foe->getName() << " falls!\n";
             } else {
-                out << "\n[Info] No villain here to fight.\n";
+                out << "\n[Info] No foe here.\n";
             }
         } else if (lower == "vault") {
             Enemy* foe = currentRoom->getEnemy();
-            if (foe != nullptr && foe->isAlive()) {
+            if (foe && foe->isAlive()) {
                 lastAnimAction = "vault";
                 if (!player.spendStamina(25)) {
                     out << "\n[Low Stamina] Need 25 STM to vault!\n";
                     foe->strikePlayer(player, out, false);
                 } else {
-                    int dmg = static_cast<int>(player.getAttackPower() * 1.45) + 10;
-                    out << "\n[Vault Strike] You leap and slam " << foe->getName() << " for " << dmg << " DMG! (-25 STM)\n";
+                    int dmg = static_cast<int>(player.getAttackPower(levelNumber) * 1.45) + 8;
+                    out << "\n[Vault] Heavy vault strike for " << dmg << " DMG! (-25 STM)\n";
                     foe->takeDamage(dmg, out);
-                    if (foe->isAlive()) {
-                        out << " [Evade] You vault clear of the counterattack!\n";
-                    } else {
-                        out << "\n[Defeated] " << foe->getName() << " is crushed!\n";
-                    }
                 }
             } else {
-                out << "\n[Info] No villain here.\n";
+                out << "\n[Info] No foe here.\n";
             }
         } else if (lower == "guard") {
             Enemy* foe = currentRoom->getEnemy();
-            if (foe != nullptr && foe->isAlive()) {
+            if (foe && foe->isAlive()) {
                 lastAnimAction = "guard";
-                player.gainStamina(25);
-                int counterDmg = player.getAttackPower() / 2;
-                out << "\n[Guard Riposte] You guard (+25 STM) and counter for " << counterDmg << " DMG!\n";
-                foe->takeDamage(counterDmg, out);
-                if (foe->isAlive()) {
-                    foe->strikePlayer(player, out, true);
-                } else {
-                    out << "\n[Defeated] " << foe->getName() << " falls to your riposte!\n";
-                }
+                player.gainStamina(20);
+                int cDmg = player.getAttackPower(levelNumber) / 2;
+                out << "\n[Guard] Riposte for " << cDmg << " DMG (+20 STM)!\n";
+                foe->takeDamage(cDmg, out);
+                if (foe->isAlive()) foe->strikePlayer(player, out, true);
             } else {
-                out << "\n[Info] No villain attacking here.\n";
+                out << "\n[Info] No foe here.\n";
             }
         } else if (lower == "torch") {
             Enemy* foe = currentRoom->getEnemy();
-            if (foe != nullptr && foe->isAlive()) {
+            if (foe && foe->isAlive()) {
                 if (!player.getInventory().hasItem("Torch")) {
                     out << "\n[No Torch] Claim the Torch first!\n";
                 } else if (!player.spendStamina(20)) {
                     out << "\n[Low Stamina] Need 20 STM for Torch Flare!\n";
                 } else {
                     lastAnimAction = "torch";
-                    int dmg = 26 + (player.getInventory().hasItem("Blade") ? 8 : 0);
-                    out << "\n[Torch Flare] Blazing flame sears " << foe->getName() << " for " << dmg << " DMG! (-20 STM)\n";
+                    int dmg = 28 + levelNumber * 4;
+                    out << "\n[Torch Flare] Sears " << foe->getName() << " for " << dmg << " DMG! (-20 STM)\n";
                     foe->takeDamage(dmg, out);
-                    if (foe->isAlive()) {
-                        player.takeDamage(foe->getAttackDamage() / 2, out);
-                    } else {
-                        out << "\n[Defeated] " << foe->getName() << " is driven back!\n";
-                    }
+                    if (foe->isAlive()) player.takeDamage(foe->getAttackDamage() / 2, out);
                 }
             } else {
-                out << "\n[Info] No villain here.\n";
-            }
-        } else if (lower == "search") {
-            if (currentRoom == &corridorRoom) {
-                if (!floorTrap.isResolved()) {
-                    activePrompt = "trap";
-                    floorTrap.startEncounter(player, out);
-                    return out.str();
-                } else if (!creviceSearch.isResolved() && !player.getInventory().hasItem("Key")) {
-                    activePrompt = "crevice";
-                    creviceSearch.startEncounter(player, out);
-                    return out.str();
-                } else {
-                    out << "\n[Info] Already inspected.\n";
-                }
-            } else if (currentRoom == &cisternRoom) {
-                if (!cisternRiddle.isResolved()) {
-                    activePrompt = "riddle_bell";
-                    cisternRiddle.startEncounter(player, out);
-                    return out.str();
-                } else {
-                    out << "\n[Info] Already solved.\n";
-                }
-            } else if (currentRoom == &forgeRoom) {
-                if (!forgeRiddle.isResolved()) {
-                    activePrompt = "riddle_forge";
-                    forgeRiddle.startEncounter(player, out);
-                    return out.str();
-                } else {
-                    out << "\n[Info] Already solved.\n";
-                }
-            } else if (currentRoom == &sanctumRoom) {
-                if (!brazierPuzzle.isResolved()) {
-                    activePrompt = "brazier";
-                    brazierPuzzle.startEncounter(player, out);
-                    return out.str();
-                } else {
-                    out << "\n[Info] Already lit.\n";
-                }
-            } else {
-                out << "\n[Info] Nothing hidden to inspect here.\n";
+                player.useItem("Torch", out);
             }
         } else if (lower == "door") {
-            if (currentRoom == &gateRoom) {
+            if (currentRoom == &rGate) {
                 if (!player.getInventory().hasItem("Key")) {
-                    riddleDoor.startEncounter(player, out);
+                    out << "\n[Locked] You need [Key] to open this gate.\n";
+                } else if (levelNumber == 1) {
+                    out << "\n[Level 1 Cleared!] Advancing to Level 2!\n";
+                    configureLevel(2, out);
+                    lastAnimAction = "level_up";
+                    return out.str();
+                } else if (levelNumber == 2) {
+                    out << "\n[Level 2 Cleared!] Advancing to Level 3!\n";
+                    configureLevel(3, out);
+                    lastAnimAction = "twist";
+                    return out.str();
                 } else {
-                    activePrompt = "riddle_gate";
-                    riddleDoor.startEncounter(player, out);
+                    worldDestroyed = true;
+                    lastAnimAction = "apocalypse";
+                    out << "\n*** VICTORY! ALL 3 LEVELS CONQUERED! ***\n";
                     return out.str();
                 }
             } else {
-                out << "\n[Info] Reach Room 6 (Final Gate) to use the gate.\n";
+                out << "\n[Info] Reach the Gate chamber to use 'door'.\n";
             }
-        } else if (lower == "north") {
-            Enemy* foe = currentRoom->getEnemy();
-            if (foe != nullptr && foe->isAlive()) {
-                out << "\n[Blocked] " << foe->getName() << " blocks the path! Fight first.\n";
-            } else if (currentRoom == &cisternRoom && !cisternRiddle.isResolved()) {
-                out << "\n[Sealed] Inspect ('search') and solve Riddle I first.\n";
-            } else if (currentRoom == &forgeRoom && !forgeRiddle.isResolved()) {
-                out << "\n[Sealed] Inspect ('search') and solve Riddle III first.\n";
-            } else if (currentRoom->getNorth() != nullptr) {
-                lastAnimAction = "run_north";
-                currentRoom = currentRoom->getNorth();
-                player.gainStamina(10);
-            } else {
-                out << "\n[Info] No northern path here.\n";
-            }
-        } else if (lower == "south" || lower == "retreat") {
-            if (currentRoom->getSouth() != nullptr) {
-                lastAnimAction = "run_south";
-                currentRoom = currentRoom->getSouth();
-                player.gainStamina(15);
-            } else {
-                out << "\n[Info] Already at the southern start.\n";
-            }
-        } else if (lower == "look" || lower == "help") {
-            out << "\n[Moves] slash | vault | guard | torch | rest | take | search | use herb | door | north | south\n";
         } else {
             out << "\n[?] Unknown command '" << input << "'.\n";
         }
 
         if (!player.isAlive()) {
-            handlePlayerDefeat(currentRoom->getEnemy(), out);
+            restartCurrentLevel("You were defeated!", out);
             return out.str();
         }
 
@@ -1060,25 +723,29 @@ public:
     int getHasRelic() const { return player.getInventory().hasItem("Relic") ? 1 : 0; }
     int getEnemyHp() const {
         Enemy* foe = currentRoom->getEnemy();
-        return (foe != nullptr && foe->isAlive()) ? foe->getHealth() : 0;
+        return (foe && foe->isAlive()) ? foe->getHealth() : 0;
     }
     int getEnemyMaxHp() const {
         Enemy* foe = currentRoom->getEnemy();
-        return (foe != nullptr) ? foe->getMaxHealth() : 0;
+        return foe ? foe->getMaxHealth() : 0;
     }
     const char* getEnemyNameCstr() const {
-        static std::string ename;
+        static std::string s;
         Enemy* foe = currentRoom->getEnemy();
-        ename = (foe != nullptr && foe->isAlive()) ? foe->getName() : "";
-        return ename.c_str();
+        s = (foe && foe->isAlive()) ? foe->getName() : "";
+        return s.c_str();
     }
     const char* getEnemyKindCstr() const {
-        static std::string ekind;
+        static std::string s;
         Enemy* foe = currentRoom->getEnemy();
-        ekind = (foe != nullptr && foe->isAlive()) ? foe->getKind() : "";
-        return ekind.c_str();
+        s = (foe && foe->isAlive()) ? foe->getKind() : "";
+        return s.c_str();
     }
-    const char* getPromptModeCstr() const { return activePrompt.c_str(); }
+    const char* getPromptModeCstr() const {
+        static std::string s;
+        s = awaitingRiddle ? "riddle_gate" : "";
+        return s.c_str();
+    }
     const char* getLastAnimCstr() const { return lastAnimAction.c_str(); }
     int getLevelNumber() const { return levelNumber; }
     int getWorldDestroyedFlag() const { return worldDestroyed ? 1 : 0; }
@@ -1093,13 +760,7 @@ EXPORT const char* run_command(const char* input) {
     response = g_engine.step(input ? input : "");
     return response.c_str();
 }
-
-EXPORT const char* current_room() {
-    static std::string roomId;
-    roomId = g_engine.getRoomId();
-    return roomId.c_str();
-}
-
+EXPORT const char* current_room() { static std::string s; s = g_engine.getRoomId(); return s.c_str(); }
 EXPORT int current_hp() { return g_engine.getHp(); }
 EXPORT int max_hp() { return g_engine.getMaxHp(); }
 EXPORT int current_stamina() { return g_engine.getStamina(); }
