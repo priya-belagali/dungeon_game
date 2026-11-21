@@ -468,38 +468,38 @@
     let audioCtx = null;
     let shakeFrames = 0;
     let particles = [];
-    let facingDir = 'east'; // 'east' | 'west' | 'north' | 'south'
+    let facingDir = 'east';
 
     const runnerProfiles = {
       1: {
         name: 'Kaelen',
-        bio: 'Raised in forgotten border shrines, Kaelen spent years mapping collapsed catacombs for fallen orders—convinced that ancient relics hold the key to rewriting an unjust fate.'
+        bio: 'Catacomb scout seeking relics that can reshape an old fate.'
       },
       2: {
         name: 'Lyra',
-        bio: 'Once a trusted cipher-runner for the temple archivists, Lyra fled after uncovering banned rites—now pursuing the Relic to settle an old score with those who cast her out.'
+        bio: 'Former archivist runner pursuing hidden seals and lost artifacts.'
       },
       3: {
         name: 'Thorne',
-        bio: 'A survivor of long-forgotten frontier wars, Thorne watched kingdoms rise and fracture on empty oaths—quietly building toward a reckoning meant to end the cycle forever.'
+        bio: 'Frontier veteran pushing through ancient trials toward a final reckoning.'
       }
     };
 
-    // 9-room maze layout with grid coords (gx, gy) for canvas minimap:
-    // West wing: west1 (-1, 0) -> west2 (-2, 0)
-    // East wing: forge (+1, 0) -> east2 (+2, 0)
-    // North wing: corridor (0, -1) -> sanctum (0, -2) -> gate (0, -3)
-    // South wing: cistern (0, +1)
+    // Clear 6-chamber forward maze:
+    // Ch.1 (cell) -> East to Ch.2 (east_wing) or North to Ch.3 (corridor)
+    // Ch.2 (east_wing) -> East to Ch.3 (corridor)
+    // Ch.3 (corridor) -> North to Ch.4 (forge)
+    // Ch.4 (forge) -> North to Ch.5 (sanctum) or East to Ch.6 (gate)
+    // Ch.5 (sanctum) -> North to Ch.6 (gate)
+    // Ch.6 (gate) -> Final Gate
+    // Rule: Entering a higher chamber number locks out moving back to lower chamber numbers.
     const mazeRooms = {
-      cell:     { title: '1. Maze Crossroads',   gx: 0,  gy: 0,  idx: 1, north: 'corridor', south: 'cistern', east: 'forge',   west: 'west1',  item: 'Torch', foe: { name: 'Demon Monkey', kind: 'monkey', hp: 62 } },
-      west1:    { title: '2. West Armory Wing',   gx: -1, gy: 0,  idx: 2, north: null,       south: null,      east: 'cell',    west: 'west2',  item: 'Blade', foe: { name: 'Demon Monkey', kind: 'monkey', hp: 68 } },
-      west2:    { title: '3. West Crypt (Dead End)', gx: -2, gy: 0, idx: 3, north: null,    south: null,      east: 'west1',   west: null,     item: 'Herb',  foe: { name: 'Shadow Wraith', kind: 'wraith', hp: 82 } },
-      forge:    { title: '4. East Demon Foundry', gx: 1,  gy: 0,  idx: 4, north: null,       south: null,      east: 'east2',   west: 'cell',   item: 'Relic', foe: { name: 'Obsidian Golem', kind: 'golem', hp: 96 } },
-      east2:    { title: '5. East Chasm (Trap)',  gx: 2,  gy: 0,  idx: 4, north: null,       south: null,      east: null,      west: 'forge',  item: null,    foe: null, lethal: true },
-      corridor: { title: '6. North Gallery',      gx: 0,  gy: -1, idx: 2, north: 'sanctum',  south: 'cell',    east: 'forge',   west: 'west1',  item: null,    foe: { name: 'Demon Monkey', kind: 'monkey', hp: 70 } },
-      sanctum:  { title: '7. North Sanctum',      gx: 0,  gy: -2, idx: 5, north: 'gate',     south: 'corridor',east: null,      west: null,     item: 'Key',   foe: { name: 'Obsidian Golem', kind: 'golem', hp: 98 } },
-      cistern:  { title: '8. South Vault (-STM)', gx: 0,  gy: 1,  idx: 3, north: 'cell',     south: null,      east: 'forge',   west: 'west1',  item: 'Herb',  foe: { name: 'Shadow Wraith', kind: 'wraith', hp: 84 } },
-      gate:     { title: '9. Final Gate',         gx: 0,  gy: -3, idx: 6, north: null,       south: 'sanctum', east: null,      west: null,     item: null,    foe: { name: 'Astral Warden', kind: 'seraph', hp: 118 } }
+      cell:      { num: 1, title: '1. Courtyard',       x: 68,  y: 92, hint: 'Steel sometimes waits off the main path.',         north: 'corridor', south: null, east: 'east_wing', west: null, item: 'Torch', foe: null },
+      east_wing: { num: 2, title: '2. East Wing',       x: 138, y: 92, hint: 'A sharp edge helps before deeper halls.',         north: null,       south: null, east: 'corridor',  west: null, item: 'Blade', foe: { name: 'Demon Monkey', kind: 'monkey', hp: 64 } },
+      corridor:  { num: 3, title: '3. Lantern Gallery', x: 103, y: 62, hint: 'Higher chambers do not let you step back.',     north: 'forge',      south: null, east: null,        west: null, item: null,    foe: { name: 'Shadow Wraith', kind: 'wraith', hp: 78 } },
+      forge:     { num: 4, title: '4. Deep Hall',       x: 103, y: 34, hint: 'Ancient relics carry unseen strength.',           north: 'sanctum',    south: null, east: 'gate',      west: null, item: 'Relic', foe: { name: 'Obsidian Golem', kind: 'golem', hp: 94 } },
+      sanctum:   { num: 5, title: '5. Inner Sanctum',   x: 103, y: 14, hint: 'What opens a gate often waits just before it.',   north: 'gate',       south: null, east: null,        west: null, item: 'Key',   foe: { name: 'Obsidian Golem', kind: 'golem', hp: 94 } },
+      gate:      { num: 6, title: '6. Final Gate',      x: 162, y: 24, hint: 'Defeat the ward and use the door once fitted.',  north: null,       south: null, east: null,        west: null, item: null,    foe: { name: 'Astral Warden', kind: 'seraph', hp: 112 } }
     };
 
     let fbState = {
@@ -535,71 +535,14 @@
       const gain = ac.createGain();
       osc.connect(gain);
       gain.connect(ac.destination);
-
-      if (type === 'slash') {
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(520, now);
-        osc.frequency.exponentialRampToValueAtTime(120, now + 0.14);
-        gain.gain.setValueAtTime(0.14, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
-        osc.start(now); osc.stop(now + 0.15);
-      } else if (type === 'vault') {
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(240, now);
-        osc.frequency.exponentialRampToValueAtTime(760, now + 0.18);
-        gain.gain.setValueAtTime(0.14, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.19);
-        osc.start(now); osc.stop(now + 0.19);
-      } else if (type === 'guard') {
-        osc.type = 'square';
-        osc.frequency.setValueAtTime(340, now);
-        osc.frequency.setValueAtTime(510, now + 0.06);
-        gain.gain.setValueAtTime(0.09, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
-        osc.start(now); osc.stop(now + 0.16);
-      } else if (type === 'torch') {
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(190, now);
-        osc.frequency.exponentialRampToValueAtTime(65, now + 0.28);
-        gain.gain.setValueAtTime(0.16, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.29);
-        osc.start(now); osc.stop(now + 0.29);
-      } else if (type === 'move') {
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(175, now);
-        osc.frequency.exponentialRampToValueAtTime(105, now + 0.11);
-        gain.gain.setValueAtTime(0.11, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
-        osc.start(now); osc.stop(now + 0.12);
-      } else if (type === 'dead_end') {
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(260, now);
-        osc.frequency.exponentialRampToValueAtTime(130, now + 0.22);
-        gain.gain.setValueAtTime(0.12, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.23);
-        osc.start(now); osc.stop(now + 0.23);
-      } else if (type === 'death') {
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(220, now);
-        osc.frequency.exponentialRampToValueAtTime(42, now + 0.55);
-        gain.gain.setValueAtTime(0.20, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.58);
-        osc.start(now); osc.stop(now + 0.58);
-      } else if (type === 'win') {
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(440, now);
-        osc.frequency.setValueAtTime(554, now + 0.1);
-        osc.frequency.setValueAtTime(659, now + 0.2);
-        gain.gain.setValueAtTime(0.15, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.38);
-        osc.start(now); osc.stop(now + 0.38);
-      } else {
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(380, now);
-        gain.gain.setValueAtTime(0.06, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
-        osc.start(now); osc.stop(now + 0.06);
-      }
+      const freqs = { slash: [520, 120], vault: [240, 760], guard: [340, 510], torch: [190, 65], move: [175, 105], dead_end: [250, 140], death: [220, 42], win: [440, 659], click: [380, 320] };
+      const [f1, f2] = freqs[type] || [380, 320];
+      osc.type = type === 'slash' || type === 'torch' || type === 'death' ? 'sawtooth' : 'triangle';
+      osc.frequency.setValueAtTime(f1, now);
+      osc.frequency.exponentialRampToValueAtTime(f2, now + 0.16);
+      gain.gain.setValueAtTime(0.11, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+      osc.start(now); osc.stop(now + 0.18);
     }
 
     function toggleSfx() {
@@ -609,23 +552,18 @@
       if (sfxEnabled) playSfx('click');
     }
 
-    function spawnBurst(x, y, color, count = 18) {
+    function spawnBurst(x, y, color, count = 16) {
       for (let i = 0; i < count; i++) {
         const ang = Math.random() * Math.PI * 2;
-        const spd = 1.2 + Math.random() * 4.2;
+        const spd = 1.2 + Math.random() * 4;
         particles.push({
-          x, y,
-          vx: Math.cos(ang) * spd,
-          vy: Math.sin(ang) * spd - 1.2,
-          life: 24 + Math.floor(Math.random() * 18),
-          maxLife: 42,
-          color,
-          r: 2 + Math.random() * 3
+          x, y, vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd - 1,
+          life: 24 + Math.floor(Math.random() * 14), maxLife: 38, color, r: 2 + Math.random() * 2.5
         });
       }
     }
 
-    function setBubble(text, frames = 150) {
+    function setBubble(text, frames = 130) {
       bubbleText = text;
       bubbleTimer = frames;
     }
@@ -651,20 +589,19 @@
       fbState.hasKey = false;
       fbState.hasRelic = false;
 
+      const s = (lv - 1) * 14;
       mazeRooms.cell.item = 'Torch';
       mazeRooms.cell.foe = null;
-      mazeRooms.west1.item = 'Blade';
-      mazeRooms.west1.foe = { name: 'Demon Monkey', kind: 'monkey', hp: 62 + lv * 8 };
-      mazeRooms.west2.item = 'Herb';
-      mazeRooms.west2.foe = { name: 'Shadow Wraith', kind: 'wraith', hp: 74 + lv * 10 };
+      mazeRooms.east_wing.item = 'Blade';
+      mazeRooms.east_wing.foe = { name: 'Demon Monkey', kind: 'monkey', hp: 64 + s };
+      mazeRooms.corridor.item = null;
+      mazeRooms.corridor.foe = { name: 'Shadow Wraith', kind: 'wraith', hp: 78 + s };
       mazeRooms.forge.item = 'Relic';
-      mazeRooms.forge.foe = { name: 'Obsidian Golem', kind: 'golem', hp: 86 + lv * 12 };
-      mazeRooms.corridor.foe = { name: 'Demon Monkey', kind: 'monkey', hp: 64 + lv * 8 };
+      mazeRooms.forge.foe = { name: 'Obsidian Golem', kind: 'golem', hp: 94 + s };
       mazeRooms.sanctum.item = 'Key';
-      mazeRooms.sanctum.foe = { name: 'Obsidian Golem', kind: 'golem', hp: 88 + lv * 12 };
-      mazeRooms.cistern.item = 'Herb';
-      mazeRooms.cistern.foe = { name: 'Shadow Wraith', kind: 'wraith', hp: 76 + lv * 10 };
-      mazeRooms.gate.foe = { name: 'Astral Warden', kind: 'seraph', hp: 102 + lv * 14 };
+      mazeRooms.sanctum.foe = { name: 'Obsidian Golem', kind: 'golem', hp: 94 + s };
+      mazeRooms.gate.item = null;
+      mazeRooms.gate.foe = { name: 'Astral Warden', kind: 'seraph', hp: 112 + s };
     }
 
     function selectRunner(id) {
@@ -700,8 +637,8 @@
         syncWasmState();
       } else {
         loadMazeLevel(lvl);
-        combatLog.textContent = `[Level ${lvl} Started — ${runnerProfiles[fbState.avId].name}]\nExits from Crossroads: [North] [South] [East] [West]. Try 'east' or 'west' to explore!\n`;
-        setBubble(`Level ${lvl} ready! Explore East, West, North, or South.`);
+        combatLog.textContent = `[Level ${lvl} — ${runnerProfiles[fbState.avId].name}] Start in Chamber 1. Higher chambers lock out going back to lower numbers.\n`;
+        setBubble(`Chamber 1: ${mazeRooms.cell.hint}`);
         pushFallbackState();
       }
     }
@@ -721,7 +658,7 @@
         hasKey: fbState.hasKey,
         hasRelic: fbState.hasRelic,
         foeHp: foe ? foe.hp : 0,
-        foeMaxHp: foe ? (70 + fbState.lvl * 14) : 0,
+        foeMaxHp: foe ? (75 + fbState.lvl * 14) : 0,
         foeName: foe ? foe.name : '',
         foeKind: foe ? foe.kind : '',
         mode: '',
@@ -761,13 +698,13 @@
         hasTorch, hasBlade, hasHerb, hasKey, hasRelic,
         foeHp, foeMaxHp, foeName, foeKind, mode, anim, lvl, destroyed, avId, defeats
       };
-      const r = mazeRooms[roomId] || { title: roomId, idx: 1 };
+      const r = mazeRooms[roomId] || mazeRooms.cell;
       renderHud(cachedState, r);
     }
 
     function renderHud(st, r) {
       document.getElementById('lvlTag').textContent = `Level ${st.lvl}`;
-      document.getElementById('roomTag').textContent = r.title || st.roomId;
+      document.getElementById('roomTag').textContent = r.title;
 
       const timerEl = document.getElementById('timerTag');
       if (st.lvl === 3 && !st.destroyed) {
@@ -777,12 +714,7 @@
         timerEl.style.display = 'none';
       }
 
-      const objs = {
-        1: 'Lv.1 Sunlit Ruins — Explore East/West/North/South wings, grab Torch/Blade/Relic/Key & unlock Gate.',
-        2: 'Lv.2 Relic Hunt — Fight demons in East & West wings, claim Relic & Key, unlock Gate.',
-        3: 'Lv.3 Eclipse Endgame — Beat the clock & maze; claim Scythe/Relic/Key & open Final Gate!'
-      };
-      document.getElementById('goalTxt').textContent = objs[st.lvl] || '';
+      document.getElementById('goalTxt').textContent = `Hint: ${r.hint}`;
 
       document.getElementById('hpTxt').textContent = st.hp;
       document.getElementById('maxHpTxt').textContent = st.maxHp;
@@ -808,7 +740,7 @@
       document.getElementById('relRelic').classList.toggle('got', st.hasRelic);
 
       for (let i = 1; i <= 6; i++) {
-        document.getElementById('ch' + i).classList.toggle('here', i === (r.idx || 1));
+        document.getElementById('ch' + i).classList.toggle('here', i === r.num);
       }
     }
 
@@ -834,21 +766,14 @@
         const anim = Module.ccall('last_anim', 'string', [], []);
 
         if ((c === 'north' || c === 'south' || c === 'east' || c === 'west' || c === 'retreat') && nextRoom !== prevRoom) {
-          runTimerFrames = 110;
-          const labels = {
-            north: 'Exploring North...',
-            south: 'Heading South (-STM)...',
-            retreat: 'Retreating South...',
-            east: 'Turning East into the wing...',
-            west: 'Turning West into the wing...'
-          };
-          setBubble(labels[c] || 'Exploring...');
+          runTimerFrames = 100;
+          setBubble((mazeRooms[nextRoom] && mazeRooms[nextRoom].hint) || 'Moving forward...');
           playSfx('move');
         } else if (anim === 'slash' || anim === 'vault' || anim === 'guard' || anim === 'torch') {
-          heroAttackFrames = 22;
-          if (nextFoeHp < prevFoeHp) enemyHurtFrames = 22;
-          if (nextHp < prevHp && nextFoeHp > 0) setTimeout(() => { enemyAttackFrames = 22; heroHurtFrames = 22; }, 220);
-          playSfx(anim); shakeFrames = 9; spawnBurst(540, 195, '#fbbf24', 18);
+          heroAttackFrames = 20;
+          if (nextFoeHp < prevFoeHp) enemyHurtFrames = 20;
+          if (nextHp < prevHp && nextFoeHp > 0) setTimeout(() => { enemyAttackFrames = 20; heroHurtFrames = 20; }, 200);
+          playSfx(anim); shakeFrames = 8; spawnBurst(540, 195, '#fbbf24', 16);
         } else {
           playSfx('click');
         }
@@ -856,63 +781,54 @@
         return;
       }
 
-      // Standalone 9-room maze engine
+      // Standalone 6-chamber forward maze engine
       appendCombat('> ' + cmd);
       const r = mazeRooms[fbState.room] || mazeRooms.cell;
 
       const moveDir = (dir, cost, animName) => {
         if (dir === 'north' && r.foe && r.foe.hp > 0) {
-          appendCombat(`[Blocked] ${r.foe.name} guards the northern path! Defeat it first or try East/West.`);
+          appendCombat(`[Blocked] Defeat ${r.foe.name} before moving North.`);
           playSfx('dead_end');
           return;
         }
         const nextId = r[dir];
-        if (!nextId) {
-          appendCombat(`[Wall] No exit ${dir} from ${r.title}.`);
+        if (!nextId || !mazeRooms[nextId]) {
+          appendCombat(`[No Path] No route ${dir} from Chamber ${r.num}.`);
+          playSfx('dead_end');
+          return;
+        }
+        const nr = mazeRooms[nextId];
+        if (nr.num < r.num) {
+          appendCombat(`[Locked Behind] Chamber ${r.num} cannot return you to Chamber ${nr.num}.`);
           playSfx('dead_end');
           return;
         }
         fbState.room = nextId;
         fbState.anim = animName;
-        runTimerFrames = 110;
+        runTimerFrames = 100;
         fbState.stm = Math.max(0, fbState.stm - cost);
-        appendCombat(`[Move ${dir.toUpperCase()}] -${cost} STM (STM: ${fbState.stm})`);
+        appendCombat(`[Move ${dir.toUpperCase()} -> Chamber ${nr.num}] -${cost} STM (STM: ${fbState.stm})`);
         playSfx('move');
-
-        const labels = {
-          north: 'Exploring North...',
-          south: 'Heading South (-STM)...',
-          retreat: 'Retreating South...',
-          east: 'Turning East into the wing...',
-          west: 'Turning West into the wing...'
-        };
-        setBubble(labels[c] || 'Exploring...');
+        setBubble(nr.hint);
 
         if (fbState.stm === 0) {
-          fbState.hp -= 12;
-          appendCombat('[Exhausted] 0 stamina! -12 HP.');
+          fbState.hp -= 10;
+          appendCombat('[Exhausted] 0 stamina! -10 HP.');
         }
-        const nr = mazeRooms[fbState.room];
-        if (nr.lethal) {
-          appendCombat('[LETHAL WRONG TURN] Trap triggered! Restarting level...');
-          playSfx('death'); shakeFrames = 18; spawnBurst(220, 200, '#ef4444', 30);
+        if (fbState.hp <= 0) {
+          appendCombat('[Restarted] You fell! Restarting level...');
+          playSfx('death');
           loadMazeLevel(fbState.lvl);
-        } else if (fbState.hp <= 0) {
-          appendCombat('[DEFEATED] You fell! Restarting level...');
-          playSfx('death'); shakeFrames = 18;
-          loadMazeLevel(fbState.lvl);
-        } else if (nr.west === null && dir === 'west') {
-          appendCombat('[Dead End] Dead end reached in the West! Turn East to head back.');
-          playSfx('dead_end');
+        } else {
+          if (nr.item) appendCombat(` * Found: [${nr.item}] ('take')`);
+          if (nr.foe && nr.foe.hp > 0) appendCombat(` * Guardian: ${nr.foe.name} (${nr.foe.hp} HP)`);
         }
-        if (nr.item) appendCombat(` * Item here: [${nr.item}] ('take')`);
-        if (nr.foe && nr.foe.hp > 0) appendCombat(` * Demon here: ${nr.foe.name} (${nr.foe.hp} HP)`);
       };
 
       if (c === 'north') moveDir('north', 12, 'run_north');
-      else if (c === 'south' || c === 'retreat') moveDir('south', 18, 'run_south');
-      else if (c === 'east') moveDir('east', 14, 'run_east');
-      else if (c === 'west') moveDir('west', 14, 'run_west');
+      else if (c === 'south' || c === 'retreat') moveDir('south', 16, 'run_south');
+      else if (c === 'east') moveDir('east', 12, 'run_east');
+      else if (c === 'west') moveDir('west', 12, 'run_west');
       else if (c === 'take') {
         if (r.item) {
           if (r.item === 'Torch') fbState.hasTorch = true;
@@ -920,45 +836,46 @@
           if (r.item === 'Herb') fbState.hasHerb = true;
           if (r.item === 'Key') fbState.hasKey = true;
           if (r.item === 'Relic') fbState.hasRelic = true;
-          appendCombat(`[Acquired] Picked up ${r.item}!`);
-          playSfx('win'); spawnBurst(200, 190, '#e879f9', 20);
+          appendCombat(`[Taken] Picked up ${r.item}!`);
+          playSfx('win'); spawnBurst(200, 190, '#e879f9', 18);
           r.item = null;
         } else {
-          appendCombat('[Info] Nothing to take here.');
+          appendCombat('[Info] Nothing here to take.');
         }
+      } else if (c === 'search') {
+        appendCombat(`[Hint] ${r.hint}`);
+        setBubble(r.hint);
       } else if (c === 'rest') {
         fbState.stm = Math.min(fbState.maxStm, fbState.stm + 30);
         fbState.hp = Math.min(fbState.maxHp, fbState.hp + 10);
         appendCombat('[Rest] +30 STM, +10 HP.');
-        playSfx('click');
       } else if (c === 'use herb') {
         if (fbState.hasHerb) {
           fbState.hasHerb = false;
           fbState.hp = Math.min(fbState.maxHp, fbState.hp + 45);
-          appendCombat('[Herb] Healed +45 HP.');
-          playSfx('win');
+          appendCombat('[Herb] +45 HP.');
         } else {
           appendCombat('[!] No Herb in pack.');
         }
       } else if (c === 'slash' || c === 'attack' || c === 'vault' || c === 'guard' || c === 'torch') {
         if (r.foe && r.foe.hp > 0) {
-          const dmg = (c === 'vault' ? 42 : (c === 'torch' ? 36 : 28)) + (fbState.hasBlade ? 12 : 0) + (fbState.hasRelic ? 14 : 0);
+          const dmg = (c === 'vault' ? 40 : (c === 'torch' ? 34 : 26)) + (fbState.hasBlade ? 14 : 0) + (fbState.hasRelic ? 14 : 0);
           r.foe.hp = Math.max(0, r.foe.hp - dmg);
           heroAttackFrames = 20;
           enemyHurtFrames = 20;
           fbState.anim = c === 'attack' ? 'slash' : c;
-          appendCombat(`[${c.toUpperCase()}] Dealt ${dmg} DMG to ${r.foe.name}!`);
+          appendCombat(`[${c.toUpperCase()}] ${dmg} DMG to ${r.foe.name}!`);
           playSfx(c === 'attack' ? 'slash' : c);
           shakeFrames = 8;
-          spawnBurst(540, 195, '#fbbf24', 18);
+          spawnBurst(540, 195, '#fbbf24', 16);
           if (r.foe.hp > 0 && c !== 'vault') {
-            const eDmg = c === 'guard' ? 10 : 20;
+            const eDmg = c === 'guard' ? 10 : 18;
             fbState.hp -= eDmg;
             enemyAttackFrames = 20;
             heroHurtFrames = 20;
-            appendCombat(`[${r.foe.name}] Countered for ${eDmg} DMG!`);
+            appendCombat(`[${r.foe.name}] Strikes back for ${eDmg} DMG!`);
             if (fbState.hp <= 0) {
-              appendCombat('[DEFEATED] Restarting level...');
+              appendCombat('[Restarted] Defeated! Restarting level...');
               playSfx('death');
               loadMazeLevel(fbState.lvl);
             }
@@ -966,21 +883,25 @@
             appendCombat(`[Defeated] ${r.foe.name} is down!`);
           }
         } else {
-          appendCombat('[Info] No demon in this chamber.');
+          appendCombat('[Info] No enemy here.');
         }
       } else if (c === 'door') {
         if (fbState.room === 'gate') {
-          if (fbState.lvl < 3) {
-            appendCombat(`[Gate Unlocked] Advancing to Level ${fbState.lvl + 1}!`);
+          if (r.foe && r.foe.hp > 0) {
+            appendCombat(`[Gate] Defeat ${r.foe.name} first.`);
+          } else if (!fbState.hasKey) {
+            appendCombat('[Locked] A Key is needed to open the gate.');
+          } else if (fbState.lvl < 3) {
+            appendCombat(`[Cleared] Advancing to Level ${fbState.lvl + 1}!`);
             playSfx('win');
             loadMazeLevel(fbState.lvl + 1);
           } else {
             fbState.destroyed = true;
-            appendCombat('*** FINAL GATE CONQUERED — VICTORY! ***');
+            appendCombat('*** VICTORY! ALL 3 LEVELS CONQUERED! ***');
             playSfx('win');
           }
         } else {
-          appendCombat('[Info] Reach the Final Gate chamber (North) to use \'door\'.');
+          appendCombat('[Info] Reach Chamber 6 (Final Gate) to use \'door\'.');
         }
       } else {
         appendCombat(`[Info] Command '${cmd}' executed.`);
@@ -1006,14 +927,14 @@
     }
 
     function drawMazeMinimap(st) {
-      const boxX = canvas.width - 196;
+      const boxX = canvas.width - 214;
       const boxY = 10;
-      const boxW = 186;
-      const boxH = 112;
+      const boxW = 204;
+      const boxH = 118;
 
       ctx.save();
-      ctx.fillStyle = 'rgba(7, 12, 20, 0.84)';
-      ctx.strokeStyle = 'rgba(245, 158, 11, 0.45)';
+      ctx.fillStyle = 'rgba(7, 12, 20, 0.88)';
+      ctx.strokeStyle = 'rgba(245, 158, 11, 0.55)';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
       ctx.roundRect(boxX, boxY, boxW, boxH, 8);
@@ -1022,45 +943,44 @@
 
       ctx.fillStyle = '#fde68a';
       ctx.font = 'bold 9.5px Inter, sans-serif';
-      ctx.fillText('MAZE MAP (N / S / E / W)', boxX + 9, boxY + 13);
+      ctx.fillText('CHAMBER MAP (1 -> 6 Forward)', boxX + 9, boxY + 13);
 
-      const cx = boxX + 96;
-      const cy = boxY + 86;
-      const stepX = 28;
-      const stepY = 20;
+      const edges = [
+        ['cell', 'east_wing'],
+        ['cell', 'corridor'],
+        ['east_wing', 'corridor'],
+        ['corridor', 'forge'],
+        ['forge', 'sanctum'],
+        ['forge', 'gate'],
+        ['sanctum', 'gate']
+      ];
 
-      // Draw links
-      ctx.strokeStyle = 'rgba(148, 163, 184, 0.35)';
-      ctx.lineWidth = 1.5;
-      Object.values(mazeRooms).forEach((rm) => {
-        const x1 = cx + rm.gx * stepX;
-        const y1 = cy + rm.gy * stepY;
-        ['north', 'south', 'east', 'west'].forEach((d) => {
-          const nid = rm[d];
-          if (nid && mazeRooms[nid]) {
-            const nr = mazeRooms[nid];
-            ctx.beginPath();
-            ctx.moveTo(x1, y1);
-            ctx.lineTo(cx + nr.gx * stepX, cy + nr.gy * stepY);
-            ctx.stroke();
-          }
-        });
+      ctx.strokeStyle = 'rgba(148, 163, 184, 0.45)';
+      ctx.lineWidth = 1.6;
+      edges.forEach(([a, b]) => {
+        const ra = mazeRooms[a], rb = mazeRooms[b];
+        if (!ra || !rb) return;
+        ctx.beginPath();
+        ctx.moveTo(boxX + ra.x, boxY + ra.y);
+        ctx.lineTo(boxX + rb.x, boxY + rb.y);
+        ctx.stroke();
       });
 
-      // Draw room nodes
       Object.entries(mazeRooms).forEach(([id, rm]) => {
-        const rx = cx + rm.gx * stepX;
-        const ry = cy + rm.gy * stepY;
+        const px = boxX + rm.x;
+        const py = boxY + rm.y;
         const isHere = st.roomId === id;
-        ctx.fillStyle = isHere ? '#10b981' : (rm.lethal ? '#ef4444' : (rm.item ? '#f59e0b' : '#475569'));
+        ctx.fillStyle = isHere ? '#10b981' : (rm.num === 6 ? '#a855f7' : '#334155');
         ctx.beginPath();
-        ctx.arc(rx, ry, isHere ? 5.5 : 3.8, 0, Math.PI * 2);
+        ctx.arc(px, py, isHere ? 8.5 : 7.5, 0, Math.PI * 2);
         ctx.fill();
-        if (isHere) {
-          ctx.strokeStyle = '#ecfdf5';
-          ctx.lineWidth = 1.5;
-          ctx.stroke();
-        }
+        ctx.strokeStyle = isHere ? '#ecfdf5' : '#94a3b8';
+        ctx.lineWidth = 1.4;
+        ctx.stroke();
+
+        ctx.fillStyle = '#f8fafc';
+        ctx.font = 'bold 9px Inter, sans-serif';
+        ctx.fillText(String(rm.num), px - 2.5, py + 3);
       });
 
       ctx.restore();
@@ -1085,20 +1005,16 @@
 
       const skin = avId === 1 ? '#df9f72' : (avId === 2 ? '#f3c29b' : '#b27046');
 
-      // Legs
       ctx.strokeStyle = '#334155'; ctx.lineWidth = 6.5;
       ctx.beginPath(); ctx.moveTo(-3, -34); ctx.lineTo(-swing * 14, -17 - liftB * 5); ctx.lineTo(-swing * 18, -liftB * 8); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(3, -34); ctx.lineTo(swing * 14, -17 - liftF * 5); ctx.lineTo(swing * 18, -liftF * 8); ctx.stroke();
 
-      // Torso
       ctx.fillStyle = isEvilTwist ? '#6d28d9' : (avId === 2 ? '#2563eb' : (avId === 3 ? '#475569' : '#334155'));
       ctx.beginPath(); ctx.roundRect(-11, -64, 22, 32, 6); ctx.fill();
 
-      // Head & face
       ctx.fillStyle = skin;
       ctx.beginPath(); ctx.arc(1.5, -78.5, 10.5, 0, Math.PI * 2); ctx.fill();
 
-      // Eye + brow + nose
       ctx.fillStyle = '#090d16';
       ctx.beginPath(); ctx.arc(6.8, -79.5, 1.8, 0, Math.PI * 2); ctx.fill();
       ctx.strokeStyle = '#1e1b4b'; ctx.lineWidth = 1.6;
@@ -1106,11 +1022,9 @@
       ctx.strokeStyle = '#7c2d12'; ctx.lineWidth = 1.5;
       ctx.beginPath(); ctx.moveTo(10.5, -79.5); ctx.lineTo(12.5, -76.5); ctx.stroke();
 
-      // Hair
       ctx.fillStyle = avId === 2 ? '#db2777' : '#29170c';
       ctx.beginPath(); ctx.arc(0, -81, 11, Math.PI * 0.95, Math.PI * 2.05); ctx.fill();
 
-      // Weapon arm
       const hx = isAttacking ? 34 : 14 + swing * 5;
       const hy = isAttacking ? -52 : -40;
       ctx.strokeStyle = skin; ctx.lineWidth = 5;
@@ -1165,7 +1079,7 @@
       if (!text) return;
       ctx.save();
       ctx.font = 'bold 11px Inter, sans-serif';
-      const bw = Math.min(340, Math.max(120, ctx.measureText(text).width + 20));
+      const bw = Math.min(350, Math.max(120, ctx.measureText(text).width + 20));
       const bh = 25;
       const bx = Math.max(12, Math.min(canvas.width - bw - 12, x - bw * 0.4));
       const by = Math.max(8, y - bh - 10);
@@ -1206,7 +1120,6 @@
       if (enemyHurtFrames > 0) enemyHurtFrames--;
       if (bubbleTimer > 0 && --bubbleTimer === 0) bubbleText = '';
 
-      // Columns & floor
       const span = 210;
       const start = -(((scrollOffset * 0.75) % span + span) % span) - 30;
       ctx.strokeStyle = 'rgba(226, 232, 240, 0.14)';
@@ -1220,7 +1133,7 @@
       const lungeX = heroAttackFrames > 0 ? 140 : 0;
       let baseWalkX = 160;
       if (isRunning) {
-        const prog = 1 - runTimerFrames / 110;
+        const prog = 1 - runTimerFrames / 100;
         if (facingDir === 'east') baseWalkX = 95 + prog * 180;
         else if (facingDir === 'west') baseWalkX = 260 - prog * 165;
         else baseWalkX = -30 + prog * 190;
@@ -1228,17 +1141,10 @@
       const px = baseWalkX + lungeX;
 
       drawHumanCharacter(px, floorY, {
-        avId: st.avId,
-        hasTorch: st.hasTorch,
-        hasBlade: st.hasBlade,
-        hasRelic: st.hasRelic,
-        isEvilTwist: st.lvl === 3,
-        isRunning,
-        isAttacking: heroAttackFrames > 0,
-        isHurt: heroHurtFrames > 0,
-        isGuarding: st.anim === 'guard' && heroAttackFrames > 0,
-        dirSign,
-        phase: scrollOffset * 0.16
+        avId: st.avId, hasTorch: st.hasTorch, hasBlade: st.hasBlade, hasRelic: st.hasRelic,
+        isEvilTwist: st.lvl === 3, isRunning, isAttacking: heroAttackFrames > 0,
+        isHurt: heroHurtFrames > 0, isGuarding: st.anim === 'guard' && heroAttackFrames > 0,
+        dirSign, phase: scrollOffset * 0.16
       });
 
       ctx.fillStyle = '#f8fafc';
@@ -1250,8 +1156,7 @@
       }
 
       if (heroAttackFrames > 10) {
-        ctx.strokeStyle = '#fbbf24';
-        ctx.lineWidth = 4;
+        ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 4;
         ctx.beginPath(); ctx.arc(380, 195, 62, -0.85, 0.75); ctx.stroke();
       }
 
