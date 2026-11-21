@@ -451,7 +451,9 @@
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     const combatLog = document.getElementById('combatLog');
+
     let wasmReady = false;
+    let useFallback = false;
     let chosenRunner = 1;
     let scrollOffset = 0;
     let runTimerFrames = 0;
@@ -462,29 +464,11 @@
     let level3SecondsLeft = 90;
     let bubbleText = '';
     let bubbleTimer = 0;
-
-    let cachedState = {
-      roomId: 'cell',
-      hp: 140,
-      maxHp: 140,
-      stm: 100,
-      maxStm: 100,
-      hasTorch: false,
-      hasBlade: false,
-      hasHerb: false,
-      hasKey: false,
-      hasRelic: false,
-      foeHp: 0,
-      foeMaxHp: 0,
-      foeName: '',
-      foeKind: '',
-      mode: '',
-      anim: 'idle',
-      lvl: 1,
-      destroyed: false,
-      avId: 1,
-      defeats: 0
-    };
+    let sfxEnabled = true;
+    let audioCtx = null;
+    let shakeFrames = 0;
+    let particles = [];
+    let facingDir = 'east'; // 'east' | 'west' | 'north' | 'south'
 
     const runnerProfiles = {
       1: {
@@ -501,1047 +485,35 @@
       }
     };
 
-    const chamberMap = {
-      cell:     { label: '1. Start Chamber', goal: 'Advance North to continue the mission.', idx: 1 },
-      corridor: { label: '2. Gallery',       goal: 'Fight the villain, inspect for Key, and move North.', idx: 2 },
-      cistern:  { label: '3. Cistern',       goal: 'Defeat the wraith & inspect to solve Riddle I.', idx: 3 },
-      forge:    { label: '4. Forge',         goal: 'Claim items/Relic, defeat the golem & inspect for Riddle III.', idx: 4 },
-      sanctum:  { label: '5. Sanctum',       goal: 'Inspect braziers (Riddle II) & defeat the guardian.', idx: 5 },
-      gate:     { label: '6. Final Gate',    goal: 'Use Key & solve the Final Riddle to complete the stage.', idx: 6 }
+    // 9-room maze layout with grid coords (gx, gy) for canvas minimap:
+    // West wing: west1 (-1, 0) -> west2 (-2, 0)
+    // East wing: forge (+1, 0) -> east2 (+2, 0)
+    // North wing: corridor (0, -1) -> sanctum (0, -2) -> gate (0, -3)
+    // South wing: cistern (0, +1)
+    const mazeRooms = {
+      cell:     { title: '1. Maze Crossroads',   gx: 0,  gy: 0,  idx: 1, north: 'corridor', south: 'cistern', east: 'forge',   west: 'west1',  item: 'Torch', foe: { name: 'Demon Monkey', kind: 'monkey', hp: 62 } },
+      west1:    { title: '2. West Armory Wing',   gx: -1, gy: 0,  idx: 2, north: null,       south: null,      east: 'cell',    west: 'west2',  item: 'Blade', foe: { name: 'Demon Monkey', kind: 'monkey', hp: 68 } },
+      west2:    { title: '3. West Crypt (Dead End)', gx: -2, gy: 0, idx: 3, north: null,    south: null,      east: 'west1',   west: null,     item: 'Herb',  foe: { name: 'Shadow Wraith', kind: 'wraith', hp: 82 } },
+      forge:    { title: '4. East Demon Foundry', gx: 1,  gy: 0,  idx: 4, north: null,       south: null,      east: 'east2',   west: 'cell',   item: 'Relic', foe: { name: 'Obsidian Golem', kind: 'golem', hp: 96 } },
+      east2:    { title: '5. East Chasm (Trap)',  gx: 2,  gy: 0,  idx: 4, north: null,       south: null,      east: null,      west: 'forge',  item: null,    foe: null, lethal: true },
+      corridor: { title: '6. North Gallery',      gx: 0,  gy: -1, idx: 2, north: 'sanctum',  south: 'cell',    east: 'forge',   west: 'west1',  item: null,    foe: { name: 'Demon Monkey', kind: 'monkey', hp: 70 } },
+      sanctum:  { title: '7. North Sanctum',      gx: 0,  gy: -2, idx: 5, north: 'gate',     south: 'corridor',east: null,      west: null,     item: 'Key',   foe: { name: 'Obsidian Golem', kind: 'golem', hp: 98 } },
+      cistern:  { title: '8. South Vault (-STM)', gx: 0,  gy: 1,  idx: 3, north: 'cell',     south: null,      east: 'forge',   west: 'west1',  item: 'Herb',  foe: { name: 'Shadow Wraith', kind: 'wraith', hp: 84 } },
+      gate:     { title: '9. Final Gate',         gx: 0,  gy: -3, idx: 6, north: null,       south: 'sanctum', east: null,      west: null,     item: null,    foe: { name: 'Astral Warden', kind: 'seraph', hp: 118 } }
     };
 
-    function setBubble(text, frames = 150) {
-      bubbleText = text;
-      bubbleTimer = frames;
-    }
-
-    function selectRunner(id) {
-      chosenRunner = id;
-      for (let i = 1; i <= 3; i++) {
-        document.getElementById('tab' + i).classList.toggle('active', i === id);
-      }
-      document.getElementById('runnerLore').innerHTML =
-        '<strong>' + runnerProfiles[id].name + ':</strong> ' + runnerProfiles[id].bio;
-    }
-
-    function appendCombat(msg) {
-      combatLog.textContent += msg + '\n';
-      combatLog.scrollTop = combatLog.scrollHeight;
-    }
-
-    function newRun(lvl) {
-      if (!wasmReady) return;
-      const rName = runnerProfiles[chosenRunner].name.toLowerCase();
-      const reply = Module.ccall('run_command', 'string', ['string'], [`start ${rName} level${lvl}`]);
-      combatLog.textContent = '';
-      appendCombat(reply);
-      runTimerFrames = 0;
-      heroAttackFrames = 0;
-      enemyAttackFrames = 0;
-      heroHurtFrames = 0;
-      enemyHurtFrames = 0;
-      level3SecondsLeft = 90;
-      if (lvl === 1) setBubble('Starting Level 1. Let us explore!');
-      else if (lvl === 2) setBubble('Level 2: I must find the Ancient Relic!');
-      else setBubble('Hehe... now I have the Relic. The world will burn!');
-      syncState();
-    }
-
-    // High-detail human characters on canvas: larger scale, multi-pass shading, realistic anatomy, clothing folds, and distinct features
-    function drawHumanCharacter(px, py, opts) {
-      const {
-        avId, hasTorch, hasBlade, hasRelic, isEvilTwist,
-        isRunning, isAttacking, isHurt, isGuarding, dirSign, phase
-      } = opts;
-
-      ctx.save();
-      ctx.translate(px, py);
-      ctx.scale(dirSign * 1.38, 1.38);
-
-      const swing = isRunning ? Math.sin(phase) : 0;
-      const liftF = isRunning ? Math.max(0, -Math.cos(phase)) : 0;
-      const liftB = isRunning ? Math.max(0, -Math.cos(phase + Math.PI)) : 0;
-
-      if (isHurt) {
-        ctx.translate(-5, -2);
-      }
-
-      // Soft cast shadow on dungeon floor
-      const shGrad = ctx.createRadialGradient(0, 2, 2, 0, 2, avId === 3 ? 28 : 22);
-      shGrad.addColorStop(0, 'rgba(0, 0, 0, 0.55)');
-      shGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-      ctx.fillStyle = shGrad;
-      ctx.beginPath();
-      ctx.ellipse(0, 2, avId === 3 ? 28 : 22, 5.5, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      const skinBase = avId === 1 ? '#df9f72' : (avId === 2 ? '#f3c29b' : '#b27046');
-      const skinHi   = avId === 1 ? '#f5c7a3' : (avId === 2 ? '#ffe5ce' : '#d6976e');
-      const skinLo   = avId === 1 ? '#9d5f36' : (avId === 2 ? '#be845b' : '#784222');
-
-      function skinLinear(x1, y1, x2, y2) {
-        const g = ctx.createLinearGradient(x1, y1, x2, y2);
-        g.addColorStop(0, skinHi);
-        g.addColorStop(0.5, skinBase);
-        g.addColorStop(1, skinLo);
-        return g;
-      }
-
-      function drawTaperedLimb(x1, y1, x2, y2, w1, w2, fill, strokeCol = null) {
-        const dx = x2 - x1, dy = y2 - y1;
-        const len = Math.hypot(dx, dy) || 1;
-        const nx = -dy / len, ny = dx / len;
-        ctx.fillStyle = fill;
-        ctx.beginPath();
-        ctx.moveTo(x1 + nx * w1 * 0.5, y1 + ny * w1 * 0.5);
-        ctx.lineTo(x2 + nx * w2 * 0.5, y2 + ny * w2 * 0.5);
-        ctx.arc(x2, y2, w2 * 0.5, Math.atan2(ny, nx), Math.atan2(-ny, -nx));
-        ctx.lineTo(x1 - nx * w1 * 0.5, y1 - ny * w1 * 0.5);
-        ctx.arc(x1, y1, w1 * 0.5, Math.atan2(-ny, -nx), Math.atan2(ny, nx));
-        ctx.closePath();
-        ctx.fill();
-        if (strokeCol) {
-          ctx.strokeStyle = strokeCol;
-          ctx.lineWidth = 1;
-          ctx.stroke();
-        }
-      }
-
-      function drawRealisticHead(eyeY, irisCol, hairCol, optsFace) {
-        const { isBroad, isSlender, hasBeard, hasFreckles, hasMustache } = optsFace;
-
-        // Shaded neck with sternocleidomastoid highlight/shadow
-        drawTaperedLimb(0, -63, 1.5, -72, isBroad ? 10 : 7.2, isBroad ? 9 : 6.4, skinLinear(-7, -73, 9, -63));
-
-        // Realistic cranium & jaw contour
-        const fGrad = ctx.createRadialGradient(4, eyeY + 1, 1.5, 1.5, eyeY + 1, 13.5);
-        fGrad.addColorStop(0, skinHi);
-        fGrad.addColorStop(0.65, skinBase);
-        fGrad.addColorStop(1, skinLo);
-
-        ctx.fillStyle = fGrad;
-        ctx.beginPath();
-        if (isBroad) {
-          ctx.moveTo(-9, eyeY - 10);
-          ctx.quadraticCurveTo(2, eyeY - 13, 11, eyeY - 9);
-          ctx.lineTo(11.5, eyeY + 5);
-          ctx.quadraticCurveTo(7, eyeY + 12.5, 1, eyeY + 11.5);
-          ctx.quadraticCurveTo(-7, eyeY + 9, -9.5, eyeY + 2);
-        } else if (isSlender) {
-          ctx.moveTo(-8.5, eyeY - 10);
-          ctx.quadraticCurveTo(1.5, eyeY - 13, 10, eyeY - 9);
-          ctx.quadraticCurveTo(10.5, eyeY + 2, 8.5, eyeY + 8);
-          ctx.quadraticCurveTo(4.5, eyeY + 12.5, 1.5, eyeY + 12);
-          ctx.quadraticCurveTo(-5.5, eyeY + 10, -8.5, eyeY + 2);
-        } else {
-          ctx.ellipse(1.5, eyeY + 1, 10.2, 11.8, 0.04, 0, Math.PI * 2);
-        }
-        ctx.closePath();
-        ctx.fill();
-        ctx.strokeStyle = skinLo;
-        ctx.lineWidth = 0.9;
-        ctx.stroke();
-
-        // Cheek & brow highlights
-        ctx.fillStyle = 'rgba(255, 240, 224, 0.22)';
-        ctx.beginPath();
-        ctx.ellipse(7.2, eyeY + 3.5, 3.2, 2.2, -0.2, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Realistic ear with inner ridge
-        ctx.fillStyle = skinLinear(-8, eyeY - 3, -2, eyeY + 6);
-        ctx.beginPath();
-        ctx.ellipse(-5.2, eyeY + 1.5, 3.4, 5.2, -0.12, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = skinLo;
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.arc(-4.8, eyeY + 1.5, 1.7, -0.8, 1.1);
-        ctx.stroke();
-
-        // Eye socket shadow + sclera + colored iris + pupil + specular catchlight
-        ctx.fillStyle = 'rgba(60, 30, 15, 0.22)';
-        ctx.beginPath();
-        ctx.ellipse(6.8, eyeY + 0.3, 3.3, 2.6, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = '#f8fafc';
-        ctx.beginPath();
-        ctx.ellipse(6.8, eyeY, 2.8, 1.95, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = isEvilTwist ? '#e879f9' : irisCol;
-        ctx.beginPath();
-        ctx.arc(7.3, eyeY, 1.55, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = '#090d16';
-        ctx.beginPath();
-        ctx.arc(7.4, eyeY, 0.8, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.arc(7.9, eyeY - 0.55, 0.55, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Upper eyelash & contoured eyebrow
-        ctx.strokeStyle = isSlender ? hairCol : '#111827';
-        ctx.lineWidth = isSlender ? 1.4 : 1.8;
-        ctx.beginPath();
-        ctx.arc(6.8, eyeY, 2.8, Math.PI * 1.05, Math.PI * 1.95);
-        ctx.stroke();
-
-        ctx.strokeStyle = hairCol;
-        ctx.lineWidth = isSlender ? 1.6 : 2.3;
-        ctx.beginPath();
-        if (isEvilTwist || isAttacking) {
-          ctx.moveTo(3.8, eyeY - 3.8);
-          ctx.quadraticCurveTo(7.2, eyeY - 3.3, 10.2, eyeY - 2.1);
-        } else {
-          ctx.moveTo(3.8, eyeY - 3.3);
-          ctx.quadraticCurveTo(7.2, eyeY - 4.1, 10.2, eyeY - 3.5);
-        }
-        ctx.stroke();
-
-        // Sculpted nose bridge, tip & nostril
-        ctx.strokeStyle = skinLo;
-        ctx.lineWidth = 1.6;
-        ctx.beginPath();
-        ctx.moveTo(10.1, eyeY - 0.6);
-        ctx.lineTo(12.6, eyeY + 3.4);
-        ctx.quadraticCurveTo(11.3, eyeY + 4.5, 9.5, eyeY + 4.2);
-        ctx.stroke();
-
-        ctx.fillStyle = skinLo;
-        ctx.beginPath();
-        ctx.arc(10.5, eyeY + 3.8, 0.9, 0, Math.PI * 2);
-        ctx.fill();
-
-        if (hasFreckles) {
-          ctx.fillStyle = 'rgba(154, 52, 18, 0.48)';
-          ctx.beginPath();
-          ctx.arc(7.8, eyeY + 3.4, 0.75, 0, Math.PI * 2);
-          ctx.arc(9.4, eyeY + 2.8, 0.7, 0, Math.PI * 2);
-          ctx.arc(8.5, eyeY + 4.5, 0.65, 0, Math.PI * 2);
-          ctx.fill();
-        }
-
-        // Upper & lower lip contour
-        ctx.fillStyle = isSlender ? '#e11d48' : '#b45309';
-        ctx.beginPath();
-        ctx.moveTo(6.6, eyeY + 7.4);
-        ctx.quadraticCurveTo(8.8, eyeY + 6.4, 10.9, eyeY + 7.5);
-        ctx.quadraticCurveTo(8.8, eyeY + 9.2, 6.6, eyeY + 7.4);
-        ctx.fill();
-
-        ctx.strokeStyle = '#451a03';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(6.8, eyeY + 7.5);
-        ctx.lineTo(10.7, eyeY + 7.5);
-        ctx.stroke();
-
-        if (hasMustache) {
-          ctx.fillStyle = hairCol;
-          ctx.beginPath();
-          ctx.moveTo(5.5, eyeY + 5.6);
-          ctx.quadraticCurveTo(8.8, eyeY + 4.8, 11.6, eyeY + 6.2);
-          ctx.quadraticCurveTo(8.8, eyeY + 6.4, 5.5, eyeY + 5.6);
-          ctx.fill();
-        }
-
-        if (hasBeard) {
-          ctx.fillStyle = hairCol;
-          ctx.beginPath();
-          ctx.moveTo(0.5, eyeY + 3.2);
-          ctx.quadraticCurveTo(3.5, eyeY + 12.5, 11.8, eyeY + 9.2);
-          ctx.lineTo(11.2, eyeY + 5.2);
-          ctx.quadraticCurveTo(7.5, eyeY + 6.5, 5.2, eyeY + 5.8);
-          ctx.closePath();
-          ctx.fill();
-        }
-      }
-
-      if (avId === 1) {
-        // KAELEN: Lean athletic ruin-delver, dark wavy hair, open collar, leather vest, amber scarf, dagger
-        const bFootX = -swing * 18, bFootY = -liftB * 9;
-        const fFootX = swing * 18, fFootY = -liftF * 9;
-
-        // Back leg & laced boot
-        drawTaperedLimb(-3, -34, -swing * 10, -17 - liftB * 5, 9.2, 7.2, skinLinear(-12, -34, 8, -15), '#0f172a');
-        drawTaperedLimb(-swing * 10, -17 - liftB * 5, bFootX, bFootY, 7.2, 5.4, '#1e293b', '#0f172a');
-        ctx.fillStyle = '#0f172a';
-        ctx.beginPath(); ctx.roundRect(bFootX - 4, bFootY - 5, 13, 6, 2); ctx.fill();
-
-        // Trailing woven amber scarf
-        const scGrad = ctx.createLinearGradient(-26, -62, -2, -40);
-        scGrad.addColorStop(0, isEvilTwist ? '#c084fc' : '#fbbf24');
-        scGrad.addColorStop(1, isEvilTwist ? '#7e22ce' : '#d97706');
-        ctx.fillStyle = scGrad;
-        ctx.beginPath();
-        ctx.moveTo(-4, -63);
-        ctx.quadraticCurveTo(-22, -56 + swing * 5, -27, -41 + swing * 5);
-        ctx.lineTo(-18, -38 + swing * 5);
-        ctx.quadraticCurveTo(-14, -49, -2, -59);
-        ctx.closePath();
-        ctx.fill();
-
-        // Shaded vest & tunic
-        const tGrad = ctx.createLinearGradient(-11, -64, 11, -32);
-        tGrad.addColorStop(0, isEvilTwist ? '#7c3aed' : '#475569');
-        tGrad.addColorStop(0.55, isEvilTwist ? '#4c1d95' : '#2b3a4a');
-        tGrad.addColorStop(1, '#0f172a');
-        ctx.fillStyle = tGrad;
-        ctx.beginPath();
-        ctx.roundRect(-11, -64, 22, 32, 7);
-        ctx.fill();
-        ctx.strokeStyle = 'rgba(255,255,255,0.14)';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-
-        // Belt & buckle
-        ctx.fillStyle = '#111827';
-        ctx.fillRect(-11, -37, 22, 4.5);
-        ctx.fillStyle = isEvilTwist ? '#e879f9' : '#f59e0b';
-        ctx.fillRect(1, -37.5, 4.5, 5.5);
-
-        // Front leg & boot
-        drawTaperedLimb(3, -34, swing * 10, -17 - liftF * 5, 9.6, 7.4, '#334155', '#0f172a');
-        drawTaperedLimb(swing * 10, -17 - liftF * 5, fFootX, fFootY, 7.4, 5.6, '#475569', '#0f172a');
-        ctx.fillStyle = '#111827';
-        ctx.beginPath(); ctx.roundRect(fFootX - 4, fFootY - 5, 14, 6, 2); ctx.fill();
-
-        drawRealisticHead(-79.5, '#292524', '#3b2314', {
-          isBroad: false, isSlender: false, hasBeard: false, hasFreckles: true, hasMustache: false
-        });
-
-        // Layered wavy dark hair with highlights
-        const hGrad1 = ctx.createLinearGradient(-10, -93, 10, -80);
-        hGrad1.addColorStop(0, '#5c3a21');
-        hGrad1.addColorStop(1, '#29170c');
-        ctx.fillStyle = hGrad1;
-        ctx.beginPath();
-        ctx.moveTo(-9.5, -81);
-        ctx.bezierCurveTo(-12, -94, 9, -95, 11, -83);
-        ctx.quadraticCurveTo(4, -87.5, -2, -84.5);
-        ctx.quadraticCurveTo(-6, -86.5, -9.5, -81);
-        ctx.closePath();
-        ctx.fill();
-
-        // Articulated arm, hand & steel dagger
-        const hx = isAttacking ? 35 : 15 + swing * 6;
-        const hy = isAttacking ? -52 : -38;
-        drawTaperedLimb(4, -60, isAttacking ? 20 : 12, isAttacking ? -56 : -46, 7, 5.4, skinLinear(0, -62, 22, -44), skinLo);
-        drawTaperedLimb(isAttacking ? 20 : 12, isAttacking ? -56 : -46, hx, hy, 5.4, 4.2, skinLinear(10, -56, 36, -36), skinLo);
-        if (hasBlade) {
-          ctx.strokeStyle = '#f8fafc';
-          ctx.lineWidth = 3;
-          ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx + 16, hy - 5); ctx.stroke();
-        }
-      } else if (avId === 2) {
-        // LYRA: Slender build, soft features, flowing crimson-violet hair, silver circlet, arcane tunic & blade
-        const bFootX = -swing * 20, bFootY = -liftB * 11;
-        const fFootX = swing * 20, fFootY = -liftF * 11;
-
-        drawTaperedLimb(-3, -34, -swing * 11, -17 - liftB * 6, 8, 6, '#1e3a8a', '#0f172a');
-        drawTaperedLimb(-swing * 11, -17 - liftB * 6, bFootX, bFootY, 6, 4.5, '#172554', '#0f172a');
-        drawTaperedLimb(3, -34, swing * 11, -17 - liftF * 6, 8.4, 6.2, '#2563eb', '#0f172a');
-        drawTaperedLimb(swing * 11, -17 - liftF * 6, fFootX, fFootY, 6.2, 4.7, '#1d4ed8', '#0f172a');
-
-        // Shaded fitted tunic with gold/cyan trim
-        const bGrad = ctx.createLinearGradient(-10, -64, 10, -32);
-        bGrad.addColorStop(0, isEvilTwist ? '#8b5cf6' : '#3b82f6');
-        bGrad.addColorStop(0.6, isEvilTwist ? '#581c87' : '#1d4ed8');
-        bGrad.addColorStop(1, '#0f172a');
-        ctx.fillStyle = bGrad;
-        ctx.beginPath();
-        ctx.moveTo(-10, -63);
-        ctx.quadraticCurveTo(0, -66, 10, -63);
-        ctx.lineTo(7.5, -33);
-        ctx.lineTo(-7.5, -33);
-        ctx.closePath();
-        ctx.fill();
-        ctx.strokeStyle = isEvilTwist ? '#f0abfc' : '#67e8f9';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-
-        drawRealisticHead(-79.5, '#0284c7', '#be185d', {
-          isBroad: false, isSlender: true, hasBeard: false, hasFreckles: false, hasMustache: false
-        });
-
-        // Flowing multi-strand crimson-violet hair & silver circlet
-        const hGrad2 = ctx.createLinearGradient(-28, -93, 10, -45);
-        hGrad2.addColorStop(0, '#f472b6');
-        hGrad2.addColorStop(0.55, '#be185d');
-        hGrad2.addColorStop(1, '#701a75');
-        ctx.fillStyle = hGrad2;
-        ctx.beginPath();
-        ctx.moveTo(-8.5, -82);
-        ctx.bezierCurveTo(-11, -94, 8, -94, 9.5, -83);
-        ctx.quadraticCurveTo(1, -86.5, -5, -82);
-        ctx.quadraticCurveTo(-24, -76 + swing * 7, -28, -45 + swing * 5);
-        ctx.lineTo(-17, -44 + swing * 5);
-        ctx.quadraticCurveTo(-15, -66, -7, -77);
-        ctx.closePath();
-        ctx.fill();
-
-        ctx.strokeStyle = '#f8fafc';
-        ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.moveTo(-8.5, -84.2); ctx.lineTo(9.5, -84.2); ctx.stroke();
-
-        const hx = isAttacking ? 37 : 15;
-        const hy = isAttacking ? -54 : -39 + swing * 5;
-        drawTaperedLimb(4, -60, isAttacking ? 21 : 12, isAttacking ? -57 : -47, 6, 4.6, skinLinear(0, -62, 22, -44), skinLo);
-        drawTaperedLimb(isAttacking ? 21 : 12, isAttacking ? -57 : -47, hx, hy, 4.6, 3.6, skinLinear(10, -56, 36, -36), skinLo);
-        ctx.strokeStyle = '#67e8f9';
-        ctx.lineWidth = 3.2;
-        ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx + 14, hy - 13); ctx.stroke();
-      } else {
-        // THORNE: Broad muscular build, square jaw, trimmed beard, dark steel armor, emerald mantle, greataxe
-        const bFootX = -swing * 13, bFootY = -liftB * 6;
-        const fFootX = swing * 13, fFootY = -liftF * 6;
-
-        // Emerald mantle with shadow
-        const mGrad = ctx.createLinearGradient(-28, -66, -6, -28);
-        mGrad.addColorStop(0, isEvilTwist ? '#a855f7' : '#10b981');
-        mGrad.addColorStop(1, isEvilTwist ? '#4c1d95' : '#065f46');
-        ctx.fillStyle = mGrad;
-        ctx.beginPath();
-        ctx.moveTo(-8, -66);
-        ctx.lineTo(-28, -43 + swing * 4);
-        ctx.lineTo(-22, -28 + swing * 4);
-        ctx.lineTo(-6, -34);
-        ctx.closePath();
-        ctx.fill();
-
-        drawTaperedLimb(-6, -35, -swing * 8, -18 - liftB * 4, 12, 9.5, '#1e293b', '#0f172a');
-        drawTaperedLimb(-swing * 8, -18 - liftB * 4, bFootX, bFootY, 9.5, 7.8, '#334155', '#0f172a');
-        drawTaperedLimb(6, -35, swing * 8, -18 - liftF * 4, 12.5, 10, '#334155', '#0f172a');
-        drawTaperedLimb(swing * 8, -18 - liftF * 4, fFootX, fFootY, 10, 8, '#475569', '#0f172a');
-
-        // Shaded steel breastplate
-        const aGrad = ctx.createLinearGradient(-19, -67, 19, -34);
-        aGrad.addColorStop(0, isEvilTwist ? '#7e22ce' : '#94a3b8');
-        aGrad.addColorStop(0.5, isEvilTwist ? '#3b0764' : '#334155');
-        aGrad.addColorStop(1, '#0f172a');
-        ctx.fillStyle = aGrad;
-        ctx.beginPath();
-        ctx.roundRect(-19, -67, 38, 35, 7);
-        ctx.fill();
-        ctx.strokeStyle = 'rgba(226, 232, 240, 0.25)';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-
-        // Steel shoulder pauldrons
-        const pGrad = ctx.createLinearGradient(-26, -70, 26, -54);
-        pGrad.addColorStop(0, isEvilTwist ? '#c084fc' : '#64748b');
-        pGrad.addColorStop(1, isEvilTwist ? '#581c87' : '#1e293b');
-        ctx.fillStyle = pGrad;
-        ctx.beginPath();
-        ctx.roundRect(-25, -69, 13, 15, 4);
-        ctx.roundRect(12, -69, 13, 15, 4);
-        ctx.fill();
-
-        drawRealisticHead(-81, '#1e293b', '#1e293b', {
-          isBroad: true, isSlender: false, hasBeard: true, hasFreckles: false, hasMustache: true
-        });
-
-        // Short cropped dark hair
-        ctx.fillStyle = '#1e293b';
-        ctx.beginPath();
-        ctx.roundRect(-9.5, -92, 20, 7, 4);
-        ctx.fill();
-
-        const hx = isAttacking ? 39 : 19;
-        const hy = isAttacking ? -48 : -37;
-        drawTaperedLimb(9, -62, isAttacking ? 24 : 15, isAttacking ? -54 : -46, 9, 7.2, skinLinear(4, -64, 38, -32), skinLo);
-        drawTaperedLimb(isAttacking ? 24 : 15, isAttacking ? -54 : -46, hx, hy, 7.2, 5.8, skinLinear(4, -64, 38, -32), skinLo);
-
-        ctx.strokeStyle = '#e2e8f0';
-        ctx.lineWidth = 4.2;
-        ctx.beginPath(); ctx.moveTo(hx, hy + 5); ctx.lineTo(hx + 3, hy - 24); ctx.stroke();
-        ctx.fillStyle = isEvilTwist ? '#e879f9' : '#10b981';
-        ctx.beginPath();
-        ctx.moveTo(hx + 3, hy - 24);
-        ctx.lineTo(hx + 18, hy - 30);
-        ctx.lineTo(hx + 14, hy - 11);
-        ctx.closePath();
-        ctx.fill();
-      }
-
-      if (hasTorch) {
-        const fg = ctx.createRadialGradient(18, -64, 2, 18, -64, 22);
-        fg.addColorStop(0, '#fef08a');
-        fg.addColorStop(0.5, 'rgba(245, 158, 11, 0.7)');
-        fg.addColorStop(1, 'rgba(245, 158, 11, 0)');
-        ctx.fillStyle = fg;
-        ctx.beginPath(); ctx.arc(18, -64, 22, 0, Math.PI * 2); ctx.fill();
-      }
-
-      if (hasRelic) {
-        const rg = ctx.createRadialGradient(-10, -46, 2, -10, -46, 22);
-        rg.addColorStop(0, '#f5d0fe');
-        rg.addColorStop(0.5, 'rgba(168, 85, 247, 0.65)');
-        rg.addColorStop(1, 'rgba(168, 85, 247, 0)');
-        ctx.fillStyle = rg;
-        ctx.beginPath(); ctx.arc(-10, -46, 22, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#e879f9';
-        ctx.beginPath(); ctx.arc(-10, -46, 6, 0, Math.PI * 2); ctx.fill();
-      }
-
-      if (isGuarding) {
-        ctx.strokeStyle = '#22d3ee';
-        ctx.lineWidth = 3;
-        ctx.beginPath(); ctx.arc(16, -44, 28, -0.9, 0.9); ctx.stroke();
-      }
-
-      if (isHurt) {
-        ctx.strokeStyle = '#ef4444';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(-16, -65); ctx.lineTo(14, -30);
-        ctx.stroke();
-      }
-
-      ctx.restore();
-    }
-
-    // Distinct Villain Renderers: Demon Monkey, Shadow Wraith, Obsidian Golem, Astral Warden
-    function drawVillainCharacter(ex, ey, kind, name, hp, maxHp, isAttacking, isHurt, phase) {
-      ctx.save();
-      ctx.translate(ex + (isAttacking ? -46 : 0) + (isHurt ? 14 : 0), ey);
-
-      const pulse = Math.sin(phase) * 4;
-
-      if (kind === 'wraith') {
-        // Floating hooded Shadow Wraith with spectral scythe/claws
-        ctx.translate(0, -14 + pulse);
-        const grad = ctx.createLinearGradient(0, -78, 0, 10);
-        grad.addColorStop(0, '#312e81');
-        grad.addColorStop(1, 'rgba(15, 23, 42, 0.15)');
-        ctx.fillStyle = grad;
-        ctx.beginPath();
-        ctx.moveTo(-20, 8);
-        ctx.quadraticCurveTo(-24, -46, 0, -74);
-        ctx.quadraticCurveTo(24, -46, 20, 8);
-        ctx.lineTo(8, 0);
-        ctx.lineTo(0, 10);
-        ctx.lineTo(-10, 0);
-        ctx.closePath();
-        ctx.fill();
-
-        // Glowing eyes
-        ctx.fillStyle = '#38bdf8';
-        ctx.fillRect(-11, -56, 5, 4);
-        ctx.fillRect(2, -56, 5, 4);
-
-        // Spectral claw reach
-        ctx.strokeStyle = '#93c5fd';
-        ctx.lineWidth = isAttacking ? 5 : 3.5;
-        ctx.beginPath();
-        ctx.moveTo(-14, -42);
-        ctx.lineTo(isAttacking ? -48 : -28, -36);
-        ctx.stroke();
-      } else if (kind === 'golem') {
-        // Heavy blocky Obsidian Golem with glowing core
-        ctx.fillStyle = '#1e293b';
-        ctx.fillRect(-24, -76, 48, 76);
-        ctx.strokeStyle = '#64748b';
-        ctx.lineWidth = 2.5;
-        ctx.strokeRect(-24, -76, 48, 76);
-
-        // Glowing molten chest core
-        ctx.fillStyle = '#f97316';
-        ctx.beginPath(); ctx.arc(0, -44, 8, 0, Math.PI * 2); ctx.fill();
-
-        // Glowing eyes
-        ctx.fillStyle = '#fb923c';
-        ctx.fillRect(-12, -64, 7, 4);
-        ctx.fillRect(5, -64, 7, 4);
-
-        // Heavy stone fist
-        ctx.fillStyle = '#334155';
-        ctx.fillRect(isAttacking ? -52 : -36, -46, 18, 18);
-      } else if (kind === 'seraph') {
-        // Astral Warden with radiant halo/wings and energy spear
-        ctx.fillStyle = '#1e1b4b';
-        ctx.beginPath();
-        ctx.moveTo(0, -58);
-        ctx.lineTo(-34, -84 + pulse);
-        ctx.lineTo(-22, -28);
-        ctx.closePath();
-        ctx.fill();
-        ctx.beginPath();
-        ctx.moveTo(0, -58);
-        ctx.lineTo(34, -84 - pulse);
-        ctx.lineTo(22, -28);
-        ctx.closePath();
-        ctx.fill();
-
-        ctx.fillStyle = '#4338ca';
-        ctx.beginPath(); ctx.roundRect(-14, -64, 28, 38, 6); ctx.fill();
-        ctx.fillStyle = '#e0e7ff';
-        ctx.beginPath(); ctx.arc(0, -76, 10, 0, Math.PI * 2); ctx.fill();
-        ctx.strokeStyle = '#f472b6';
-        ctx.lineWidth = 2.5;
-        ctx.beginPath(); ctx.arc(0, -76, 15, 0, Math.PI * 2); ctx.stroke();
-
-        // Spear / lance
-        ctx.strokeStyle = '#f472b6';
-        ctx.lineWidth = isAttacking ? 5 : 3.5;
-        ctx.beginPath();
-        ctx.moveTo(8, -40);
-        ctx.lineTo(isAttacking ? -54 : -34, -48);
-        ctx.stroke();
-      } else {
-        // Hunched Demon Monkey with horns & tail
-        ctx.strokeStyle = '#7c2d12';
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.moveTo(14, -22);
-        ctx.bezierCurveTo(38, -32, 36, -68, 18, -64);
-        ctx.stroke();
-
-        ctx.fillStyle = '#7c2d12';
-        ctx.beginPath(); ctx.ellipse(0, -36, 17, 21, 0.2, 0, Math.PI * 2); ctx.fill();
-
-        ctx.fillStyle = '#991b1b';
-        ctx.beginPath(); ctx.arc(-5, -62, 13, 0, Math.PI * 2); ctx.fill();
-
-        ctx.strokeStyle = '#fde047';
-        ctx.lineWidth = 2.5;
-        ctx.beginPath();
-        ctx.moveTo(-11, -72); ctx.lineTo(-17, -84);
-        ctx.moveTo(2, -72); ctx.lineTo(8, -84);
-        ctx.stroke();
-
-        ctx.fillStyle = '#fef08a';
-        ctx.fillRect(-13, -65, 4, 4);
-        ctx.fillRect(-4, -65, 4, 4);
-
-        ctx.strokeStyle = '#9a3412';
-        ctx.lineWidth = 6;
-        ctx.beginPath();
-        ctx.moveTo(-10, -45);
-        ctx.lineTo(isAttacking ? -46 : -28, -24);
-        ctx.stroke();
-      }
-
-      if (isAttacking) {
-        ctx.strokeStyle = '#ef4444';
-        ctx.lineWidth = 3.5;
-        ctx.beginPath();
-        ctx.arc(-28, -42, 22, 2.2, 4.1);
-        ctx.stroke();
-      }
-
-      if (isHurt) {
-        ctx.fillStyle = 'rgba(239, 68, 68, 0.45)';
-        ctx.beginPath(); ctx.arc(0, -40, 26, 0, Math.PI * 2); ctx.fill();
-      }
-
-      ctx.restore();
-
-      ctx.fillStyle = '#f5d0fe';
-      ctx.font = 'bold 11px Inter, sans-serif';
-      ctx.fillText(`${name} (${hp}/${maxHp})`, ex - 60, ey + 17);
-    }
-
-    function drawSpeechBubble(x, y, text) {
-      if (!text) return;
-      ctx.save();
-      ctx.font = 'bold 11px Inter, sans-serif';
-      const padX = 10;
-      const metrics = ctx.measureText(text);
-      const bw = Math.min(340, Math.max(120, metrics.width + padX * 2));
-      const bh = 26;
-      const bx = Math.max(12, Math.min(canvas.width - bw - 12, x - bw * 0.4));
-      const by = Math.max(8, y - bh - 12);
-
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.94)';
-      ctx.strokeStyle = '#f59e0b';
-      ctx.lineWidth = 1.6;
-      ctx.beginPath();
-      ctx.roundRect(bx, by, bw, bh, 8);
-      ctx.fill();
-      ctx.stroke();
-
-      // Pointer tail
-      ctx.beginPath();
-      ctx.moveTo(bx + 24, by + bh);
-      ctx.lineTo(bx + 32, by + bh + 8);
-      ctx.lineTo(bx + 40, by + bh);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-
-      ctx.fillStyle = '#fef3c7';
-      ctx.fillText(text, bx + padX, by + 17);
-      ctx.restore();
-    }
-
-    function drawRoomEnvironment(w, h, floorY, roomId, lvl, scroll, destroyed) {
-      const sky = ctx.createLinearGradient(0, 0, 0, h);
-      if (destroyed) {
-        sky.addColorStop(0, '#450a0a');
-        sky.addColorStop(1, '#1c0612');
-      } else if (lvl === 3) {
-        sky.addColorStop(0, '#1e1035');
-        sky.addColorStop(1, '#0d091a');
-      } else if (roomId === 'cistern') {
-        sky.addColorStop(0, '#072433');
-        sky.addColorStop(1, '#0c1c2c');
-      } else if (roomId === 'forge') {
-        sky.addColorStop(0, '#2d1208');
-        sky.addColorStop(1, '#130e19');
-      } else if (roomId === 'sanctum') {
-        sky.addColorStop(0, '#271036');
-        sky.addColorStop(1, '#0e1424');
-      } else if (roomId === 'gate') {
-        sky.addColorStop(0, '#0c2c47');
-        sky.addColorStop(1, '#131b2e');
-      } else {
-        sky.addColorStop(0, '#0a1922');
-        sky.addColorStop(1, '#11252e');
-      }
-      ctx.fillStyle = sky;
-      ctx.fillRect(0, 0, w, h);
-
-      // Distinct architectural props per room
-      if (roomId === 'cistern') {
-        // Water arches & ripples
-        ctx.strokeStyle = 'rgba(56, 189, 248, 0.25)';
-        ctx.lineWidth = 2;
-        for (let i = 0; i < 4; i++) {
-          ctx.beginPath();
-          ctx.arc(140 + i * 175, floorY + 18, 28, 0, Math.PI);
-          ctx.stroke();
-        }
-      } else if (roomId === 'forge') {
-        // Molten glow & glowing anvil
-        const fg = ctx.createRadialGradient(450, floorY - 12, 6, 450, floorY - 12, 85);
-        fg.addColorStop(0, 'rgba(251, 146, 60, 0.45)');
-        fg.addColorStop(1, 'rgba(251, 146, 60, 0)');
-        ctx.fillStyle = fg;
-        ctx.beginPath(); ctx.arc(450, floorY - 12, 85, 0, Math.PI * 2); ctx.fill();
-      } else if (roomId === 'sanctum') {
-        // Mystic pillars & rune ring
-        ctx.strokeStyle = 'rgba(232, 121, 249, 0.24)';
-        ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.arc(540, 125, 58, 0, Math.PI * 2); ctx.stroke();
-      } else if (roomId === 'gate') {
-        // Towering double gates
-        ctx.strokeStyle = 'rgba(250, 204, 21, 0.45)';
-        ctx.lineWidth = 3;
-        ctx.strokeRect(365, 66, 70, floorY - 66);
-      }
-
-      // Scrolling columns & floor tiles (active during North/South run)
-      const span = 210;
-      const start = -(((scroll * 0.75) % span + span) % span) - 30;
-      ctx.strokeStyle = 'rgba(226, 232, 240, 0.13)';
-      ctx.lineWidth = 2;
-      for (let x = start; x < w + span; x += span) {
-        ctx.strokeRect(x - 18, 42, 36, floorY - 42);
-      }
-
-      ctx.fillStyle = roomId === 'cistern' ? '#0b3246' : (lvl === 3 ? '#1c122b' : '#162330');
-      ctx.fillRect(0, floorY, w, h - floorY);
-      ctx.strokeStyle = lvl === 3 ? 'rgba(232, 121, 249, 0.42)' : 'rgba(245, 158, 11, 0.35)';
-      ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(0, floorY); ctx.lineTo(w, floorY); ctx.stroke();
-
-      const tSpan = 68;
-      const tStart = -(((scroll * 2.2) % tSpan + tSpan) % tSpan);
-      ctx.strokeStyle = 'rgba(148, 163, 184, 0.16)';
-      ctx.lineWidth = 1.5;
-      for (let tx = tStart; tx < w + tSpan; tx += tSpan) {
-        ctx.beginPath(); ctx.moveTo(tx, floorY); ctx.lineTo(tx - 20, h); ctx.stroke();
-      }
-    }
-
-    function drawScene(st) {
-      const w = canvas.width, h = canvas.height;
-      const {
-        roomId, avId, hasTorch, hasBlade, hasRelic,
-        foeHp, foeMaxHp, foeName, foeKind, anim, lvl, destroyed
-      } = st;
-
-      const isRunning = runTimerFrames > 0;
-      const dirSign = (anim === 'run_west' || anim === 'run_south') ? -1 : 1;
-      const speed = isRunning ? (dirSign * 3.4) : 0;
-      scrollOffset += speed;
-
-      if (isRunning) {
-        runTimerFrames--;
-        if (runTimerFrames === 0 && bubbleTimer <= 0) {
-          if (foeHp > 0) setBubble(`A ${foeName} blocks the way! Let's fight!`);
-          else if (roomId === 'forge' && lvl === 2 && !hasRelic) setBubble('There it is... the Ancient Relic!');
-          else setBubble('All clear for now. What next?');
-        }
-      }
-
-      if (heroAttackFrames > 0) heroAttackFrames--;
-      if (enemyAttackFrames > 0) enemyAttackFrames--;
-      if (heroHurtFrames > 0) heroHurtFrames--;
-      if (enemyHurtFrames > 0) enemyHurtFrames--;
-      if (bubbleTimer > 0) {
-        bubbleTimer--;
-        if (bubbleTimer === 0) bubbleText = '';
-      }
-
-      const floorY = 242;
-      drawRoomEnvironment(w, h, floorY, roomId, lvl, scrollOffset, destroyed);
-
-      const isEvilTwist = (lvl === 3);
-      const lungeX = heroAttackFrames > 0 ? 150 : 0;
-      let baseWalkX = 160;
-      if (isRunning) {
-        const prog = 1 - runTimerFrames / 120;
-        if (anim === 'run_east') baseWalkX = 95 + prog * 175;
-        else if (anim === 'run_west') baseWalkX = 250 - prog * 155;
-        else baseWalkX = -35 + prog * 195;
-      }
-      const px = baseWalkX + lungeX;
-      const py = floorY;
-
-      drawHumanCharacter(px, py, {
-        avId,
-        hasTorch,
-        hasBlade,
-        hasRelic,
-        isEvilTwist,
-        isRunning,
-        isAttacking: heroAttackFrames > 0,
-        isHurt: heroHurtFrames > 0,
-        isGuarding: anim === 'guard' && heroAttackFrames > 0,
-        dirSign,
-        phase: scrollOffset * 0.16
-      });
-
-      ctx.fillStyle = '#f8fafc';
-      ctx.font = 'bold 11px Inter, sans-serif';
-      ctx.fillText(runnerProfiles[avId].name.toUpperCase() + (isEvilTwist ? ' [VILLAIN]' : ''), px - 34, floorY + 17);
-
-      // Villains appear after running into a chamber
-      if (!isRunning && foeHp > 0) {
-        drawVillainCharacter(
-          565, floorY, foeKind, foeName, foeHp, foeMaxHp,
-          enemyAttackFrames > 0, enemyHurtFrames > 0, scrollOffset * 0.12
-        );
-      }
-
-      // Speech / thought bubble near character
-      drawSpeechBubble(px + 12, py - 94, bubbleText);
-
-      if (destroyed) {
-        ctx.fillStyle = 'rgba(239, 68, 68, 0.22)';
-        ctx.fillRect(0, 0, w, h);
-        ctx.fillStyle = '#fecaca';
-        ctx.font = 'bold 16px Cinzel, serif';
-        ctx.fillText('WORLD DESTROYED — YOU WIN!', 245, 42);
-      }
-    }
-
-    function syncRiddleBar(mode) {
-      const bar = document.getElementById('riddleBar');
-      const txt = document.getElementById('riddlePrompt');
-      const inp = document.getElementById('riddleAns');
-      const prompts = {
-        trap:         'Hazard active — type move (slide, leap, brace):',
-        crevice:      'Niche active — type side (left or right):',
-        riddle_bell:  'Riddle I active — type your answer:',
-        riddle_forge: 'Riddle III active — type your answer:',
-        brazier:      'Riddle II active — type your answer:',
-        riddle_gate:  'Final Riddle active — type your answer:'
-      };
-      if (prompts[mode]) {
-        bar.classList.add('open');
-        txt.textContent = prompts[mode];
-        inp.focus();
-      } else {
-        bar.classList.remove('open');
-        inp.value = '';
-      }
-    }
-
-    function syncState() {
-      const roomId = Module.ccall('current_room', 'string', [], []);
-      const hp = Module.ccall('current_hp', 'number', [], []);
-      const maxHp = Module.ccall('max_hp', 'number', [], []);
-      const stm = Module.ccall('current_stamina', 'number', [], []);
-      const maxStm = Module.ccall('max_stamina', 'number', [], []);
-      const hasTorch = Module.ccall('has_torch_flag', 'number', [], []) === 1;
-      const hasBlade = Module.ccall('has_blade_flag', 'number', [], []) === 1;
-      const hasHerb = Module.ccall('has_herb_flag', 'number', [], []) === 1;
-      const hasKey = Module.ccall('has_key_flag', 'number', [], []) === 1;
-      const hasRelic = Module.ccall('has_relic_flag', 'number', [], []) === 1;
-      const foeHp = Module.ccall('enemy_hp', 'number', [], []);
-      const foeMaxHp = Module.ccall('enemy_max_hp', 'number', [], []);
-      const foeName = Module.ccall('enemy_name', 'string', [], []);
-      const foeKind = Module.ccall('enemy_kind', 'string', [], []);
-      const mode = Module.ccall('prompt_mode', 'string', [], []);
-      const anim = Module.ccall('last_anim', 'string', [], []);
-      const lvl = Module.ccall('current_level', 'number', [], []);
-      const destroyed = Module.ccall('is_world_destroyed', 'number', [], []) === 1;
-      const avId = Module.ccall('current_avatar_id', 'number', [], []);
-      const defeats = Module.ccall('defeats_count', 'number', [], []);
-
-      cachedState = {
-        roomId, hp, maxHp, stm, maxStm,
-        hasTorch, hasBlade, hasHerb, hasKey, hasRelic,
-        foeHp, foeMaxHp, foeName, foeKind, mode, anim, lvl, destroyed, avId, defeats
-      };
-
-      const cInfo = chamberMap[roomId] || { label: roomId, goal: '', idx: 1 };
-      document.getElementById('lvlTag').textContent = `Level ${lvl}`;
-      document.getElementById('roomTag').textContent = cInfo.label;
-
-      const timerEl = document.getElementById('timerTag');
-      if (lvl === 3 && !destroyed) {
-        timerEl.style.display = 'inline-block';
-        timerEl.textContent = `Time Left: ${level3SecondsLeft}s`;
-      } else {
-        timerEl.style.display = 'none';
-      }
-
-      let goalText = cInfo.goal;
-      if (lvl === 2) goalText = 'Mission Lv.2: Claim the magical Relic in the Forge & reach the Final Gate.';
-      if (lvl === 3) goalText = 'Mission Lv.3 (Villain Twist, Timed!): Use the Relic to reach & unlock the Final Gate to destroy the world!';
-      document.getElementById('goalTxt').textContent = goalText;
-
-      document.getElementById('hpTxt').textContent = hp;
-      document.getElementById('maxHpTxt').textContent = maxHp;
-      document.getElementById('hpBar').style.width = Math.max(0, Math.min(100, (hp / maxHp) * 100)) + '%';
-
-      document.getElementById('stmTxt').textContent = stm;
-      document.getElementById('stmBar').style.width = Math.max(0, Math.min(100, (stm / maxStm) * 100)) + '%';
-
-      const foeWrap = document.getElementById('foeBarWrap');
-      if (foeHp > 0) {
-        foeWrap.style.display = 'flex';
-        document.getElementById('foeNameTxt').textContent = foeName;
-        document.getElementById('foeHpTxt').textContent = `${foeHp}/${foeMaxHp}`;
-        document.getElementById('foeBar').style.width = Math.max(0, Math.min(100, (foeHp / foeMaxHp) * 100)) + '%';
-      } else {
-        foeWrap.style.display = 'none';
-      }
-
-      document.getElementById('relTorch').classList.toggle('got', hasTorch);
-      document.getElementById('relBlade').classList.toggle('got', hasBlade);
-      document.getElementById('relHerb').classList.toggle('got', hasHerb);
-      document.getElementById('relKey').classList.toggle('got', hasKey);
-      document.getElementById('relRelic').classList.toggle('got', hasRelic);
-
-      for (let i = 1; i <= 6; i++) {
-        document.getElementById('ch' + i).classList.toggle('here', i === cInfo.idx);
-      }
-
-      syncRiddleBar(mode);
-      drawScene(cachedState);
-    }
-
-    function runAction(cmd) {
-      if (!wasmReady) return;
-      const prevRoom = Module.ccall('current_room', 'string', [], []);
-      const prevLvl = Module.ccall('current_level', 'number', [], []);
-      const prevHp = Module.ccall('current_hp', 'number', [], []);
-      const prevFoeHp = Module.ccall('enemy_hp', 'number', [], []);
-
-      appendCombat('> ' + cmd);
-      const out = Module.ccall('run_command', 'string', ['string'], [cmd]);
-      appendCombat(out);
-
-      const nextRoom = Module.ccall('current_room', 'string', [], []);
-      const nextLvl = Module.ccall('current_level', 'number', [], []);
-      const nextHp = Module.ccall('current_hp', 'number', [], []);
-      const nextFoeHp = Module.ccall('enemy_hp', 'number', [], []);
-      const anim = Module.ccall('last_anim', 'string', [], []);
-      const norm = cmd.trim().toLowerCase();
-
-      if (nextLvl !== prevLvl) {
-        runTimerFrames = 0;
-        if (nextLvl === 2) {
-          setBubble('Level 2: Time to claim that magical Relic!');
-        } else if (nextLvl === 3) {
-          level3SecondsLeft = 90;
-          setBubble('Plot twist! I am the villain—I will destroy the world with this Relic!');
-        }
-      } else if ((norm === 'north' || norm === 'south' || norm === 'east' || norm === 'west' || norm === 'retreat') && nextRoom !== prevRoom) {
-        runTimerFrames = 120;
-        const labels = { north: 'Exploring North...', south: 'Heading South (-STM)...', retreat: 'Retreating South...', east: 'Turning East into the wing...', west: 'Turning West into the wing...' };
-        setBubble(labels[norm] || 'Exploring...');
-      } else if (anim === 'slash' || anim === 'vault' || anim === 'guard' || anim === 'torch') {
-        heroAttackFrames = 22;
-        if (nextFoeHp < prevFoeHp) enemyHurtFrames = 22;
-        if (nextHp < prevHp && nextFoeHp > 0) {
-          setTimeout(() => { enemyAttackFrames = 22; heroHurtFrames = 22; }, 220);
-          setBubble('Oof! That hurt—stay sharp!');
-        } else if (nextFoeHp === 0 && prevFoeHp > 0) {
-          setBubble('Down they go! Moving on.');
-        } else {
-          setBubble('Take this!');
-        }
-      } else if (nextHp < prevHp) {
-        heroHurtFrames = 22;
-        setBubble('Ouch! That took a toll on me.');
-      } else if (anim === 'relic_found') {
-        setBubble('The Ancient Relic is mine! Unlimited dark power!');
-      } else if (anim === 'take') {
-        setBubble('Found something useful!');
-      } else if (anim === 'apocalypse') {
-        setBubble('The world is shattered! My master plan is complete!');
-      }
-
-      syncState();
-    }
-
-    function submitRiddle() {
-      const inp = document.getElementById('riddleAns');
-      const v = inp.value.trim();
-      if (!v) return;
-      runAction(v);
-      inp.value = '';
-    }
-
-    function submitCli() {
-      const inp = document.getElementById('cliInput');
-      const v = inp.value.trim();
-      if (!v) return;
-      runAction(v);
-      inp.value = '';
-    }
-
-    setInterval(() => {
-      if (!wasmReady) return;
-      if (cachedState.lvl === 3 && !cachedState.destroyed) {
-        level3SecondsLeft = Math.max(0, level3SecondsLeft - 1);
-        document.getElementById('timerTag').textContent = `Time Left: ${level3SecondsLeft}s`;
-        if (level3SecondsLeft === 0) {
-          const out = Module.ccall('run_command', 'string', ['string'], ['timeout']);
-          appendCombat(out);
-          level3SecondsLeft = 90;
-          setBubble('Too slow! Resetting Level 3 clock...');
-          syncState();
-        }
-      }
-    }, 1000);
-
-    var Module = {
-      onRuntimeInitialized: function () {
-        wasmReady = true;
-        selectRunner(1);
-        newRun(1);
-      }
+    let fbState = {
+      lvl: 1, room: 'cell', hp: 140, maxHp: 140, stm: 100, maxStm: 100,
+      hasTorch: false, hasBlade: false, hasHerb: false, hasKey: false, hasRelic: false,
+      foeHp: 0, foeMaxHp: 0, foeName: '', foeKind: '', anim: 'idle', destroyed: false, avId: 1
     };
 
-
-    // === v10 Dramatic Visuals, Maze Feedback & Web Audio SFX ===
-    let sfxEnabled = true;
-    let audioCtx = null;
-    let shakeFrames = 0;
-    let particles = [];
+    let cachedState = {
+      roomId: 'cell', hp: 140, maxHp: 140, stm: 100, maxStm: 100,
+      hasTorch: false, hasBlade: false, hasHerb: false, hasKey: false, hasRelic: false,
+      foeHp: 0, foeMaxHp: 0, foeName: '', foeKind: '', mode: '', anim: 'idle',
+      lvl: 1, destroyed: false, avId: 1, defeats: 0
+    };
 
     function getAudio() {
       if (!sfxEnabled) return null;
@@ -1594,9 +566,9 @@
         osc.start(now); osc.stop(now + 0.29);
       } else if (type === 'move') {
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(160, now);
-        osc.frequency.exponentialRampToValueAtTime(95, now + 0.11);
-        gain.gain.setValueAtTime(0.10, now);
+        osc.frequency.setValueAtTime(175, now);
+        osc.frequency.exponentialRampToValueAtTime(105, now + 0.11);
+        gain.gain.setValueAtTime(0.11, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
         osc.start(now); osc.stop(now + 0.12);
       } else if (type === 'dead_end') {
@@ -1653,84 +625,679 @@
       }
     }
 
-    // Wrap drawScene to add dramatic screen shake, slash trails & ember/arcane particles
-    const _origDrawScene = drawScene;
-    drawScene = function(st) {
+    function setBubble(text, frames = 150) {
+      bubbleText = text;
+      bubbleTimer = frames;
+    }
+
+    function appendCombat(msg) {
+      combatLog.textContent += msg + '\n';
+      combatLog.scrollTop = combatLog.scrollHeight;
+    }
+
+    function loadMazeLevel(lv) {
+      fbState.lvl = lv;
+      fbState.room = 'cell';
+      fbState.stm = 100;
+      fbState.maxStm = 100;
+      fbState.maxHp = fbState.avId === 2 ? 125 : (fbState.avId === 3 ? 160 : 140);
+      fbState.hp = fbState.maxHp;
+      fbState.destroyed = false;
+      fbState.anim = 'idle';
+      facingDir = 'east';
+      fbState.hasTorch = false;
+      fbState.hasBlade = false;
+      fbState.hasHerb = false;
+      fbState.hasKey = false;
+      fbState.hasRelic = false;
+
+      mazeRooms.cell.item = 'Torch';
+      mazeRooms.cell.foe = null;
+      mazeRooms.west1.item = 'Blade';
+      mazeRooms.west1.foe = { name: 'Demon Monkey', kind: 'monkey', hp: 62 + lv * 8 };
+      mazeRooms.west2.item = 'Herb';
+      mazeRooms.west2.foe = { name: 'Shadow Wraith', kind: 'wraith', hp: 74 + lv * 10 };
+      mazeRooms.forge.item = 'Relic';
+      mazeRooms.forge.foe = { name: 'Obsidian Golem', kind: 'golem', hp: 86 + lv * 12 };
+      mazeRooms.corridor.foe = { name: 'Demon Monkey', kind: 'monkey', hp: 64 + lv * 8 };
+      mazeRooms.sanctum.item = 'Key';
+      mazeRooms.sanctum.foe = { name: 'Obsidian Golem', kind: 'golem', hp: 88 + lv * 12 };
+      mazeRooms.cistern.item = 'Herb';
+      mazeRooms.cistern.foe = { name: 'Shadow Wraith', kind: 'wraith', hp: 76 + lv * 10 };
+      mazeRooms.gate.foe = { name: 'Astral Warden', kind: 'seraph', hp: 102 + lv * 14 };
+    }
+
+    function selectRunner(id) {
+      fbState.avId = id;
+      chosenRunner = id;
+      for (let i = 1; i <= 3; i++) {
+        document.getElementById('tab' + i).classList.toggle('active', i === id);
+      }
+      document.getElementById('runnerLore').innerHTML =
+        '<strong>' + runnerProfiles[id].name + ':</strong> ' + runnerProfiles[id].bio;
+      if (wasmReady && !useFallback) {
+        const rName = runnerProfiles[chosenRunner].name.toLowerCase();
+        Module.ccall('run_command', 'string', ['string'], [`start ${rName} level${cachedState.lvl || 1}`]);
+        syncWasmState();
+      } else {
+        loadMazeLevel(fbState.lvl);
+        pushFallbackState();
+      }
+    }
+
+    function newRun(lvl) {
+      runTimerFrames = 0;
+      heroAttackFrames = 0;
+      enemyAttackFrames = 0;
+      heroHurtFrames = 0;
+      enemyHurtFrames = 0;
+      level3SecondsLeft = 90;
+      if (wasmReady && !useFallback) {
+        const rName = runnerProfiles[chosenRunner].name.toLowerCase();
+        const reply = Module.ccall('run_command', 'string', ['string'], [`start ${rName} level${lvl}`]);
+        combatLog.textContent = '';
+        appendCombat(reply);
+        syncWasmState();
+      } else {
+        loadMazeLevel(lvl);
+        combatLog.textContent = `[Level ${lvl} Started — ${runnerProfiles[fbState.avId].name}]\nExits from Crossroads: [North] [South] [East] [West]. Try 'east' or 'west' to explore!\n`;
+        setBubble(`Level ${lvl} ready! Explore East, West, North, or South.`);
+        pushFallbackState();
+      }
+    }
+
+    function pushFallbackState() {
+      const r = mazeRooms[fbState.room] || mazeRooms.cell;
+      const foe = r.foe && r.foe.hp > 0 ? r.foe : null;
+      cachedState = {
+        roomId: fbState.room,
+        hp: fbState.hp,
+        maxHp: fbState.maxHp,
+        stm: fbState.stm,
+        maxStm: fbState.maxStm,
+        hasTorch: fbState.hasTorch,
+        hasBlade: fbState.hasBlade,
+        hasHerb: fbState.hasHerb,
+        hasKey: fbState.hasKey,
+        hasRelic: fbState.hasRelic,
+        foeHp: foe ? foe.hp : 0,
+        foeMaxHp: foe ? (70 + fbState.lvl * 14) : 0,
+        foeName: foe ? foe.name : '',
+        foeKind: foe ? foe.kind : '',
+        mode: '',
+        anim: fbState.anim,
+        lvl: fbState.lvl,
+        destroyed: fbState.destroyed,
+        avId: fbState.avId,
+        defeats: 0
+      };
+      renderHud(cachedState, r);
+    }
+
+    function syncWasmState() {
+      const roomId = Module.ccall('current_room', 'string', [], []);
+      const hp = Module.ccall('current_hp', 'number', [], []);
+      const maxHp = Module.ccall('max_hp', 'number', [], []);
+      const stm = Module.ccall('current_stamina', 'number', [], []);
+      const maxStm = Module.ccall('max_stamina', 'number', [], []);
+      const hasTorch = Module.ccall('has_torch_flag', 'number', [], []) === 1;
+      const hasBlade = Module.ccall('has_blade_flag', 'number', [], []) === 1;
+      const hasHerb = Module.ccall('has_herb_flag', 'number', [], []) === 1;
+      const hasKey = Module.ccall('has_key_flag', 'number', [], []) === 1;
+      const hasRelic = Module.ccall('has_relic_flag', 'number', [], []) === 1;
+      const foeHp = Module.ccall('enemy_hp', 'number', [], []);
+      const foeMaxHp = Module.ccall('enemy_max_hp', 'number', [], []);
+      const foeName = Module.ccall('enemy_name', 'string', [], []);
+      const foeKind = Module.ccall('enemy_kind', 'string', [], []);
+      const mode = Module.ccall('prompt_mode', 'string', [], []);
+      const anim = Module.ccall('last_anim', 'string', [], []);
+      const lvl = Module.ccall('current_level', 'number', [], []);
+      const destroyed = Module.ccall('is_world_destroyed', 'number', [], []) === 1;
+      const avId = Module.ccall('current_avatar_id', 'number', [], []);
+      const defeats = Module.ccall('defeats_count', 'number', [], []);
+
+      cachedState = {
+        roomId, hp, maxHp, stm, maxStm,
+        hasTorch, hasBlade, hasHerb, hasKey, hasRelic,
+        foeHp, foeMaxHp, foeName, foeKind, mode, anim, lvl, destroyed, avId, defeats
+      };
+      const r = mazeRooms[roomId] || { title: roomId, idx: 1 };
+      renderHud(cachedState, r);
+    }
+
+    function renderHud(st, r) {
+      document.getElementById('lvlTag').textContent = `Level ${st.lvl}`;
+      document.getElementById('roomTag').textContent = r.title || st.roomId;
+
+      const timerEl = document.getElementById('timerTag');
+      if (st.lvl === 3 && !st.destroyed) {
+        timerEl.style.display = 'inline-block';
+        timerEl.textContent = `Time Left: ${level3SecondsLeft}s`;
+      } else {
+        timerEl.style.display = 'none';
+      }
+
+      const objs = {
+        1: 'Lv.1 Sunlit Ruins — Explore East/West/North/South wings, grab Torch/Blade/Relic/Key & unlock Gate.',
+        2: 'Lv.2 Relic Hunt — Fight demons in East & West wings, claim Relic & Key, unlock Gate.',
+        3: 'Lv.3 Eclipse Endgame — Beat the clock & maze; claim Scythe/Relic/Key & open Final Gate!'
+      };
+      document.getElementById('goalTxt').textContent = objs[st.lvl] || '';
+
+      document.getElementById('hpTxt').textContent = st.hp;
+      document.getElementById('maxHpTxt').textContent = st.maxHp;
+      document.getElementById('hpBar').style.width = Math.max(0, Math.min(100, (st.hp / st.maxHp) * 100)) + '%';
+
+      document.getElementById('stmTxt').textContent = st.stm;
+      document.getElementById('stmBar').style.width = Math.max(0, Math.min(100, (st.stm / st.maxStm) * 100)) + '%';
+
+      const foeWrap = document.getElementById('foeBarWrap');
+      if (st.foeHp > 0) {
+        foeWrap.style.display = 'flex';
+        document.getElementById('foeNameTxt').textContent = st.foeName;
+        document.getElementById('foeHpTxt').textContent = `${st.foeHp}/${st.foeMaxHp}`;
+        document.getElementById('foeBar').style.width = Math.max(0, Math.min(100, (st.foeHp / st.foeMaxHp) * 100)) + '%';
+      } else {
+        foeWrap.style.display = 'none';
+      }
+
+      document.getElementById('relTorch').classList.toggle('got', st.hasTorch);
+      document.getElementById('relBlade').classList.toggle('got', st.hasBlade);
+      document.getElementById('relHerb').classList.toggle('got', st.hasHerb);
+      document.getElementById('relKey').classList.toggle('got', st.hasKey);
+      document.getElementById('relRelic').classList.toggle('got', st.hasRelic);
+
+      for (let i = 1; i <= 6; i++) {
+        document.getElementById('ch' + i).classList.toggle('here', i === (r.idx || 1));
+      }
+    }
+
+    function runAction(cmd) {
+      const c = cmd.trim().toLowerCase();
+      if (!c) return;
+
+      if (c === 'east') facingDir = 'east';
+      else if (c === 'west') facingDir = 'west';
+      else if (c === 'north') facingDir = 'north';
+      else if (c === 'south' || c === 'retreat') facingDir = 'south';
+
+      if (wasmReady && !useFallback) {
+        const prevRoom = Module.ccall('current_room', 'string', [], []);
+        const prevHp = Module.ccall('current_hp', 'number', [], []);
+        const prevFoeHp = Module.ccall('enemy_hp', 'number', [], []);
+        appendCombat('> ' + cmd);
+        const out = Module.ccall('run_command', 'string', ['string'], [cmd]);
+        appendCombat(out);
+        const nextRoom = Module.ccall('current_room', 'string', [], []);
+        const nextHp = Module.ccall('current_hp', 'number', [], []);
+        const nextFoeHp = Module.ccall('enemy_hp', 'number', [], []);
+        const anim = Module.ccall('last_anim', 'string', [], []);
+
+        if ((c === 'north' || c === 'south' || c === 'east' || c === 'west' || c === 'retreat') && nextRoom !== prevRoom) {
+          runTimerFrames = 110;
+          const labels = {
+            north: 'Exploring North...',
+            south: 'Heading South (-STM)...',
+            retreat: 'Retreating South...',
+            east: 'Turning East into the wing...',
+            west: 'Turning West into the wing...'
+          };
+          setBubble(labels[c] || 'Exploring...');
+          playSfx('move');
+        } else if (anim === 'slash' || anim === 'vault' || anim === 'guard' || anim === 'torch') {
+          heroAttackFrames = 22;
+          if (nextFoeHp < prevFoeHp) enemyHurtFrames = 22;
+          if (nextHp < prevHp && nextFoeHp > 0) setTimeout(() => { enemyAttackFrames = 22; heroHurtFrames = 22; }, 220);
+          playSfx(anim); shakeFrames = 9; spawnBurst(540, 195, '#fbbf24', 18);
+        } else {
+          playSfx('click');
+        }
+        syncWasmState();
+        return;
+      }
+
+      // Standalone 9-room maze engine
+      appendCombat('> ' + cmd);
+      const r = mazeRooms[fbState.room] || mazeRooms.cell;
+
+      const moveDir = (dir, cost, animName) => {
+        if (dir === 'north' && r.foe && r.foe.hp > 0) {
+          appendCombat(`[Blocked] ${r.foe.name} guards the northern path! Defeat it first or try East/West.`);
+          playSfx('dead_end');
+          return;
+        }
+        const nextId = r[dir];
+        if (!nextId) {
+          appendCombat(`[Wall] No exit ${dir} from ${r.title}.`);
+          playSfx('dead_end');
+          return;
+        }
+        fbState.room = nextId;
+        fbState.anim = animName;
+        runTimerFrames = 110;
+        fbState.stm = Math.max(0, fbState.stm - cost);
+        appendCombat(`[Move ${dir.toUpperCase()}] -${cost} STM (STM: ${fbState.stm})`);
+        playSfx('move');
+
+        const labels = {
+          north: 'Exploring North...',
+          south: 'Heading South (-STM)...',
+          retreat: 'Retreating South...',
+          east: 'Turning East into the wing...',
+          west: 'Turning West into the wing...'
+        };
+        setBubble(labels[c] || 'Exploring...');
+
+        if (fbState.stm === 0) {
+          fbState.hp -= 12;
+          appendCombat('[Exhausted] 0 stamina! -12 HP.');
+        }
+        const nr = mazeRooms[fbState.room];
+        if (nr.lethal) {
+          appendCombat('[LETHAL WRONG TURN] Trap triggered! Restarting level...');
+          playSfx('death'); shakeFrames = 18; spawnBurst(220, 200, '#ef4444', 30);
+          loadMazeLevel(fbState.lvl);
+        } else if (fbState.hp <= 0) {
+          appendCombat('[DEFEATED] You fell! Restarting level...');
+          playSfx('death'); shakeFrames = 18;
+          loadMazeLevel(fbState.lvl);
+        } else if (nr.west === null && dir === 'west') {
+          appendCombat('[Dead End] Dead end reached in the West! Turn East to head back.');
+          playSfx('dead_end');
+        }
+        if (nr.item) appendCombat(` * Item here: [${nr.item}] ('take')`);
+        if (nr.foe && nr.foe.hp > 0) appendCombat(` * Demon here: ${nr.foe.name} (${nr.foe.hp} HP)`);
+      };
+
+      if (c === 'north') moveDir('north', 12, 'run_north');
+      else if (c === 'south' || c === 'retreat') moveDir('south', 18, 'run_south');
+      else if (c === 'east') moveDir('east', 14, 'run_east');
+      else if (c === 'west') moveDir('west', 14, 'run_west');
+      else if (c === 'take') {
+        if (r.item) {
+          if (r.item === 'Torch') fbState.hasTorch = true;
+          if (r.item === 'Blade') fbState.hasBlade = true;
+          if (r.item === 'Herb') fbState.hasHerb = true;
+          if (r.item === 'Key') fbState.hasKey = true;
+          if (r.item === 'Relic') fbState.hasRelic = true;
+          appendCombat(`[Acquired] Picked up ${r.item}!`);
+          playSfx('win'); spawnBurst(200, 190, '#e879f9', 20);
+          r.item = null;
+        } else {
+          appendCombat('[Info] Nothing to take here.');
+        }
+      } else if (c === 'rest') {
+        fbState.stm = Math.min(fbState.maxStm, fbState.stm + 30);
+        fbState.hp = Math.min(fbState.maxHp, fbState.hp + 10);
+        appendCombat('[Rest] +30 STM, +10 HP.');
+        playSfx('click');
+      } else if (c === 'use herb') {
+        if (fbState.hasHerb) {
+          fbState.hasHerb = false;
+          fbState.hp = Math.min(fbState.maxHp, fbState.hp + 45);
+          appendCombat('[Herb] Healed +45 HP.');
+          playSfx('win');
+        } else {
+          appendCombat('[!] No Herb in pack.');
+        }
+      } else if (c === 'slash' || c === 'attack' || c === 'vault' || c === 'guard' || c === 'torch') {
+        if (r.foe && r.foe.hp > 0) {
+          const dmg = (c === 'vault' ? 42 : (c === 'torch' ? 36 : 28)) + (fbState.hasBlade ? 12 : 0) + (fbState.hasRelic ? 14 : 0);
+          r.foe.hp = Math.max(0, r.foe.hp - dmg);
+          heroAttackFrames = 20;
+          enemyHurtFrames = 20;
+          fbState.anim = c === 'attack' ? 'slash' : c;
+          appendCombat(`[${c.toUpperCase()}] Dealt ${dmg} DMG to ${r.foe.name}!`);
+          playSfx(c === 'attack' ? 'slash' : c);
+          shakeFrames = 8;
+          spawnBurst(540, 195, '#fbbf24', 18);
+          if (r.foe.hp > 0 && c !== 'vault') {
+            const eDmg = c === 'guard' ? 10 : 20;
+            fbState.hp -= eDmg;
+            enemyAttackFrames = 20;
+            heroHurtFrames = 20;
+            appendCombat(`[${r.foe.name}] Countered for ${eDmg} DMG!`);
+            if (fbState.hp <= 0) {
+              appendCombat('[DEFEATED] Restarting level...');
+              playSfx('death');
+              loadMazeLevel(fbState.lvl);
+            }
+          } else if (r.foe.hp === 0) {
+            appendCombat(`[Defeated] ${r.foe.name} is down!`);
+          }
+        } else {
+          appendCombat('[Info] No demon in this chamber.');
+        }
+      } else if (c === 'door') {
+        if (fbState.room === 'gate') {
+          if (fbState.lvl < 3) {
+            appendCombat(`[Gate Unlocked] Advancing to Level ${fbState.lvl + 1}!`);
+            playSfx('win');
+            loadMazeLevel(fbState.lvl + 1);
+          } else {
+            fbState.destroyed = true;
+            appendCombat('*** FINAL GATE CONQUERED — VICTORY! ***');
+            playSfx('win');
+          }
+        } else {
+          appendCombat('[Info] Reach the Final Gate chamber (North) to use \'door\'.');
+        }
+      } else {
+        appendCombat(`[Info] Command '${cmd}' executed.`);
+      }
+
+      pushFallbackState();
+    }
+
+    function submitRiddle() {
+      const inp = document.getElementById('riddleAns');
+      const v = inp.value.trim();
+      if (!v) return;
+      runAction(v);
+      inp.value = '';
+    }
+
+    function submitCli() {
+      const inp = document.getElementById('cliInput');
+      const v = inp.value.trim();
+      if (!v) return;
+      runAction(v);
+      inp.value = '';
+    }
+
+    function drawMazeMinimap(st) {
+      const boxX = canvas.width - 196;
+      const boxY = 10;
+      const boxW = 186;
+      const boxH = 112;
+
+      ctx.save();
+      ctx.fillStyle = 'rgba(7, 12, 20, 0.84)';
+      ctx.strokeStyle = 'rgba(245, 158, 11, 0.45)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(boxX, boxY, boxW, boxH, 8);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#fde68a';
+      ctx.font = 'bold 9.5px Inter, sans-serif';
+      ctx.fillText('MAZE MAP (N / S / E / W)', boxX + 9, boxY + 13);
+
+      const cx = boxX + 96;
+      const cy = boxY + 86;
+      const stepX = 28;
+      const stepY = 20;
+
+      // Draw links
+      ctx.strokeStyle = 'rgba(148, 163, 184, 0.35)';
+      ctx.lineWidth = 1.5;
+      Object.values(mazeRooms).forEach((rm) => {
+        const x1 = cx + rm.gx * stepX;
+        const y1 = cy + rm.gy * stepY;
+        ['north', 'south', 'east', 'west'].forEach((d) => {
+          const nid = rm[d];
+          if (nid && mazeRooms[nid]) {
+            const nr = mazeRooms[nid];
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(cx + nr.gx * stepX, cy + nr.gy * stepY);
+            ctx.stroke();
+          }
+        });
+      });
+
+      // Draw room nodes
+      Object.entries(mazeRooms).forEach(([id, rm]) => {
+        const rx = cx + rm.gx * stepX;
+        const ry = cy + rm.gy * stepY;
+        const isHere = st.roomId === id;
+        ctx.fillStyle = isHere ? '#10b981' : (rm.lethal ? '#ef4444' : (rm.item ? '#f59e0b' : '#475569'));
+        ctx.beginPath();
+        ctx.arc(rx, ry, isHere ? 5.5 : 3.8, 0, Math.PI * 2);
+        ctx.fill();
+        if (isHere) {
+          ctx.strokeStyle = '#ecfdf5';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+        }
+      });
+
+      ctx.restore();
+    }
+
+    function drawHumanCharacter(px, py, opts) {
+      const { avId, hasTorch, hasBlade, hasRelic, isEvilTwist, isRunning, isAttacking, isHurt, isGuarding, dirSign, phase } = opts;
+      ctx.save();
+      ctx.translate(px, py);
+      ctx.scale(dirSign * 1.35, 1.35);
+
+      const swing = isRunning ? Math.sin(phase) : 0;
+      const liftF = isRunning ? Math.max(0, -Math.cos(phase)) : 0;
+      const liftB = isRunning ? Math.max(0, -Math.cos(phase + Math.PI)) : 0;
+      if (isHurt) ctx.translate(-5, -2);
+
+      const shGrad = ctx.createRadialGradient(0, 2, 2, 0, 2, 22);
+      shGrad.addColorStop(0, 'rgba(0, 0, 0, 0.55)');
+      shGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = shGrad;
+      ctx.beginPath(); ctx.ellipse(0, 2, 22, 5.5, 0, 0, Math.PI * 2); ctx.fill();
+
+      const skin = avId === 1 ? '#df9f72' : (avId === 2 ? '#f3c29b' : '#b27046');
+
+      // Legs
+      ctx.strokeStyle = '#334155'; ctx.lineWidth = 6.5;
+      ctx.beginPath(); ctx.moveTo(-3, -34); ctx.lineTo(-swing * 14, -17 - liftB * 5); ctx.lineTo(-swing * 18, -liftB * 8); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(3, -34); ctx.lineTo(swing * 14, -17 - liftF * 5); ctx.lineTo(swing * 18, -liftF * 8); ctx.stroke();
+
+      // Torso
+      ctx.fillStyle = isEvilTwist ? '#6d28d9' : (avId === 2 ? '#2563eb' : (avId === 3 ? '#475569' : '#334155'));
+      ctx.beginPath(); ctx.roundRect(-11, -64, 22, 32, 6); ctx.fill();
+
+      // Head & face
+      ctx.fillStyle = skin;
+      ctx.beginPath(); ctx.arc(1.5, -78.5, 10.5, 0, Math.PI * 2); ctx.fill();
+
+      // Eye + brow + nose
+      ctx.fillStyle = '#090d16';
+      ctx.beginPath(); ctx.arc(6.8, -79.5, 1.8, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#1e1b4b'; ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.moveTo(4.2, -83); ctx.lineTo(9.5, -82.2); ctx.stroke();
+      ctx.strokeStyle = '#7c2d12'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(10.5, -79.5); ctx.lineTo(12.5, -76.5); ctx.stroke();
+
+      // Hair
+      ctx.fillStyle = avId === 2 ? '#db2777' : '#29170c';
+      ctx.beginPath(); ctx.arc(0, -81, 11, Math.PI * 0.95, Math.PI * 2.05); ctx.fill();
+
+      // Weapon arm
+      const hx = isAttacking ? 34 : 14 + swing * 5;
+      const hy = isAttacking ? -52 : -40;
+      ctx.strokeStyle = skin; ctx.lineWidth = 5;
+      ctx.beginPath(); ctx.moveTo(4, -59); ctx.lineTo(hx, hy); ctx.stroke();
+      if (hasBlade || avId === 2 || avId === 3) {
+        ctx.strokeStyle = isEvilTwist ? '#e879f9' : '#f8fafc';
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx + 16, hy - 8); ctx.stroke();
+      }
+      if (hasTorch) {
+        ctx.fillStyle = '#fbbf24';
+        ctx.beginPath(); ctx.arc(18, -64, 6, 0, Math.PI * 2); ctx.fill();
+      }
+      if (hasRelic) {
+        ctx.fillStyle = '#e879f9';
+        ctx.beginPath(); ctx.arc(-10, -46, 6, 0, Math.PI * 2); ctx.fill();
+      }
+      if (isGuarding) {
+        ctx.strokeStyle = '#22d3ee'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(16, -44, 26, -0.9, 0.9); ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawVillainCharacter(ex, ey, kind, name, hp, maxHp, isAttacking, isHurt, phase) {
+      ctx.save();
+      ctx.translate(ex + (isAttacking ? -42 : 0) + (isHurt ? 12 : 0), ey);
+      const pulse = Math.sin(phase) * 4;
+      if (kind === 'wraith') {
+        ctx.translate(0, -12 + pulse);
+        ctx.fillStyle = '#312e81';
+        ctx.beginPath(); ctx.moveTo(-18, 6); ctx.quadraticCurveTo(-22, -46, 0, -72); ctx.quadraticCurveTo(22, -46, 18, 6); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#38bdf8'; ctx.fillRect(-9, -54, 4, 4); ctx.fillRect(3, -54, 4, 4);
+      } else if (kind === 'golem') {
+        ctx.fillStyle = '#1e293b'; ctx.fillRect(-22, -74, 44, 74);
+        ctx.fillStyle = '#f97316'; ctx.beginPath(); ctx.arc(0, -42, 7, 0, Math.PI * 2); ctx.fill();
+      } else if (kind === 'seraph') {
+        ctx.fillStyle = '#4338ca'; ctx.beginPath(); ctx.roundRect(-14, -64, 28, 38, 6); ctx.fill();
+        ctx.fillStyle = '#e0e7ff'; ctx.beginPath(); ctx.arc(0, -76, 9, 0, Math.PI * 2); ctx.fill();
+      } else {
+        ctx.fillStyle = '#7c2d12'; ctx.beginPath(); ctx.ellipse(0, -34, 16, 20, 0.2, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#991b1b'; ctx.beginPath(); ctx.arc(-4, -58, 12, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#fef08a'; ctx.fillRect(-10, -61, 4, 4); ctx.fillRect(-2, -61, 4, 4);
+      }
+      ctx.restore();
+      ctx.fillStyle = '#f5d0fe';
+      ctx.font = 'bold 11px Inter, sans-serif';
+      ctx.fillText(`${name} (${hp}/${maxHp})`, ex - 56, ey + 17);
+    }
+
+    function drawSpeechBubble(x, y, text) {
+      if (!text) return;
+      ctx.save();
+      ctx.font = 'bold 11px Inter, sans-serif';
+      const bw = Math.min(340, Math.max(120, ctx.measureText(text).width + 20));
+      const bh = 25;
+      const bx = Math.max(12, Math.min(canvas.width - bw - 12, x - bw * 0.4));
+      const by = Math.max(8, y - bh - 10);
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.94)';
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 8); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#fef3c7';
+      ctx.fillText(text, bx + 10, by + 16);
+      ctx.restore();
+    }
+
+    function drawScene(st) {
+      const w = canvas.width, h = canvas.height;
+      const floorY = 242;
       ctx.save();
       if (shakeFrames > 0) {
         shakeFrames--;
         const mag = Math.min(9, shakeFrames * 0.65);
         ctx.translate((Math.random() - 0.5) * mag * 2, (Math.random() - 0.5) * mag * 2);
       }
-      _origDrawScene(st);
 
-      // Dramatic slash arc when attacking
-      if (heroAttackFrames > 10) {
-        ctx.save();
-        ctx.strokeStyle = st.lvl === 3 ? '#e879f9' : (st.lvl === 2 ? '#22d3ee' : '#fbbf24');
-        ctx.lineWidth = 5;
-        ctx.shadowColor = ctx.strokeStyle;
-        ctx.shadowBlur = 14;
-        ctx.beginPath();
-        ctx.arc(380, 195, 68, -0.85, 0.75);
-        ctx.stroke();
-        ctx.restore();
+      const sky = ctx.createLinearGradient(0, 0, 0, h);
+      sky.addColorStop(0, st.lvl === 3 ? '#1e1035' : '#0a1922');
+      sky.addColorStop(1, '#11252e');
+      ctx.fillStyle = sky;
+      ctx.fillRect(0, 0, w, h);
+
+      const isRunning = runTimerFrames > 0;
+      const dirSign = (facingDir === 'west' || facingDir === 'south') ? -1 : 1;
+      if (isRunning) {
+        scrollOffset += dirSign * 3.4;
+        runTimerFrames--;
+      }
+      if (heroAttackFrames > 0) heroAttackFrames--;
+      if (enemyAttackFrames > 0) enemyAttackFrames--;
+      if (heroHurtFrames > 0) heroHurtFrames--;
+      if (enemyHurtFrames > 0) enemyHurtFrames--;
+      if (bubbleTimer > 0 && --bubbleTimer === 0) bubbleText = '';
+
+      // Columns & floor
+      const span = 210;
+      const start = -(((scrollOffset * 0.75) % span + span) % span) - 30;
+      ctx.strokeStyle = 'rgba(226, 232, 240, 0.14)';
+      ctx.lineWidth = 2;
+      for (let x = start; x < w + span; x += span) {
+        ctx.strokeRect(x - 18, 42, 36, floorY - 42);
+      }
+      ctx.fillStyle = '#162330';
+      ctx.fillRect(0, floorY, w, h - floorY);
+
+      const lungeX = heroAttackFrames > 0 ? 140 : 0;
+      let baseWalkX = 160;
+      if (isRunning) {
+        const prog = 1 - runTimerFrames / 110;
+        if (facingDir === 'east') baseWalkX = 95 + prog * 180;
+        else if (facingDir === 'west') baseWalkX = 260 - prog * 165;
+        else baseWalkX = -30 + prog * 190;
+      }
+      const px = baseWalkX + lungeX;
+
+      drawHumanCharacter(px, floorY, {
+        avId: st.avId,
+        hasTorch: st.hasTorch,
+        hasBlade: st.hasBlade,
+        hasRelic: st.hasRelic,
+        isEvilTwist: st.lvl === 3,
+        isRunning,
+        isAttacking: heroAttackFrames > 0,
+        isHurt: heroHurtFrames > 0,
+        isGuarding: st.anim === 'guard' && heroAttackFrames > 0,
+        dirSign,
+        phase: scrollOffset * 0.16
+      });
+
+      ctx.fillStyle = '#f8fafc';
+      ctx.font = 'bold 11px Inter, sans-serif';
+      ctx.fillText(`${runnerProfiles[st.avId].name.toUpperCase()} (${facingDir.toUpperCase()})`, px - 38, floorY + 17);
+
+      if (!isRunning && st.foeHp > 0) {
+        drawVillainCharacter(565, floorY, st.foeKind, st.foeName, st.foeHp, st.foeMaxHp, enemyAttackFrames > 0, enemyHurtFrames > 0, scrollOffset * 0.12);
       }
 
-      // Render & step particles
+      if (heroAttackFrames > 10) {
+        ctx.strokeStyle = '#fbbf24';
+        ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.arc(380, 195, 62, -0.85, 0.75); ctx.stroke();
+      }
+
       for (let i = particles.length - 1; i >= 0; i--) {
         const p = particles[i];
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vy += 0.12;
-        p.life--;
-        if (p.life <= 0) {
-          particles.splice(i, 1);
-          continue;
-        }
-        ctx.save();
+        p.x += p.vx; p.y += p.vy; p.vy += 0.12; p.life--;
+        if (p.life <= 0) { particles.splice(i, 1); continue; }
         ctx.globalAlpha = Math.max(0, p.life / p.maxLife);
         ctx.fillStyle = p.color;
-        ctx.shadowColor = p.color;
-        ctx.shadowBlur = 8;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
       }
+      ctx.globalAlpha = 1;
+
+      drawSpeechBubble(px + 12, floorY - 94, bubbleText);
+      drawMazeMinimap(st);
       ctx.restore();
+    }
+
+    setInterval(() => {
+      if (cachedState.lvl === 3 && !cachedState.destroyed) {
+        level3SecondsLeft = Math.max(0, level3SecondsLeft - 1);
+        const tEl = document.getElementById('timerTag');
+        if (tEl) tEl.textContent = `Time Left: ${level3SecondsLeft}s`;
+      }
+    }, 1000);
+
+    var Module = {
+      onRuntimeInitialized: function () {
+        wasmReady = true;
+        useFallback = false;
+        selectRunner(1);
+        newRun(1);
+      }
     };
 
-    // Wrap runAction to trigger SFX, shake & particles
-    const _origRunAction = runAction;
-    runAction = function(cmd) {
-      _origRunAction(cmd);
-      const norm = cmd.trim().toLowerCase();
-      if (norm === 'slash' || norm === 'attack') {
-        playSfx('slash'); shakeFrames = 8; spawnBurst(540, 195, '#fbbf24', 18);
-      } else if (norm === 'vault') {
-        playSfx('vault'); shakeFrames = 10; spawnBurst(540, 195, '#22d3ee', 22);
-      } else if (norm === 'guard') {
-        playSfx('guard'); shakeFrames = 6; spawnBurst(260, 195, '#38bdf8', 14);
-      } else if (norm === 'torch') {
-        playSfx('torch'); shakeFrames = 9; spawnBurst(540, 190, '#fb923c', 26);
-      } else if (norm === 'north' || norm === 'south' || norm === 'east' || norm === 'west') {
-        playSfx('move');
-        if (norm === 'south') spawnBurst(160, 240, '#f59e0b', 10);
-      } else if (norm === 'take') {
-        playSfx('win'); spawnBurst(200, 190, '#e879f9', 20);
-      } else {
-        playSfx('click');
-      }
-      const logTxt = combatLog.textContent.slice(-260).toLowerCase();
-      if (logTxt.includes('level restarted') || logTxt.includes('lethal')) {
-        playSfx('death'); shakeFrames = 18; spawnBurst(220, 200, '#ef4444', 32);
-      } else if (logTxt.includes('dead end')) {
-        playSfx('dead_end');
-      } else if (logTxt.includes('victory')) {
-        playSfx('win'); spawnBurst(400, 150, '#a855f7', 40);
-      }
-    };
+    window.addEventListener('DOMContentLoaded', () => {
+      selectRunner(1);
+      newRun(1);
+      setTimeout(() => {
+        if (!wasmReady) {
+          useFallback = true;
+          loadMazeLevel(1);
+          pushFallbackState();
+        }
+      }, 200);
+    });
 
     function loopFrame() {
       drawScene(cachedState);
@@ -1739,160 +1306,6 @@
     requestAnimationFrame(loopFrame);
   </script>
 
-    // Fallback engine when dungeon.wasm/dungeon.js isn't compiled locally
-    window.addEventListener('DOMContentLoaded', () => {
-      setTimeout(() => {
-        if (!wasmReady) {
-          const fbState = {
-            lvl: 1, room: 'cell', hp: 140, maxHp: 140, stm: 100, maxStm: 100,
-            hasTorch: false, hasBlade: false, hasHerb: false, hasKey: false, hasRelic: false,
-            foeHp: 0, foeMaxHp: 0, foeName: '', foeKind: '', anim: 'idle', destroyed: false, avId: 1
-          };
-          const rooms = {
-            cell: { title: '1. Maze Crossroads', idx: 1, north: 'corridor', south: 'cistern', east: 'forge', west: 'west1', item: 'Torch', foe: null },
-            west1: { title: '2. West Armory Wing', idx: 2, north: null, south: null, east: 'cell', west: 'west2', item: 'Blade', foe: { name: 'Demon Monkey', kind: 'monkey', hp: 68 } },
-            west2: { title: '3. West Dead-End Crypt', idx: 3, north: null, south: null, east: 'west1', west: null, item: 'Herb', foe: { name: 'Shadow Wraith', kind: 'wraith', hp: 82 } },
-            forge: { title: '4. East Demon Foundry', idx: 4, north: null, south: null, east: 'east2', west: 'cell', item: 'Relic', foe: { name: 'Obsidian Golem', kind: 'golem', hp: 96 } },
-            east2: { title: '5. East Chasm (Lethal)', idx: 4, north: null, south: null, east: null, west: 'forge', item: null, foe: null, lethal: true },
-            corridor: { title: '6. North Shifting Gallery', idx: 2, north: 'sanctum', south: 'cell', east: 'forge', west: 'west1', item: null, foe: { name: 'Demon Monkey', kind: 'monkey', hp: 70 } },
-            sanctum: { title: '7. North Relic Sanctum', idx: 5, north: 'gate', south: 'corridor', east: null, west: null, item: 'Key', foe: { name: 'Obsidian Golem', kind: 'golem', hp: 98 } },
-            cistern: { title: '8. South Sunken Vault', idx: 3, north: 'cell', south: null, east: 'forge', west: 'west1', item: 'Herb', foe: { name: 'Shadow Wraith', kind: 'wraith', hp: 84 } },
-            gate: { title: '9. Final Gate', idx: 6, north: null, south: 'sanctum', east: null, west: null, item: null, foe: { name: 'Astral Warden', kind: 'seraph', hp: 118 } }
-          };
-          function loadFbLevel(lv) {
-            fbState.lvl = lv; fbState.room = 'cell'; fbState.stm = 100; fbState.maxStm = 100;
-            fbState.maxHp = fbState.avId === 2 ? 125 : (fbState.avId === 3 ? 160 : 140);
-            fbState.hp = fbState.maxHp; fbState.destroyed = false;
-            fbState.hasTorch = false; fbState.hasBlade = false; fbState.hasHerb = false; fbState.hasKey = false; fbState.hasRelic = false;
-            rooms.cell.item = 'Torch'; rooms.cistern.item = 'Herb'; rooms.corridor.item = 'Blade'; rooms.sanctum.item = 'Relic'; rooms.gate.item = 'Key';
-            rooms.cistern.foe = { name: 'Shadow Wraith', kind: 'wraith', hp: 70 + lv * 10 };
-            rooms.corridor.foe = { name: 'Demon Monkey', kind: 'monkey', hp: 60 + lv * 10 };
-            rooms.sanctum.foe = { name: 'Obsidian Golem', kind: 'golem', hp: 85 + lv * 12 };
-            rooms.gate.foe = { name: 'Astral Warden', kind: 'seraph', hp: 100 + lv * 14 };
-          }
-          function pushFbState() {
-            const r = rooms[fbState.room] || rooms.cell;
-            const foe = r.foe && r.foe.hp > 0 ? r.foe : null;
-            cachedState = {
-              roomId: fbState.room, hp: fbState.hp, maxHp: fbState.maxHp,
-              stm: fbState.stm, maxStm: fbState.maxStm,
-              hasTorch: fbState.hasTorch, hasBlade: fbState.hasBlade, hasHerb: fbState.hasHerb,
-              hasKey: fbState.hasKey, hasRelic: fbState.hasRelic,
-              foeHp: foe ? foe.hp : 0, foeMaxHp: foe ? (70 + fbState.lvl * 12) : 0,
-              foeName: foe ? foe.name : '', foeKind: foe ? foe.kind : '',
-              mode: '', anim: fbState.anim, lvl: fbState.lvl, destroyed: fbState.destroyed, avId: fbState.avId, defeats: 0
-            };
-            document.getElementById('lvlTag').textContent = `Level ${fbState.lvl}`;
-            document.getElementById('roomTag').textContent = r.title;
-            document.getElementById('hpTxt').textContent = fbState.hp;
-            document.getElementById('maxHpTxt').textContent = fbState.maxHp;
-            document.getElementById('hpBar').style.width = Math.max(0, (fbState.hp / fbState.maxHp) * 100) + '%';
-            document.getElementById('stmTxt').textContent = fbState.stm;
-            document.getElementById('stmBar').style.width = Math.max(0, (fbState.stm / fbState.maxStm) * 100) + '%';
-            document.getElementById('relTorch').classList.toggle('got', fbState.hasTorch);
-            document.getElementById('relBlade').classList.toggle('got', fbState.hasBlade);
-            document.getElementById('relHerb').classList.toggle('got', fbState.hasHerb);
-            document.getElementById('relKey').classList.toggle('got', fbState.hasKey);
-            document.getElementById('relRelic').classList.toggle('got', fbState.hasRelic);
-            for (let i = 1; i <= 6; i++) document.getElementById('ch' + i).classList.toggle('here', i === r.idx);
-            const objs = {
-              1: 'Lv.1 Sunlit Ruins (Weapon: Sunlit Blade) — Explore maze, grab Torch/Blade/Relic/Key & reach Gate.',
-              2: 'Lv.2 Relic Hunt (Weapon: Arcane Glaive) — Watch stamina on South backtracks; unlock Gate.',
-              3: 'Lv.3 Eclipse Endgame (Weapon: Eclipse Scythe) — Beat the clock & maze; unlock Final Gate!'
-            };
-            document.getElementById('goalTxt').textContent = objs[fbState.lvl];
-          }
-          window.selectRunner = function(id) {
-            fbState.avId = id; chosenRunner = id;
-            for (let i = 1; i <= 3; i++) document.getElementById('tab' + i).classList.toggle('active', i === id);
-            document.getElementById('runnerLore').innerHTML = '<strong>' + runnerProfiles[id].name + ':</strong> ' + runnerProfiles[id].bio;
-            loadFbLevel(fbState.lvl); pushFbState();
-          };
-          window.newRun = function(lv) {
-            loadFbLevel(lv);
-            combatLog.textContent = `[Level ${lv} Started — ${runnerProfiles[fbState.avId].name}]\n`;
-            setBubble(`Level ${lv} ready! Watch your stamina & wrong turns.`);
-            pushFbState();
-          };
-          window.runAction = function(cmd) {
-            const c = cmd.trim().toLowerCase();
-            appendCombat('> ' + cmd);
-            const r = rooms[fbState.room] || rooms.cell;
-            const moveDir = (dir, cost, animName) => {
-              if (dir === 'north' && r.foe && r.foe.hp > 0) { appendCombat(`[Blocked] ${r.foe.name} blocks North!`); return; }
-              const nextId = r[dir];
-              if (!nextId) { appendCombat(`[Wall] No exit ${dir}.`); return; }
-              fbState.room = nextId; fbState.anim = animName;
-              fbState.stm = Math.max(0, fbState.stm - cost);
-              appendCombat(`[Move ${dir}] -${cost} STM (STM: ${fbState.stm})`);
-              if (fbState.stm === 0) {
-                fbState.hp -= 12; appendCombat('[Exhausted] 0 stamina! -12 HP.');
-              }
-              const nr = rooms[fbState.room];
-              if (nr.lethal) {
-                appendCombat('[LETHAL WRONG TURN] Trap triggered! Restarting level...');
-                loadFbLevel(fbState.lvl);
-              } else if (fbState.hp <= 0) {
-                appendCombat('[DEFEATED] You fell! Restarting level...');
-                loadFbLevel(fbState.lvl);
-              } else if (nr.north === null && dir === 'west') {
-                appendCombat('[Dead End] Dead end reached! Turn back.');
-              }
-            };
-            if (c === 'north') { runTimerFrames = 120; moveDir('north', 12, 'run_north'); }
-            else if (c === 'south' || c === 'retreat') { runTimerFrames = 120; moveDir('south', 18, 'run_south'); }
-            else if (c === 'east') { runTimerFrames = 120; moveDir('east', 14, 'run_east'); }
-            else if (c === 'west') { runTimerFrames = 120; moveDir('west', 14, 'run_west'); }
-            else if (c === 'take') {
-              if (r.item) {
-                if (r.item === 'Torch') fbState.hasTorch = true;
-                if (r.item === 'Blade') fbState.hasBlade = true;
-                if (r.item === 'Herb') fbState.hasHerb = true;
-                if (r.item === 'Key') fbState.hasKey = true;
-                if (r.item === 'Relic') fbState.hasRelic = true;
-                appendCombat(`[Acquired] Picked up ${r.item}!`);
-                r.item = null;
-              } else appendCombat('[Info] Nothing to take here.');
-            } else if (c === 'rest') {
-              fbState.stm = Math.min(fbState.maxStm, fbState.stm + 30);
-              fbState.hp = Math.min(fbState.maxHp, fbState.hp + 10);
-              appendCombat('[Rest] +30 STM, +10 HP.');
-            } else if (c === 'use herb') {
-              if (fbState.hasHerb) { fbState.hasHerb = false; fbState.hp = Math.min(fbState.maxHp, fbState.hp + 45); appendCombat('[Herb] Healed +45 HP.'); }
-              else appendCombat('[!] No Herb.');
-            } else if (c === 'slash' || c === 'attack' || c === 'vault' || c === 'guard' || c === 'torch') {
-              if (r.foe && r.foe.hp > 0) {
-                const dmg = (c === 'vault' ? 42 : (c === 'torch' ? 36 : 28)) + (fbState.hasBlade ? 10 : 0) + (fbState.hasRelic ? 12 : 0);
-                r.foe.hp = Math.max(0, r.foe.hp - dmg);
-                heroAttackFrames = 20; enemyHurtFrames = 20;
-                appendCombat(`[${c.toUpperCase()}] Dealt ${dmg} DMG to ${r.foe.name}!`);
-                if (r.foe.hp > 0 && c !== 'vault') {
-                  const eDmg = c === 'guard' ? 10 : 20;
-                  fbState.hp -= eDmg; enemyAttackFrames = 20; heroHurtFrames = 20;
-                  appendCombat(`[${r.foe.name}] Countered for ${eDmg} DMG!`);
-                  if (fbState.hp <= 0) { appendCombat('[DEFEATED] Restarting level...'); loadFbLevel(fbState.lvl); }
-                } else if (r.foe.hp === 0) appendCombat(`[Defeated] ${r.foe.name} is down!`);
-              } else appendCombat('[Info] No foe here.');
-            } else if (c === 'door') {
-              if (fbState.room === 'gate') {
-                if (fbState.lvl < 3) {
-                  appendCombat(`[Gate Unlocked] Advancing to Level ${fbState.lvl + 1}!`);
-                  loadFbLevel(fbState.lvl + 1);
-                } else {
-                  fbState.destroyed = true;
-                  appendCombat('*** FINAL GATE CONQUERED — VICTORY! ***');
-                }
-              } else appendCombat('[Info] Reach the Final Gate chamber first.');
-            } else {
-              appendCombat(`[Info] Command '${cmd}' executed.`);
-            }
-            pushFbState();
-          };
-          selectRunner(1);
-          newRun(1);
-        }
-      }, 250);
-    });
 
   <script src="dungeon.js"></script>
 </body>
