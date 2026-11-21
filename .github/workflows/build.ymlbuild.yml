@@ -22,7 +22,7 @@ jobs:
 
       - name: Compile C++ to WebAssembly
         run: |
-          emcc dungeon_engine.cpp -o dungeon.js \
+          em++ dungeon_engine.cpp -o dungeon.js \
             -s EXPORTED_FUNCTIONS="['_run_command','_current_room','_current_hp','_has_torch_flag']" \
             -s EXPORTED_RUNTIME_METHODS="['ccall','cwrap']"
 
