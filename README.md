@@ -1,3 +1,3 @@
-# Idol Sprint — C++ OOP Temple Adventure
+# Eclipse of the Relic — 3-Level C++ OOP Adventure
 
-A Temple Run-inspired 6-chamber C++ OOP adventure featuring distinct humanoid characters (no stick figures), running triggered only when moving north or south with a run sequence before encountering demon monkeys and obstacles, stamina-based combat moves, knockdown recovery loops, and four riddles compiled to WebAssembly via GitHub Actions.
+Features distinct human-like avatars with facial details and hairstyles, multiple villain types (Demon Monkey, Shadow Wraith, Obsidian Golem, Astral Warden), character speech/thought bubbles, distinct chamber visuals, visible hero and villain combat animations, and a 3-level story where Level 2 recovers the magical Relic and Level 3 reveals the hero's villainous plan to destroy the world under a timer.

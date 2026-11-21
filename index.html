@@ -3,23 +3,24 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Idol Sprint — C++ OOP Temple Adventure</title>
+  <title>Eclipse of the Relic — 3-Level C++ OOP Adventure</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg-0: #06090d;
-      --bg-1: #0c131a;
-      --bg-2: #121c26;
-      --bg-3: #192633;
+      --bg-0: #05080d;
+      --bg-1: #0b1219;
+      --bg-2: #121c27;
+      --bg-3: #192635;
       --line: rgba(148, 163, 184, 0.16);
-      --text: #f1f5f9;
+      --text: #f8fafc;
       --muted: #94a3b8;
       --amber: #f59e0b;
       --cyan: #22d3ee;
       --crimson: #ef4444;
       --emerald: #10b981;
+      --violet: #a855f7;
     }
     * { box-sizing: border-box; }
     html, body {
@@ -28,8 +29,8 @@
       height: 100vh;
       overflow: hidden;
       background:
-        radial-gradient(ellipse at 18% 0%, rgba(245, 158, 11, 0.13), transparent 45%),
-        radial-gradient(ellipse at 85% 5%, rgba(16, 185, 129, 0.11), transparent 45%),
+        radial-gradient(ellipse at 18% 0%, rgba(245, 158, 11, 0.14), transparent 45%),
+        radial-gradient(ellipse at 85% 5%, rgba(168, 85, 247, 0.12), transparent 45%),
         var(--bg-0);
       color: var(--text);
       font-family: 'Inter', system-ui, sans-serif;
@@ -63,10 +64,10 @@
     h1 {
       margin: 0;
       font-family: 'Cinzel', serif;
-      font-size: 15px;
+      font-size: 14.5px;
       font-weight: 800;
       letter-spacing: 0.7px;
-      background: linear-gradient(90deg, #fde68a, #f59e0b, #34d399);
+      background: linear-gradient(90deg, #fde68a, #f59e0b, #c084fc);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       white-space: nowrap;
@@ -80,6 +81,11 @@
       border: 1px solid rgba(245, 158, 11, 0.35);
       color: #fde68a;
       white-space: nowrap;
+    }
+    .tag.timer {
+      background: rgba(239, 68, 68, 0.18);
+      border-color: rgba(239, 68, 68, 0.55);
+      color: #fca5a5;
     }
     .hud-bars {
       display: flex;
@@ -95,7 +101,7 @@
       font-weight: 600;
     }
     .bar-bg {
-      width: 92px;
+      width: 88px;
       height: 7px;
       background: #05070a;
       border: 1px solid var(--line);
@@ -104,13 +110,13 @@
     }
     .bar-hp { height: 100%; width: 100%; background: linear-gradient(90deg, #ef4444, #f59e0b 55%, #10b981); transition: width 0.2s; }
     .bar-stm { height: 100%; width: 100%; background: linear-gradient(90deg, #0284c7, #22d3ee); transition: width 0.2s; }
-    .bar-foe { height: 100%; width: 100%; background: linear-gradient(90deg, #ea580c, #ef4444); transition: width 0.2s; }
+    .bar-foe { height: 100%; width: 100%; background: linear-gradient(90deg, #dc2626, #a855f7); transition: width 0.2s; }
 
     .main-area {
       flex: 1 1 auto;
       min-height: 0;
       display: grid;
-      grid-template-columns: 1.58fr 0.96fr;
+      grid-template-columns: 1.62fr 0.94fr;
       gap: 9px;
     }
     .stage-col {
@@ -149,7 +155,7 @@
     .goal-line strong { color: var(--amber); margin-right: 6px; }
 
     .log-box {
-      flex: 0 0 132px;
+      flex: 0 0 124px;
       background: #06090f;
       border: 1px solid var(--line);
       border-radius: 11px;
@@ -157,7 +163,7 @@
       overflow-y: auto;
       font-family: 'JetBrains Mono', monospace;
       font-size: 11px;
-      line-height: 1.38;
+      line-height: 1.36;
       white-space: pre-wrap;
       color: #e2e8f0;
     }
@@ -204,24 +210,24 @@
     .lore-scroll {
       font-size: 10.5px;
       color: #cbd5e1;
-      line-height: 1.36;
+      line-height: 1.35;
       padding: 6px 8px;
       border-radius: 7px;
       background: rgba(255, 255, 255, 0.025);
       border: 1px solid rgba(148, 163, 184, 0.12);
-      max-height: 82px;
+      max-height: 76px;
       overflow-y: auto;
     }
     .relics-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(5, 1fr);
       gap: 4px;
     }
     .rel-pill {
-      padding: 4px;
+      padding: 4px 2px;
       border-radius: 6px;
       text-align: center;
-      font-size: 10.5px;
+      font-size: 10px;
       font-weight: 600;
       background: var(--bg-2);
       border: 1px solid var(--line);
@@ -231,6 +237,11 @@
       color: #fde68a;
       border-color: rgba(245, 158, 11, 0.55);
       background: rgba(245, 158, 11, 0.15);
+    }
+    .rel-pill.relic-special.got {
+      color: #e9d5ff;
+      border-color: rgba(168, 85, 247, 0.7);
+      background: rgba(168, 85, 247, 0.22);
     }
     .chambers-grid {
       display: grid;
@@ -310,7 +321,7 @@
     button.m.grn { background: rgba(16, 185, 129, 0.16); border-color: rgba(16, 185, 129, 0.48); color: #a7f3d0; }
 
     .cli {
-      flex: 1 1 150px;
+      flex: 1 1 140px;
       display: flex;
       align-items: center;
       background: #05070b;
@@ -335,14 +346,14 @@
   <div class="screen">
     <header>
       <div class="head-left">
-        <h1>IDOL SPRINT</h1>
-        <span class="tag" id="roomTag">1. Idol Courtyard</span>
-        <span class="tag" id="runTag" style="background:rgba(34,211,238,0.12);border-color:rgba(34,211,238,0.35);color:#a5f3fc;">Kaelen · Lv.1</span>
-        <span class="tag" id="lossTag" style="background:rgba(239,68,68,0.12);border-color:rgba(239,68,68,0.35);color:#fca5a5;">Knockdowns: 0</span>
+        <h1>ECLIPSE OF THE RELIC</h1>
+        <span class="tag" id="lvlTag">Level 1</span>
+        <span class="tag" id="roomTag">1. Sunlit Courtyard</span>
+        <span class="tag timer" id="timerTag" style="display:none;">Clock: 90s</span>
       </div>
       <div class="hud-bars">
         <div class="stat-meter">
-          <span>HP <span id="hpTxt">130</span>/<span id="maxHpTxt">130</span></span>
+          <span>HP <span id="hpTxt">140</span>/<span id="maxHpTxt">140</span></span>
           <div class="bar-bg"><div class="bar-hp" id="hpBar"></div></div>
         </div>
         <div class="stat-meter">
@@ -350,7 +361,7 @@
           <div class="bar-bg"><div class="bar-stm" id="stmBar"></div></div>
         </div>
         <div class="stat-meter" id="foeBarWrap" style="display:none;">
-          <span style="color:#fca5a5;"><span id="foeNameTxt">Monkey</span> <span id="foeHpTxt">0</span></span>
+          <span style="color:#f5d0fe;"><span id="foeNameTxt">Villain</span> <span id="foeHpTxt">0</span></span>
           <div class="bar-bg"><div class="bar-foe" id="foeBar"></div></div>
         </div>
       </div>
@@ -359,46 +370,48 @@
     <div class="main-area">
       <div class="stage-col">
         <div class="canvas-wrap">
-          <canvas id="gameCanvas" width="780" height="320"></canvas>
-          <div class="goal-line"><strong>OBJECTIVE</strong><span id="goalTxt">Starting temple run...</span></div>
+          <canvas id="gameCanvas" width="800" height="325"></canvas>
+          <div class="goal-line"><strong>OBJECTIVE</strong><span id="goalTxt">Starting Level 1...</span></div>
         </div>
         <div class="log-box" id="combatLog"></div>
       </div>
 
       <aside class="side-panel">
         <div>
-          <div class="sec-hd">Select Runner &amp; Backstory</div>
+          <div class="sec-hd">Select Character &amp; Backstory</div>
           <div class="avatar-tabs">
             <button class="tab-btn active" id="tab1" onclick="selectRunner(1)">Kaelen</button>
             <button class="tab-btn" id="tab2" onclick="selectRunner(2)">Lyra</button>
             <button class="tab-btn" id="tab3" onclick="selectRunner(3)">Thorne</button>
           </div>
           <div class="lore-scroll" id="runnerLore" style="margin-top:5px;"></div>
-          <div style="display:flex;gap:5px;margin-top:5px;">
-            <button class="m gld" style="flex:1;" onclick="newRun(1)">Run Lv.1 Standard</button>
-            <button class="m atk" style="flex:1;" onclick="newRun(2)">Run Lv.2 Veteran</button>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:5px;">
+            <button class="m gld" onclick="newRun(1)">Lv.1 Ruins</button>
+            <button class="m skl" onclick="newRun(2)">Lv.2 Relic Hunt</button>
+            <button class="m atk" onclick="newRun(3)">Lv.3 Endgame</button>
           </div>
         </div>
 
         <div>
-          <div class="sec-hd">Temple Relics</div>
+          <div class="sec-hd">Items &amp; Ancient Relic</div>
           <div class="relics-grid">
             <div class="rel-pill" id="relTorch">Torch</div>
             <div class="rel-pill" id="relBlade">Blade</div>
             <div class="rel-pill" id="relHerb">Herb</div>
             <div class="rel-pill" id="relKey">Key</div>
+            <div class="rel-pill relic-special" id="relRelic">Relic</div>
           </div>
         </div>
 
         <div>
-          <div class="sec-hd">6 Temple Chambers</div>
+          <div class="sec-hd">6 Chambers</div>
           <div class="chambers-grid">
-            <div class="ch-cell here" id="ch1">1. Courtyard</div>
+            <div class="ch-cell here" id="ch1">1. Start</div>
             <div class="ch-cell" id="ch2">2. Gallery</div>
             <div class="ch-cell" id="ch3">3. Cistern</div>
             <div class="ch-cell" id="ch4">4. Forge</div>
             <div class="ch-cell" id="ch5">5. Sanctum</div>
-            <div class="ch-cell" id="ch6">6. Gate</div>
+            <div class="ch-cell" id="ch6">6. Final Gate</div>
           </div>
         </div>
       </aside>
@@ -407,7 +420,7 @@
     <div class="dock">
       <div class="riddle-bar" id="riddleBar">
         <span id="riddlePrompt">Challenge active:</span>
-        <input id="riddleAns" type="text" placeholder="Type move or riddle answer..." />
+        <input id="riddleAns" type="text" placeholder="Type move or answer..." />
         <button class="m gld" onclick="submitRiddle()">Submit</button>
       </div>
 
@@ -420,12 +433,12 @@
         <button class="m" onclick="runAction('take')">Take</button>
         <button class="m" onclick="runAction('search')">Inspect / Riddle</button>
         <button class="m" onclick="runAction('use herb')">Use Herb</button>
-        <button class="m" onclick="runAction('door')">Gate</button>
+        <button class="m" onclick="runAction('door')">Final Gate</button>
         <button class="m" onclick="runAction('north')">North</button>
         <button class="m" onclick="runAction('south')">South</button>
         <form class="cli" onsubmit="event.preventDefault(); submitCli();">
           <span>&gt;</span>
-          <input id="cliInput" type="text" placeholder="slash, vault, guard, torch, rest, take, search, north..." autocomplete="off" />
+          <input id="cliInput" type="text" placeholder="slash, vault, guard, torch, take, search, north..." autocomplete="off" />
         </form>
       </div>
     </div>
@@ -437,27 +450,35 @@
     const combatLog = document.getElementById('combatLog');
     let wasmReady = false;
     let chosenRunner = 1;
-    let chosenDiff = 1;
-    let animPhase = 0;
     let scrollOffset = 0;
     let runTimerFrames = 0;
-    let encounterRevealFrames = 0;
+    let heroAttackFrames = 0;
+    let enemyAttackFrames = 0;
+    let heroHurtFrames = 0;
+    let enemyHurtFrames = 0;
+    let level3SecondsLeft = 90;
+    let bubbleText = '';
+    let bubbleTimer = 0;
 
     let cachedState = {
       roomId: 'cell',
-      hp: 130,
-      maxHp: 130,
+      hp: 140,
+      maxHp: 140,
       stm: 100,
       maxStm: 100,
       hasTorch: false,
       hasBlade: false,
       hasHerb: false,
       hasKey: false,
+      hasRelic: false,
       foeHp: 0,
       foeMaxHp: 0,
       foeName: '',
+      foeKind: '',
       mode: '',
       anim: 'idle',
+      lvl: 1,
+      destroyed: false,
       avId: 1,
       defeats: 0
     };
@@ -465,26 +486,31 @@
     const runnerProfiles = {
       1: {
         name: 'Kaelen',
-        bio: 'Kaelen grew up on the cliff paths overlooking the sunken jungle temple where his older brother vanished chasing a stolen sun-idol. Trained in ruined watchtowers, Kaelen reads crumbling stonework and demon monkey pack calls by instinct—balanced enough to endure long sprints, traps, and riddles without burning out too soon.'
+        bio: 'Kaelen is a seasoned ruin-delver with dark wavy hair, a leather vest, and a warm amber scarf. Beneath his calm explorer mask hides a cold obsession with forbidden relics.'
       },
       2: {
         name: 'Lyra',
-        bio: 'Lyra was a sky-bridge courier hired by rival expedition guilds before the temple’s ancient wards sealed the valley. Fast, daring, and deadly with a tempered blade, she vaults over hazards and punishes demon monkeys with heavy bursts, though her lighter armor leaves little room for sloppy mistakes.'
+        bio: 'Lyra is an agile arcane courier with long braided crimson-violet hair, silver trim, and sharp reflexes—driven by secrets that turn darker as the Relic awakens.'
       },
       3: {
         name: 'Thorne',
-        bio: 'Thorne spent twelve winters guarding a storm-battered monastery at the edge of the basin, learning to absorb punishing blows and steady his breathing under pressure. His strikes start measured, but his towering stamina and resilience let him outlast brutal demon monkey ambushes and recover from setbacks.'
+        bio: 'Thorne is a tall, broad-shouldered veteran with a trimmed beard, dark steel pauldrons, and an emerald cloak—whose stoic patience conceals a plan to remake the world in ash.'
       }
     };
 
     const chamberMap = {
-      cell:     { label: '1. Idol Courtyard',    goal: 'Grab the Torch, then run North into the Trapped Gallery.', idx: 1 },
-      corridor: { label: '2. Trapped Gallery',   goal: 'Battle the Crimson Demon Monkey (slash/vault/guard/torch), grab Blade, inspect traps for Key.', idx: 2 },
-      cistern:  { label: '3. Sunken Cistern',    goal: 'Battle the Fang Demon Monkey & inspect the gong shrine for Riddle I.', idx: 3 },
-      forge:    { label: '4. Obsidian Forge',    goal: 'Battle the Ember Demon Monkey, grab Herb, inspect anvil for Riddle III.', idx: 4 },
-      sanctum:  { label: '5. Ember Sanctum',     goal: 'Inspect braziers (Riddle II), grab Herb, defeat the Alpha Idol Monkey.', idx: 5 },
-      gate:     { label: '6. Outer Temple Gate', goal: 'Unlock with Key & solve Riddle IV to escape the temple.', idx: 6 }
+      cell:     { label: '1. Start Chamber', goal: 'Advance North to continue the mission.', idx: 1 },
+      corridor: { label: '2. Gallery',       goal: 'Fight the villain, inspect for Key, and move North.', idx: 2 },
+      cistern:  { label: '3. Cistern',       goal: 'Defeat the wraith & inspect to solve Riddle I.', idx: 3 },
+      forge:    { label: '4. Forge',         goal: 'Claim items/Relic, defeat the golem & inspect for Riddle III.', idx: 4 },
+      sanctum:  { label: '5. Sanctum',       goal: 'Inspect braziers (Riddle II) & defeat the guardian.', idx: 5 },
+      gate:     { label: '6. Final Gate',    goal: 'Use Key & solve the Final Riddle to complete the stage.', idx: 6 }
     };
+
+    function setBubble(text, frames = 150) {
+      bubbleText = text;
+      bubbleTimer = frames;
+    }
 
     function selectRunner(id) {
       chosenRunner = id;
@@ -500,447 +526,568 @@
       combatLog.scrollTop = combatLog.scrollHeight;
     }
 
-    function newRun(lv) {
-      chosenDiff = lv;
+    function newRun(lvl) {
       if (!wasmReady) return;
       const rName = runnerProfiles[chosenRunner].name.toLowerCase();
-      const dWord = lv === 2 ? 'veteran' : 'standard';
-      const reply = Module.ccall('run_command', 'string', ['string'], [`start ${rName} ${dWord}`]);
+      const reply = Module.ccall('run_command', 'string', ['string'], [`start ${rName} level${lvl}`]);
       combatLog.textContent = '';
       appendCombat(reply);
       runTimerFrames = 0;
-      encounterRevealFrames = 0;
-      animPhase = 10;
+      heroAttackFrames = 0;
+      enemyAttackFrames = 0;
+      heroHurtFrames = 0;
+      enemyHurtFrames = 0;
+      level3SecondsLeft = 90;
+      if (lvl === 1) setBubble('Starting Level 1. Let us explore!');
+      else if (lvl === 2) setBubble('Level 2: I must find the Ancient Relic!');
+      else setBubble('Hehe... now I have the Relic. The world will burn!');
       syncState();
     }
 
-    function drawHumanoidRunner(px, py, avId, hasTorch, hasBlade, isRunning, isGuarding, isSlashing, isVaulting, dirSign, phase) {
+    // Human-like character with distinct facial features, hair, neck, shoulders, torso, arms, legs, and outfits
+    function drawHumanCharacter(px, py, opts) {
+      const {
+        avId, hasTorch, hasBlade, hasRelic, isEvilTwist,
+        isRunning, isAttacking, isHurt, isGuarding, dirSign, phase
+      } = opts;
+
       ctx.save();
       ctx.translate(px, py);
       ctx.scale(dirSign, 1);
 
-      const stride = isRunning ? Math.sin(phase) : 0;
-      const counterStride = isRunning ? Math.sin(phase + Math.PI) : 0;
-      const liftFront = isRunning ? Math.max(0, -Math.cos(phase)) * 8 : 0;
-      const liftBack = isRunning ? Math.max(0, -Math.cos(phase + Math.PI)) * 8 : 0;
+      const swing = isRunning ? Math.sin(phase) : 0;
+      const liftF = isRunning ? Math.max(0, -Math.cos(phase)) * 7 : 0;
+      const liftB = isRunning ? Math.max(0, -Math.cos(phase + Math.PI)) * 7 : 0;
 
-      // Distinct humanoid proportions & silhouettes per runner
-      const torsoColor = avId === 1 ? '#3b4d61' : (avId === 2 ? '#1e3a5f' : '#4a3f35');
-      const accentColor = avId === 1 ? '#f59e0b' : (avId === 2 ? '#22d3ee' : '#10b981');
-      const skinColor = avId === 1 ? '#e2a679' : (avId === 2 ? '#f1c29b' : '#c88d63');
+      // Distinct human looks per avatar
+      const skin = avId === 1 ? '#e8b288' : (avId === 2 ? '#f4c7a1' : '#c68b63');
+      const hairColor = avId === 1 ? '#291d18' : (avId === 2 ? '#be185d' : '#1e293b');
+      const outfitMain = isEvilTwist
+        ? '#4c1d95'
+        : (avId === 1 ? '#2b3a4a' : (avId === 2 ? '#1d4ed8' : '#374151'));
+      const trimColor = isEvilTwist
+        ? '#e879f9'
+        : (avId === 1 ? '#f59e0b' : (avId === 2 ? '#22d3ee' : '#10b981'));
 
-      // Back arm & back leg (humanoid limbs with joints)
-      ctx.strokeStyle = skinColor;
-      ctx.lineWidth = avId === 3 ? 8 : 6;
+      if (isHurt) {
+        ctx.translate(-5, -2);
+      }
+
+      // Back Leg (hip -> knee -> ankle/boot)
+      const bKneeX = -swing * 9;
+      const bFootX = -swing * 16;
+      const bFootY = -liftB;
+      ctx.strokeStyle = '#1f2937';
+      ctx.lineWidth = avId === 3 ? 8.5 : 6.5;
       ctx.lineCap = 'round';
-
-      // Back leg
-      const bxFootX = -counterStride * 16;
-      const bxFootY = -liftBack;
+      ctx.lineJoin = 'round';
       ctx.beginPath();
-      ctx.moveTo(-2, -26);
-      ctx.lineTo(bxFootX * 0.5, -13 - liftBack * 0.5);
-      ctx.lineTo(bxFootX, bxFootY);
+      ctx.moveTo(-2, -28);
+      ctx.lineTo(bKneeX, -14 - liftB * 0.5);
+      ctx.lineTo(bFootX, bFootY);
       ctx.stroke();
 
-      // Back arm
+      // Back Arm
+      ctx.strokeStyle = skin;
+      ctx.lineWidth = avId === 3 ? 7.5 : 5.5;
       ctx.beginPath();
-      ctx.moveTo(-2, -52);
-      ctx.lineTo(stride * 12, -35);
+      ctx.moveTo(-3, -55);
+      ctx.lineTo(-4 + swing * 12, -36);
       ctx.stroke();
 
-      // Flowing mantle / scarf (only waves while running or vaulting)
-      const waveAmp = (isRunning || isVaulting) ? Math.sin(phase * 1.4) * 5 : 1;
-      ctx.fillStyle = accentColor;
+      // Cloak / Scarf
+      ctx.fillStyle = trimColor;
       ctx.beginPath();
-      ctx.moveTo(-4, -55);
-      ctx.lineTo(-28, -36 + waveAmp);
-      ctx.lineTo(-22, -22 + waveAmp);
-      ctx.lineTo(-2, -32);
+      ctx.moveTo(-5, -58);
+      ctx.lineTo(-27, -38 + (isRunning ? Math.sin(phase * 1.4) * 5 : 0));
+      ctx.lineTo(-21, -24 + (isRunning ? Math.sin(phase * 1.4) * 5 : 0));
+      ctx.lineTo(-3, -34);
       ctx.closePath();
       ctx.fill();
 
-      // Humanoid torso (broad chest for Thorne, sleek athletic for Lyra, balanced for Kaelen)
-      const chestHalfW = avId === 3 ? 15 : (avId === 2 ? 10 : 12);
-      ctx.fillStyle = torsoColor;
+      // Human Torso (shoulders & chest)
+      const halfChest = avId === 3 ? 15 : (avId === 2 ? 10.5 : 12);
+      ctx.fillStyle = outfitMain;
       ctx.beginPath();
-      ctx.roundRect(-chestHalfW, -57, chestHalfW * 2, 32, 7);
+      ctx.roundRect(-halfChest, -60, halfChest * 2, 34, 8);
       ctx.fill();
 
-      // Belt & sash
-      ctx.fillStyle = accentColor;
-      ctx.fillRect(-chestHalfW, -29, chestHalfW * 2, 5);
+      // Belt & chest emblem
+      ctx.fillStyle = trimColor;
+      ctx.fillRect(-halfChest, -30, halfChest * 2, 4.5);
 
-      // Front leg
-      const fxFootX = stride * 16;
-      const fxFootY = -liftFront;
-      ctx.strokeStyle = skinColor;
-      ctx.lineWidth = avId === 3 ? 8 : 6;
+      // Front Leg
+      const fKneeX = swing * 9;
+      const fFootX = swing * 16;
+      const fFootY = -liftF;
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = avId === 3 ? 8.5 : 6.5;
       ctx.beginPath();
-      ctx.moveTo(2, -26);
-      ctx.lineTo(fxFootX * 0.5, -13 - liftFront * 0.5);
-      ctx.lineTo(fxFootX, fxFootY);
+      ctx.moveTo(2, -28);
+      ctx.lineTo(fKneeX, -14 - liftF * 0.5);
+      ctx.lineTo(fFootX, fFootY);
       ctx.stroke();
 
       // Boots
-      ctx.fillStyle = '#1e293b';
-      ctx.fillRect(fxFootX - 3, fxFootY - 5, 11, 5);
-      ctx.fillRect(bxFootX - 3, bxFootY - 5, 11, 5);
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(fFootX - 3, fFootY - 5, 11, 5);
+      ctx.fillRect(bFootX - 3, bFootY - 5, 11, 5);
 
-      // Humanoid head + neck + distinct headgear/hair
-      ctx.fillStyle = skinColor;
-      ctx.fillRect(-4, -63, 8, 7);
+      // Neck
+      ctx.fillStyle = skin;
+      ctx.fillRect(-4, -66, 8, 7);
+
+      // Human Head (oval face + nose + eye + eyebrow + mouth)
+      ctx.fillStyle = skin;
       ctx.beginPath();
-      ctx.arc(0, -72, 10.5, 0, Math.PI * 2);
+      ctx.ellipse(1, -76, 10.5, 12, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // Eye & brow
-      ctx.fillStyle = '#0f172a';
-      ctx.fillRect(4, -74, 3, 3);
+      // Facial features
+      ctx.fillStyle = isEvilTwist ? '#f0abfc' : '#0f172a';
+      ctx.beginPath();
+      ctx.arc(6, -77, 2.2, 0, Math.PI * 2); // eye
+      ctx.fill();
 
+      // Eyebrow (angled menacingly if evil twist or attacking)
+      ctx.strokeStyle = hairColor;
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      if (isEvilTwist || isAttacking) {
+        ctx.moveTo(3, -81); ctx.lineTo(9, -79);
+      } else {
+        ctx.moveTo(3, -80); ctx.lineTo(9, -81);
+      }
+      ctx.stroke();
+
+      // Nose bridge
+      ctx.strokeStyle = 'rgba(15, 23, 42, 0.45)';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(9, -77); ctx.lineTo(11.5, -74); ctx.lineTo(9, -73);
+      ctx.stroke();
+
+      // Distinct Hairstyles per Avatar
+      ctx.fillStyle = hairColor;
       if (avId === 1) {
-        // Kaelen: Ranger hood + headband
-        ctx.strokeStyle = '#334155';
-        ctx.lineWidth = 4;
-        ctx.beginPath(); ctx.arc(-1, -73, 12, Math.PI * 0.85, Math.PI * 1.95); ctx.stroke();
-        ctx.fillStyle = '#f59e0b';
-        ctx.fillRect(-10, -77, 21, 3.5);
-      } else if (avId === 2) {
-        // Lyra: Flowing cyan ponytail & sleek circlet
-        ctx.fillStyle = '#22d3ee';
+        // Kaelen: tousled adventurer hair
         ctx.beginPath();
-        ctx.moveTo(-9, -76);
-        ctx.quadraticCurveTo(-24, -72 + waveAmp, -28, -56 + waveAmp);
-        ctx.lineTo(-14, -62 + waveAmp);
-        ctx.closePath();
+        ctx.ellipse(0, -83, 12, 6, -0.15, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (avId === 2) {
+        // Lyra: swept bangs + flowing high ponytail
+        ctx.beginPath();
+        ctx.ellipse(0, -84, 11.5, 5.5, 0, 0, Math.PI * 2);
+        ctx.moveTo(-8, -82);
+        ctx.quadraticCurveTo(-26, -78 + (isRunning ? Math.sin(phase) * 5 : 0), -28, -56);
+        ctx.lineTo(-14, -62);
         ctx.fill();
       } else {
-        // Thorne: Heavy horned/crested guardian helm & beard
-        ctx.fillStyle = '#64748b';
-        ctx.beginPath(); ctx.arc(0, -74, 12.5, Math.PI, 0); ctx.fill();
-        ctx.strokeStyle = '#10b981';
-        ctx.lineWidth = 3;
-        ctx.beginPath(); ctx.moveTo(0, -86); ctx.lineTo(0, -94); ctx.stroke();
-        ctx.fillStyle = '#475569';
-        ctx.beginPath(); ctx.arc(3, -67, 7, 0, Math.PI * 0.9); ctx.fill();
+        // Thorne: short cropped hair + full beard
+        ctx.beginPath();
+        ctx.rect(-10, -87, 21, 7);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(3, -70, 8.5, 0.1, Math.PI * 0.92);
+        ctx.fill();
       }
 
-      // Front arm + weapon/torch
-      ctx.strokeStyle = skinColor;
-      ctx.lineWidth = avId === 3 ? 8 : 6;
-      const armReachX = isSlashing ? 28 : 13;
-      const armReachY = isSlashing ? -48 : -40 - counterStride * 8;
+      // Front Arm + Active Weapon / Relic
+      const reachX = isAttacking ? 34 : 13;
+      const reachY = isAttacking ? -52 : -42 - swing * 6;
+      ctx.strokeStyle = skin;
+      ctx.lineWidth = avId === 3 ? 7.5 : 5.5;
       ctx.beginPath();
-      ctx.moveTo(4, -52);
-      ctx.lineTo(armReachX, armReachY);
+      ctx.moveTo(4, -55);
+      ctx.lineTo(reachX, reachY);
       ctx.stroke();
 
       if (hasBlade) {
         ctx.strokeStyle = '#e2e8f0';
-        ctx.lineWidth = isSlashing ? 5 : 3;
+        ctx.lineWidth = isAttacking ? 5 : 3.2;
         ctx.beginPath();
-        ctx.moveTo(armReachX, armReachY);
-        ctx.lineTo(armReachX + (isSlashing ? 28 : 16), armReachY - (isSlashing ? 10 : 24));
+        ctx.moveTo(reachX, reachY);
+        ctx.lineTo(reachX + (isAttacking ? 34 : 16), reachY - (isAttacking ? 6 : 22));
         ctx.stroke();
+        if (isAttacking) {
+          ctx.strokeStyle = 'rgba(34, 211, 238, 0.7)';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.arc(reachX + 18, reachY - 4, 24, -0.7, 0.7);
+          ctx.stroke();
+        }
       }
 
       if (hasTorch) {
         ctx.strokeStyle = '#92400e';
         ctx.lineWidth = 4;
         ctx.beginPath();
-        ctx.moveTo(armReachX, armReachY);
-        ctx.lineTo(armReachX + 12, armReachY - 18);
+        ctx.moveTo(reachX, reachY);
+        ctx.lineTo(reachX + 10, reachY - 16);
         ctx.stroke();
+        const fg = ctx.createRadialGradient(reachX + 10, reachY - 20, 2, reachX + 10, reachY - 20, 24);
+        fg.addColorStop(0, '#fef08a');
+        fg.addColorStop(0.5, 'rgba(245, 158, 11, 0.75)');
+        fg.addColorStop(1, 'rgba(245, 158, 11, 0)');
+        ctx.fillStyle = fg;
+        ctx.beginPath(); ctx.arc(reachX + 10, reachY - 20, 24, 0, Math.PI * 2); ctx.fill();
+      }
 
-        const flameGrad = ctx.createRadialGradient(armReachX + 12, armReachY - 22, 2, armReachX + 12, armReachY - 22, 26);
-        flameGrad.addColorStop(0, '#fef08a');
-        flameGrad.addColorStop(0.5, 'rgba(245, 158, 11, 0.75)');
-        flameGrad.addColorStop(1, 'rgba(245, 158, 11, 0)');
-        ctx.fillStyle = flameGrad;
-        ctx.beginPath(); ctx.arc(armReachX + 12, armReachY - 22, 26, 0, Math.PI * 2); ctx.fill();
+      if (hasRelic) {
+        const rg = ctx.createRadialGradient(-8, -44, 2, -8, -44, 22);
+        rg.addColorStop(0, '#f5d0fe');
+        rg.addColorStop(0.5, 'rgba(168, 85, 247, 0.65)');
+        rg.addColorStop(1, 'rgba(168, 85, 247, 0)');
+        ctx.fillStyle = rg;
+        ctx.beginPath(); ctx.arc(-8, -44, 22, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#e879f9';
+        ctx.beginPath(); ctx.arc(-8, -44, 6, 0, Math.PI * 2); ctx.fill();
       }
 
       if (isGuarding) {
         ctx.strokeStyle = '#22d3ee';
         ctx.lineWidth = 3;
-        ctx.beginPath(); ctx.arc(14, -42, 28, -0.85, 0.85); ctx.stroke();
+        ctx.beginPath(); ctx.arc(16, -44, 28, -0.9, 0.9); ctx.stroke();
       }
 
-      ctx.restore();
-    }
-
-    function drawHumanoidDemonMonkey(ex, ey, foeName, foeHp, foeMaxHp, isRunning, recoilX, phase) {
-      ctx.save();
-      ctx.translate(ex + recoilX, ey);
-
-      const stride = isRunning ? Math.sin(phase) : Math.sin(phase * 0.4) * 0.25;
-      const bob = isRunning ? Math.abs(Math.cos(phase)) * 6 : Math.abs(Math.sin(phase * 0.5)) * 2;
-      ctx.translate(0, -bob);
-
-      // Curled demon tail
-      ctx.strokeStyle = '#7c2d12';
-      ctx.lineWidth = 4.5;
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.moveTo(16, -24);
-      ctx.bezierCurveTo(44, -36 + stride * 8, 42, -76, 20, -72);
-      ctx.stroke();
-
-      // Hind legs
-      ctx.strokeStyle = '#9a3412';
-      ctx.lineWidth = 6;
-      ctx.beginPath();
-      ctx.moveTo(-4, -22);
-      ctx.lineTo(-12 - stride * 12, -8);
-      ctx.lineTo(-10 - stride * 14, 0);
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.moveTo(6, -22);
-      ctx.lineTo(10 + stride * 12, -8);
-      ctx.lineTo(8 + stride * 14, 0);
-      ctx.stroke();
-
-      // Hunched humanoid-ape torso
-      ctx.fillStyle = '#7c2d12';
-      ctx.beginPath();
-      ctx.ellipse(0, -38, 18, 22, 0.22, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Chest markings
-      ctx.fillStyle = '#ea580c';
-      ctx.beginPath();
-      ctx.ellipse(-4, -36, 9, 12, 0.15, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Long front arm with claws
-      ctx.strokeStyle = '#9a3412';
-      ctx.lineWidth = 6.5;
-      ctx.beginPath();
-      ctx.moveTo(-10, -48);
-      ctx.lineTo(-26, -30 + stride * 9);
-      ctx.lineTo(-34, -14 + stride * 12);
-      ctx.stroke();
-
-      // Demon head + horns + glowing eyes
-      ctx.fillStyle = '#991b1b';
-      ctx.beginPath();
-      ctx.arc(-6, -66, 14, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Horns
-      ctx.strokeStyle = '#fde047';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(-13, -76); ctx.lineTo(-20, -90);
-      ctx.moveTo(1, -76); ctx.lineTo(8, -90);
-      ctx.stroke();
-
-      // Eyes & snout
-      ctx.fillStyle = '#fef08a';
-      ctx.fillRect(-15, -69, 4.5, 4);
-      ctx.fillRect(-6, -69, 4.5, 4);
-
-      ctx.restore();
-
-      ctx.fillStyle = '#fca5a5';
-      ctx.font = 'bold 11.5px Inter, sans-serif';
-      ctx.fillText(`${foeName} (${foeHp}/${foeMaxHp})`, ex + recoilX - 65, ey + 18);
-    }
-
-    function drawObstacleHazard(ox, floorY, roomId, mode, scroll) {
-      ctx.save();
-      ctx.translate(ox, floorY);
-
-      if (roomId === 'cistern') {
-        // Sunken gong shrine / rising stepping stones
-        ctx.fillStyle = '#0e7490';
-        ctx.fillRect(-26, -10, 52, 10);
-        ctx.strokeStyle = '#f59e0b';
-        ctx.lineWidth = 2.5;
-        ctx.beginPath(); ctx.arc(0, -34, 16, 0, Math.PI * 2); ctx.stroke();
-      } else if (roomId === 'forge') {
-        // Obsidian anvil & glowing runes
-        ctx.fillStyle = '#334155';
+      if (isHurt) {
+        ctx.strokeStyle = '#ef4444';
+        ctx.lineWidth = 3;
         ctx.beginPath();
-        ctx.moveTo(-24, -18); ctx.lineTo(24, -18); ctx.lineTo(14, -8); ctx.lineTo(-14, -8);
-        ctx.closePath(); ctx.fill();
-        ctx.fillRect(-8, -8, 16, 8);
-      } else if (roomId === 'sanctum') {
-        // Twin flame brazier
-        ctx.fillStyle = '#475569';
-        ctx.fillRect(-14, -22, 28, 22);
-        const flicker = Math.sin(scroll * 0.25) * 4;
-        ctx.fillStyle = '#f97316';
-        ctx.beginPath(); ctx.arc(0, -28 + flicker * 0.4, 10, 0, Math.PI * 2); ctx.fill();
-      } else {
-        // Spike & dart hazard in corridor/gate
-        ctx.fillStyle = '#cbd5e1';
-        for (let i = -20; i <= 20; i += 13) {
-          ctx.beginPath();
-          ctx.moveTo(i - 5, 0);
-          ctx.lineTo(i, -16);
-          ctx.lineTo(i + 5, 0);
-          ctx.closePath();
-          ctx.fill();
-        }
-      }
-
-      if (mode) {
-        ctx.fillStyle = '#fde68a';
-        ctx.font = 'bold 10.5px Inter, sans-serif';
-        ctx.fillText('OBSTACLE AHEAD', -42, -56);
-      }
-
-      ctx.restore();
-    }
-
-    function drawTempleBattle(st) {
-      const w = canvas.width, h = canvas.height;
-      const { roomId, avId, hasTorch, hasBlade, foeHp, foeMaxHp, foeName, mode, anim } = st;
-      ctx.clearRect(0, 0, w, h);
-
-      // Character only runs when north or south is clicked (active runTimerFrames > 0)
-      const isRunning = runTimerFrames > 0;
-      const dirSign = (anim === 'run_south') ? -1 : 1;
-      const trackSpeed = isRunning ? (anim === 'run_south' ? -2.8 : 2.8) : 0;
-      scrollOffset += trackSpeed;
-
-      if (isRunning) {
-        runTimerFrames--;
-        if (runTimerFrames === 0 && (foeHp > 0 || mode !== '')) {
-          encounterRevealFrames = 16;
-        }
-      }
-      if (encounterRevealFrames > 0) {
-        encounterRevealFrames--;
-      }
-
-      // Temple jungle-stone atmosphere
-      const bg = ctx.createLinearGradient(0, 0, 0, h);
-      if (roomId === 'cistern') {
-        bg.addColorStop(0, '#061c26');
-        bg.addColorStop(1, '#0e2536');
-      } else if (roomId === 'forge') {
-        bg.addColorStop(0, '#29120a');
-        bg.addColorStop(1, '#14111c');
-      } else if (roomId === 'sanctum') {
-        bg.addColorStop(0, '#2a0d19');
-        bg.addColorStop(1, '#111524');
-      } else if (roomId === 'gate') {
-        bg.addColorStop(0, '#0a2942');
-        bg.addColorStop(1, '#131b2e');
-      } else {
-        bg.addColorStop(0, '#08131a');
-        bg.addColorStop(1, '#11212b');
-      }
-      ctx.fillStyle = bg;
-      ctx.fillRect(0, 0, w, h);
-
-      // Scrolling pillars & hanging vines (move only while running north/south)
-      const colSpan = 220;
-      const colStart = -(((scrollOffset * 0.7) % colSpan + colSpan) % colSpan) - 40;
-      ctx.strokeStyle = 'rgba(167, 243, 208, 0.14)';
-      ctx.lineWidth = 2;
-      for (let cx = colStart; cx < w + colSpan; cx += colSpan) {
-        ctx.strokeRect(cx - 22, 38, 44, 200);
-        ctx.beginPath(); ctx.arc(cx, 38, 22, Math.PI, 0); ctx.stroke();
-      }
-
-      const vineSpan = 175;
-      const vineStart = -(((scrollOffset * 1.1) % vineSpan + vineSpan) % vineSpan);
-      ctx.strokeStyle = 'rgba(16, 185, 129, 0.28)';
-      for (let vx = vineStart; vx < w + vineSpan; vx += vineSpan) {
-        ctx.beginPath();
-        ctx.moveTo(vx, 0);
-        ctx.quadraticCurveTo(vx + 8, 26, vx - 3, 54);
+        ctx.moveTo(-16, -65); ctx.lineTo(14, -30);
         ctx.stroke();
       }
 
-      // Temple floor track & flagstones
-      const floorY = 238;
-      ctx.fillStyle = roomId === 'cistern' ? '#0b2c3d' : '#15222e';
+      ctx.restore();
+    }
+
+    // Distinct Villain Renderers: Demon Monkey, Shadow Wraith, Obsidian Golem, Astral Warden
+    function drawVillainCharacter(ex, ey, kind, name, hp, maxHp, isAttacking, isHurt, phase) {
+      ctx.save();
+      ctx.translate(ex + (isAttacking ? -46 : 0) + (isHurt ? 14 : 0), ey);
+
+      const pulse = Math.sin(phase) * 4;
+
+      if (kind === 'wraith') {
+        // Floating hooded Shadow Wraith with spectral scythe/claws
+        ctx.translate(0, -14 + pulse);
+        const grad = ctx.createLinearGradient(0, -78, 0, 10);
+        grad.addColorStop(0, '#312e81');
+        grad.addColorStop(1, 'rgba(15, 23, 42, 0.15)');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.moveTo(-20, 8);
+        ctx.quadraticCurveTo(-24, -46, 0, -74);
+        ctx.quadraticCurveTo(24, -46, 20, 8);
+        ctx.lineTo(8, 0);
+        ctx.lineTo(0, 10);
+        ctx.lineTo(-10, 0);
+        ctx.closePath();
+        ctx.fill();
+
+        // Glowing eyes
+        ctx.fillStyle = '#38bdf8';
+        ctx.fillRect(-11, -56, 5, 4);
+        ctx.fillRect(2, -56, 5, 4);
+
+        // Spectral claw reach
+        ctx.strokeStyle = '#93c5fd';
+        ctx.lineWidth = isAttacking ? 5 : 3.5;
+        ctx.beginPath();
+        ctx.moveTo(-14, -42);
+        ctx.lineTo(isAttacking ? -48 : -28, -36);
+        ctx.stroke();
+      } else if (kind === 'golem') {
+        // Heavy blocky Obsidian Golem with glowing core
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(-24, -76, 48, 76);
+        ctx.strokeStyle = '#64748b';
+        ctx.lineWidth = 2.5;
+        ctx.strokeRect(-24, -76, 48, 76);
+
+        // Glowing molten chest core
+        ctx.fillStyle = '#f97316';
+        ctx.beginPath(); ctx.arc(0, -44, 8, 0, Math.PI * 2); ctx.fill();
+
+        // Glowing eyes
+        ctx.fillStyle = '#fb923c';
+        ctx.fillRect(-12, -64, 7, 4);
+        ctx.fillRect(5, -64, 7, 4);
+
+        // Heavy stone fist
+        ctx.fillStyle = '#334155';
+        ctx.fillRect(isAttacking ? -52 : -36, -46, 18, 18);
+      } else if (kind === 'seraph') {
+        // Astral Warden with radiant halo/wings and energy spear
+        ctx.fillStyle = '#1e1b4b';
+        ctx.beginPath();
+        ctx.moveTo(0, -58);
+        ctx.lineTo(-34, -84 + pulse);
+        ctx.lineTo(-22, -28);
+        ctx.closePath();
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(0, -58);
+        ctx.lineTo(34, -84 - pulse);
+        ctx.lineTo(22, -28);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = '#4338ca';
+        ctx.beginPath(); ctx.roundRect(-14, -64, 28, 38, 6); ctx.fill();
+        ctx.fillStyle = '#e0e7ff';
+        ctx.beginPath(); ctx.arc(0, -76, 10, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#f472b6';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.arc(0, -76, 15, 0, Math.PI * 2); ctx.stroke();
+
+        // Spear / lance
+        ctx.strokeStyle = '#f472b6';
+        ctx.lineWidth = isAttacking ? 5 : 3.5;
+        ctx.beginPath();
+        ctx.moveTo(8, -40);
+        ctx.lineTo(isAttacking ? -54 : -34, -48);
+        ctx.stroke();
+      } else {
+        // Hunched Demon Monkey with horns & tail
+        ctx.strokeStyle = '#7c2d12';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(14, -22);
+        ctx.bezierCurveTo(38, -32, 36, -68, 18, -64);
+        ctx.stroke();
+
+        ctx.fillStyle = '#7c2d12';
+        ctx.beginPath(); ctx.ellipse(0, -36, 17, 21, 0.2, 0, Math.PI * 2); ctx.fill();
+
+        ctx.fillStyle = '#991b1b';
+        ctx.beginPath(); ctx.arc(-5, -62, 13, 0, Math.PI * 2); ctx.fill();
+
+        ctx.strokeStyle = '#fde047';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(-11, -72); ctx.lineTo(-17, -84);
+        ctx.moveTo(2, -72); ctx.lineTo(8, -84);
+        ctx.stroke();
+
+        ctx.fillStyle = '#fef08a';
+        ctx.fillRect(-13, -65, 4, 4);
+        ctx.fillRect(-4, -65, 4, 4);
+
+        ctx.strokeStyle = '#9a3412';
+        ctx.lineWidth = 6;
+        ctx.beginPath();
+        ctx.moveTo(-10, -45);
+        ctx.lineTo(isAttacking ? -46 : -28, -24);
+        ctx.stroke();
+      }
+
+      if (isAttacking) {
+        ctx.strokeStyle = '#ef4444';
+        ctx.lineWidth = 3.5;
+        ctx.beginPath();
+        ctx.arc(-28, -42, 22, 2.2, 4.1);
+        ctx.stroke();
+      }
+
+      if (isHurt) {
+        ctx.fillStyle = 'rgba(239, 68, 68, 0.45)';
+        ctx.beginPath(); ctx.arc(0, -40, 26, 0, Math.PI * 2); ctx.fill();
+      }
+
+      ctx.restore();
+
+      ctx.fillStyle = '#f5d0fe';
+      ctx.font = 'bold 11px Inter, sans-serif';
+      ctx.fillText(`${name} (${hp}/${maxHp})`, ex - 60, ey + 17);
+    }
+
+    function drawSpeechBubble(x, y, text) {
+      if (!text) return;
+      ctx.save();
+      ctx.font = 'bold 11px Inter, sans-serif';
+      const padX = 10;
+      const metrics = ctx.measureText(text);
+      const bw = Math.min(340, Math.max(120, metrics.width + padX * 2));
+      const bh = 26;
+      const bx = Math.max(12, Math.min(canvas.width - bw - 12, x - bw * 0.4));
+      const by = Math.max(8, y - bh - 12);
+
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.94)';
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.roundRect(bx, by, bw, bh, 8);
+      ctx.fill();
+      ctx.stroke();
+
+      // Pointer tail
+      ctx.beginPath();
+      ctx.moveTo(bx + 24, by + bh);
+      ctx.lineTo(bx + 32, by + bh + 8);
+      ctx.lineTo(bx + 40, by + bh);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#fef3c7';
+      ctx.fillText(text, bx + padX, by + 17);
+      ctx.restore();
+    }
+
+    function drawRoomEnvironment(w, h, floorY, roomId, lvl, scroll, destroyed) {
+      const sky = ctx.createLinearGradient(0, 0, 0, h);
+      if (destroyed) {
+        sky.addColorStop(0, '#450a0a');
+        sky.addColorStop(1, '#1c0612');
+      } else if (lvl === 3) {
+        sky.addColorStop(0, '#1e1035');
+        sky.addColorStop(1, '#0d091a');
+      } else if (roomId === 'cistern') {
+        sky.addColorStop(0, '#072433');
+        sky.addColorStop(1, '#0c1c2c');
+      } else if (roomId === 'forge') {
+        sky.addColorStop(0, '#2d1208');
+        sky.addColorStop(1, '#130e19');
+      } else if (roomId === 'sanctum') {
+        sky.addColorStop(0, '#271036');
+        sky.addColorStop(1, '#0e1424');
+      } else if (roomId === 'gate') {
+        sky.addColorStop(0, '#0c2c47');
+        sky.addColorStop(1, '#131b2e');
+      } else {
+        sky.addColorStop(0, '#0a1922');
+        sky.addColorStop(1, '#11252e');
+      }
+      ctx.fillStyle = sky;
+      ctx.fillRect(0, 0, w, h);
+
+      // Distinct architectural props per room
+      if (roomId === 'cistern') {
+        // Water arches & ripples
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.25)';
+        ctx.lineWidth = 2;
+        for (let i = 0; i < 4; i++) {
+          ctx.beginPath();
+          ctx.arc(140 + i * 175, floorY + 18, 28, 0, Math.PI);
+          ctx.stroke();
+        }
+      } else if (roomId === 'forge') {
+        // Molten glow & glowing anvil
+        const fg = ctx.createRadialGradient(450, floorY - 12, 6, 450, floorY - 12, 85);
+        fg.addColorStop(0, 'rgba(251, 146, 60, 0.45)');
+        fg.addColorStop(1, 'rgba(251, 146, 60, 0)');
+        ctx.fillStyle = fg;
+        ctx.beginPath(); ctx.arc(450, floorY - 12, 85, 0, Math.PI * 2); ctx.fill();
+      } else if (roomId === 'sanctum') {
+        // Mystic pillars & rune ring
+        ctx.strokeStyle = 'rgba(232, 121, 249, 0.24)';
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(540, 125, 58, 0, Math.PI * 2); ctx.stroke();
+      } else if (roomId === 'gate') {
+        // Towering double gates
+        ctx.strokeStyle = 'rgba(250, 204, 21, 0.45)';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(365, 66, 70, floorY - 66);
+      }
+
+      // Scrolling columns & floor tiles (active during North/South run)
+      const span = 210;
+      const start = -(((scroll * 0.75) % span + span) % span) - 30;
+      ctx.strokeStyle = 'rgba(226, 232, 240, 0.13)';
+      ctx.lineWidth = 2;
+      for (let x = start; x < w + span; x += span) {
+        ctx.strokeRect(x - 18, 42, 36, floorY - 42);
+      }
+
+      ctx.fillStyle = roomId === 'cistern' ? '#0b3246' : (lvl === 3 ? '#1c122b' : '#162330');
       ctx.fillRect(0, floorY, w, h - floorY);
-      ctx.strokeStyle = 'rgba(245, 158, 11, 0.34)';
+      ctx.strokeStyle = lvl === 3 ? 'rgba(232, 121, 249, 0.42)' : 'rgba(245, 158, 11, 0.35)';
       ctx.lineWidth = 2;
       ctx.beginPath(); ctx.moveTo(0, floorY); ctx.lineTo(w, floorY); ctx.stroke();
 
-      const tileSpan = 72;
-      const tileStart = -(((scrollOffset * 2.4) % tileSpan + tileSpan) % tileSpan);
-      ctx.strokeStyle = 'rgba(245, 158, 11, 0.18)';
+      const tSpan = 68;
+      const tStart = -(((scroll * 2.2) % tSpan + tSpan) % tSpan);
+      ctx.strokeStyle = 'rgba(148, 163, 184, 0.16)';
       ctx.lineWidth = 1.5;
-      for (let tx = tileStart; tx < w + tileSpan; tx += tileSpan) {
-        ctx.beginPath();
-        ctx.moveTo(tx, floorY);
-        ctx.lineTo(tx - 24, h);
-        ctx.stroke();
+      for (let tx = tStart; tx < w + tSpan; tx += tSpan) {
+        ctx.beginPath(); ctx.moveTo(tx, floorY); ctx.lineTo(tx - 20, h); ctx.stroke();
+      }
+    }
+
+    function drawScene(st) {
+      const w = canvas.width, h = canvas.height;
+      const {
+        roomId, avId, hasTorch, hasBlade, hasRelic,
+        foeHp, foeMaxHp, foeName, foeKind, anim, lvl, destroyed
+      } = st;
+
+      const isRunning = runTimerFrames > 0;
+      const dirSign = (anim === 'run_south') ? -1 : 1;
+      const speed = isRunning ? (anim === 'run_south' ? -3.0 : 3.0) : 0;
+      scrollOffset += speed;
+
+      if (isRunning) {
+        runTimerFrames--;
+        if (runTimerFrames === 0 && bubbleTimer <= 0) {
+          if (foeHp > 0) setBubble(`A ${foeName} blocks the way! Let's fight!`);
+          else if (roomId === 'forge' && lvl === 2 && !hasRelic) setBubble('There it is... the Ancient Relic!');
+          else setBubble('All clear for now. What next?');
+        }
       }
 
-      if (roomId === 'gate') {
-        ctx.strokeStyle = 'rgba(56, 189, 248, 0.35)';
-        ctx.lineWidth = 2.5;
-        ctx.strokeRect(345, 76, 90, floorY - 76);
+      if (heroAttackFrames > 0) heroAttackFrames--;
+      if (enemyAttackFrames > 0) enemyAttackFrames--;
+      if (heroHurtFrames > 0) heroHurtFrames--;
+      if (enemyHurtFrames > 0) enemyHurtFrames--;
+      if (bubbleTimer > 0) {
+        bubbleTimer--;
+        if (bubbleTimer === 0) bubbleText = '';
       }
 
-      const active = animPhase > 0;
-      const isSlashing = active && anim === 'slash';
-      const isGuarding = active && anim === 'guard';
-      const isVaulting = active && anim === 'vault';
-      const isTorching = active && anim === 'torch';
+      const floorY = 242;
+      drawRoomEnvironment(w, h, floorY, roomId, lvl, scrollOffset, destroyed);
 
-      const lungeX = (active && (isSlashing || isVaulting || isTorching)) ? 120 : 0;
-      const vaultY = (active && isVaulting) ? -42 : (active && anim === 'defeat' ? 12 : 0);
-      const foeRecoilX = (active && (isSlashing || isVaulting || isTorching || isGuarding)) ? 34 : 0;
+      const isEvilTwist = (lvl === 3);
+      const lungeX = heroAttackFrames > 0 ? 150 : 0;
+      const px = (isRunning ? (-35 + (1 - runTimerFrames / 120) * 195) : 160) + lungeX;
+      const py = floorY;
 
-      // Runner enters from left during north/south run, then holds position in chamber
-      const runProgress = isRunning ? (1 - runTimerFrames / 95) : 1;
-      const basePx = isRunning ? (-40 + runProgress * 215) : 175;
-      const px = basePx + lungeX;
-      const py = floorY + vaultY;
-
-      drawHumanoidRunner(
-        px, py, avId, hasTorch, hasBlade,
-        isRunning, isGuarding, isSlashing, isVaulting,
-        dirSign, scrollOffset * 0.16
-      );
+      drawHumanCharacter(px, py, {
+        avId,
+        hasTorch,
+        hasBlade,
+        hasRelic,
+        isEvilTwist,
+        isRunning,
+        isAttacking: heroAttackFrames > 0,
+        isHurt: heroHurtFrames > 0,
+        isGuarding: anim === 'guard' && heroAttackFrames > 0,
+        dirSign,
+        phase: scrollOffset * 0.16
+      });
 
       ctx.fillStyle = '#f8fafc';
-      ctx.font = 'bold 11.5px Inter, sans-serif';
-      ctx.fillText(runnerProfiles[avId].name.toUpperCase(), px - 22, floorY + 18);
+      ctx.font = 'bold 11px Inter, sans-serif';
+      ctx.fillText(runnerProfiles[avId].name.toUpperCase() + (isEvilTwist ? ' [VILLAIN]' : ''), px - 34, floorY + 17);
 
-      // Obstacles & Demon Monkeys appear after the run finishes
-      if (!isRunning) {
-        if (mode !== '' || roomId === 'corridor' || roomId === 'cistern' || roomId === 'forge' || roomId === 'sanctum') {
-          drawObstacleHazard(435, floorY, roomId, mode, scrollOffset);
-        }
-        if (foeHp > 0) {
-          drawHumanoidDemonMonkey(585, floorY, foeName, foeHp, foeMaxHp, false, foeRecoilX, scrollOffset * 0.12);
-        }
-      } else {
-        ctx.fillStyle = '#34d399';
-        ctx.font = 'bold 12px Inter, sans-serif';
-        ctx.fillText(anim === 'run_south' ? 'RUNNING SOUTH...' : 'RUNNING NORTH...', 320, 34);
+      // Villains appear after running into a chamber
+      if (!isRunning && foeHp > 0) {
+        drawVillainCharacter(
+          565, floorY, foeKind, foeName, foeHp, foeMaxHp,
+          enemyAttackFrames > 0, enemyHurtFrames > 0, scrollOffset * 0.12
+        );
       }
 
-      if (encounterRevealFrames > 0 && !isRunning) {
-        ctx.fillStyle = '#fca5a5';
-        ctx.font = 'bold 12px Inter, sans-serif';
-        ctx.fillText('ENCOUNTER REACHED!', 320, 54);
-      }
+      // Speech / thought bubble near character
+      drawSpeechBubble(px + 12, py - 94, bubbleText);
 
-      if (active && !isRunning) {
-        ctx.fillStyle = anim === 'defeat' ? '#ef4444' : '#fde68a';
-        ctx.font = 'bold 13px Inter, sans-serif';
-        const banner = {
-          slash: 'SLASH STRIKE!',
-          vault: 'VAULT SLAM!',
-          guard: 'GUARD RIPOSTE!',
-          torch: 'TORCH FLARE!',
-          defeat: 'KNOCKED DOWN — REGROUPING AT COURTYARD!',
-          escape: 'TEMPLE ESCAPED!'
-        }[anim] || '';
-        if (banner) ctx.fillText(banner, 315, 36);
-        animPhase--;
+      if (destroyed) {
+        ctx.fillStyle = 'rgba(239, 68, 68, 0.22)';
+        ctx.fillRect(0, 0, w, h);
+        ctx.fillStyle = '#fecaca';
+        ctx.font = 'bold 16px Cinzel, serif';
+        ctx.fillText('WORLD DESTROYED — YOU WIN!', 245, 42);
       }
     }
 
@@ -949,12 +1096,12 @@
       const txt = document.getElementById('riddlePrompt');
       const inp = document.getElementById('riddleAns');
       const prompts = {
-        trap:         'Run Hazard active — type move (slide, leap, brace):',
-        crevice:      'Carved Niche active — type side (left or right):',
+        trap:         'Hazard active — type move (slide, leap, brace):',
+        crevice:      'Niche active — type side (left or right):',
         riddle_bell:  'Riddle I active — type your answer:',
         riddle_forge: 'Riddle III active — type your answer:',
         brazier:      'Riddle II active — type your answer:',
-        riddle_gate:  'Riddle IV active — type your answer:'
+        riddle_gate:  'Final Riddle active — type your answer:'
       };
       if (prompts[mode]) {
         bar.classList.add('open');
@@ -976,25 +1123,40 @@
       const hasBlade = Module.ccall('has_blade_flag', 'number', [], []) === 1;
       const hasHerb = Module.ccall('has_herb_flag', 'number', [], []) === 1;
       const hasKey = Module.ccall('has_key_flag', 'number', [], []) === 1;
+      const hasRelic = Module.ccall('has_relic_flag', 'number', [], []) === 1;
       const foeHp = Module.ccall('enemy_hp', 'number', [], []);
       const foeMaxHp = Module.ccall('enemy_max_hp', 'number', [], []);
       const foeName = Module.ccall('enemy_name', 'string', [], []);
+      const foeKind = Module.ccall('enemy_kind', 'string', [], []);
       const mode = Module.ccall('prompt_mode', 'string', [], []);
       const anim = Module.ccall('last_anim', 'string', [], []);
+      const lvl = Module.ccall('current_level', 'number', [], []);
+      const destroyed = Module.ccall('is_world_destroyed', 'number', [], []) === 1;
       const avId = Module.ccall('current_avatar_id', 'number', [], []);
       const defeats = Module.ccall('defeats_count', 'number', [], []);
 
       cachedState = {
         roomId, hp, maxHp, stm, maxStm,
-        hasTorch, hasBlade, hasHerb, hasKey,
-        foeHp, foeMaxHp, foeName, mode, anim, avId, defeats
+        hasTorch, hasBlade, hasHerb, hasKey, hasRelic,
+        foeHp, foeMaxHp, foeName, foeKind, mode, anim, lvl, destroyed, avId, defeats
       };
 
       const cInfo = chamberMap[roomId] || { label: roomId, goal: '', idx: 1 };
+      document.getElementById('lvlTag').textContent = `Level ${lvl}`;
       document.getElementById('roomTag').textContent = cInfo.label;
-      document.getElementById('runTag').textContent = `${runnerProfiles[avId].name} · Lv.${chosenDiff}`;
-      document.getElementById('lossTag').textContent = `Knockdowns: ${defeats}`;
-      document.getElementById('goalTxt').textContent = cInfo.goal;
+
+      const timerEl = document.getElementById('timerTag');
+      if (lvl === 3 && !destroyed) {
+        timerEl.style.display = 'inline-block';
+        timerEl.textContent = `Time Left: ${level3SecondsLeft}s`;
+      } else {
+        timerEl.style.display = 'none';
+      }
+
+      let goalText = cInfo.goal;
+      if (lvl === 2) goalText = 'Mission Lv.2: Claim the magical Relic in the Forge & reach the Final Gate.';
+      if (lvl === 3) goalText = 'Mission Lv.3 (Villain Twist, Timed!): Use the Relic to reach & unlock the Final Gate to destroy the world!';
+      document.getElementById('goalTxt').textContent = goalText;
 
       document.getElementById('hpTxt').textContent = hp;
       document.getElementById('maxHpTxt').textContent = maxHp;
@@ -1017,29 +1179,67 @@
       document.getElementById('relBlade').classList.toggle('got', hasBlade);
       document.getElementById('relHerb').classList.toggle('got', hasHerb);
       document.getElementById('relKey').classList.toggle('got', hasKey);
+      document.getElementById('relRelic').classList.toggle('got', hasRelic);
 
       for (let i = 1; i <= 6; i++) {
         document.getElementById('ch' + i).classList.toggle('here', i === cInfo.idx);
       }
 
       syncRiddleBar(mode);
-      drawTempleBattle(cachedState);
+      drawScene(cachedState);
     }
 
     function runAction(cmd) {
       if (!wasmReady) return;
       const prevRoom = Module.ccall('current_room', 'string', [], []);
+      const prevLvl = Module.ccall('current_level', 'number', [], []);
+      const prevHp = Module.ccall('current_hp', 'number', [], []);
+      const prevFoeHp = Module.ccall('enemy_hp', 'number', [], []);
+
       appendCombat('> ' + cmd);
       const out = Module.ccall('run_command', 'string', ['string'], [cmd]);
       appendCombat(out);
+
       const nextRoom = Module.ccall('current_room', 'string', [], []);
+      const nextLvl = Module.ccall('current_level', 'number', [], []);
+      const nextHp = Module.ccall('current_hp', 'number', [], []);
+      const nextFoeHp = Module.ccall('enemy_hp', 'number', [], []);
+      const anim = Module.ccall('last_anim', 'string', [], []);
       const norm = cmd.trim().toLowerCase();
-      if ((norm === 'north' || norm === 'south' || norm === 'retreat') && nextRoom !== prevRoom) {
-        // ~2.3 seconds of running at 60fps before revealing demons & obstacles in the chamber
-        runTimerFrames = 140;
-      } else {
-        animPhase = 14;
+
+      if (nextLvl !== prevLvl) {
+        runTimerFrames = 0;
+        if (nextLvl === 2) {
+          setBubble('Level 2: Time to claim that magical Relic!');
+        } else if (nextLvl === 3) {
+          level3SecondsLeft = 90;
+          setBubble('Plot twist! I am the villain—I will destroy the world with this Relic!');
+        }
+      } else if ((norm === 'north' || norm === 'south' || norm === 'retreat') && nextRoom !== prevRoom) {
+        runTimerFrames = 120;
+        setBubble(norm === 'south' ? 'Heading back South...' : 'Running North...');
+      } else if (anim === 'slash' || anim === 'vault' || anim === 'guard' || anim === 'torch') {
+        heroAttackFrames = 22;
+        if (nextFoeHp < prevFoeHp) enemyHurtFrames = 22;
+        if (nextHp < prevHp && nextFoeHp > 0) {
+          setTimeout(() => { enemyAttackFrames = 22; heroHurtFrames = 22; }, 220);
+          setBubble('Oof! That hurt—stay sharp!');
+        } else if (nextFoeHp === 0 && prevFoeHp > 0) {
+          setBubble('Down they go! Moving on.');
+        } else {
+          setBubble('Take this!');
+        }
+      } else if (nextHp < prevHp) {
+        heroHurtFrames = 22;
+        setBubble('Ouch! That took a toll on me.');
+      } else if (anim === 'relic_found') {
+        setBubble('The Ancient Relic is mine! Unlimited dark power!');
+      } else if (anim === 'take') {
+        setBubble('Found something useful!');
+      } else if (anim === 'apocalypse') {
+        setBubble('The world is shattered! My master plan is complete!');
       }
+
       syncState();
     }
 
@@ -1059,6 +1259,21 @@
       inp.value = '';
     }
 
+    setInterval(() => {
+      if (!wasmReady) return;
+      if (cachedState.lvl === 3 && !cachedState.destroyed) {
+        level3SecondsLeft = Math.max(0, level3SecondsLeft - 1);
+        document.getElementById('timerTag').textContent = `Time Left: ${level3SecondsLeft}s`;
+        if (level3SecondsLeft === 0) {
+          const out = Module.ccall('run_command', 'string', ['string'], ['timeout']);
+          appendCombat(out);
+          level3SecondsLeft = 90;
+          setBubble('Too slow! Resetting Level 3 clock...');
+          syncState();
+        }
+      }
+    }, 1000);
+
     var Module = {
       onRuntimeInitialized: function () {
         wasmReady = true;
@@ -1068,7 +1283,7 @@
     };
 
     function loopFrame() {
-      drawTempleBattle(cachedState);
+      drawScene(cachedState);
       requestAnimationFrame(loopFrame);
     }
     requestAnimationFrame(loopFrame);
