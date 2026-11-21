@@ -438,10 +438,9 @@ public:
                 "A deep western dead-end crypt haunted by a Shadow Wraith.",
                 &herbItem1, &wraithEnemy, true, false);
             rEast1.setRoomData("4. Eastern Ember Wing",
-                "Eastern wing: Defeat Obsidian Golem & solve the eastern rune riddle ('search').",
-                "Glowing eastern chamber where a demon guards the deeper eastern passage.",
-                &herbItem2, &golemEnemy, false, false, "",
-                "What gets wetter the more it dries?", "towel");
+                "Eastern wing: Claim [Blade] or [Relic], defeat Demon Monkey, and explore East/North.",
+                "Glowing eastern chamber where a demon guards an eastern weapon & passage.",
+                &bladeItem, &monkeyEnemy, false, false, "");
             rEast2.setRoomData("5. Eastern Chasm (Lethal Turn)",
                 "Lethal wrong turn! Turn West if you survived!",
                 "Jagged collapse at the far eastern edge!",
@@ -481,10 +480,9 @@ public:
                 "Dead-end western mist chamber.",
                 &herbItem1, &wraithEnemy, true, false);
             rEast1.setRoomData("4. East Demon Foundry",
-                "Defeat Obsidian Golem & solve the mirror riddle ('search').",
-                "Eastern foundry with a demon guardian and rune lock.",
-                &relicItem, &golemEnemy, false, false, "",
-                "I speak without a mouth and hear without ears. What am I?", "echo");
+                "East wing: Claim [Relic] & fight Obsidian Golem, then push East or West.",
+                "Eastern foundry with a demon guardian and ancient relic.",
+                &relicItem, &golemEnemy, false, false, "");
             rEast2.setRoomData("5. East Pendulum Trap (Lethal)",
                 "Lethal wrong turn!",
                 "Swinging blades strike across the far-east passage!",
@@ -524,10 +522,9 @@ public:
                 "Dead-end western void pocket.",
                 &herbItem1, &wraithEnemy, true, false);
             rEast1.setRoomData("4. East Ash Crucible",
-                "Defeat Obsidian Golem & solve the riddle ('search').",
-                "Eastern crucible guarded by a demon.",
-                &relicItem, &golemEnemy, false, false, "",
-                "The more you take from me, the bigger I grow. What am I?", "hole");
+                "East wing: Claim [Relic] & fight Shadow Wraith, then explore East/West.",
+                "Eastern crucible guarded by a demon wraith.",
+                &relicItem, &wraithEnemy, false, false, "");
             rEast2.setRoomData("5. East Rift (Lethal Turn)",
                 "Lethal wrong turn!",
                 "Tearing void chasm at the eastern edge!",

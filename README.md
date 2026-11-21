@@ -7,3 +7,5 @@ v10 Additions: Distinct weapons, obstacles & objectives per level; maze navigati
 
 
 v11 Additions: Extensive 9-room North/South/East/West maze with weapons & demons across East and West wings as well; physical East/West/North/South character turning and walking animations on canvas.
+
+v12 Additions: Live Maze Minimap drawn directly on the canvas showing all 9 North/South/East/West chambers and current position; fixed East/West exploration & character turning in both WASM and standalone modes with weapons & demons across East and West wings.
