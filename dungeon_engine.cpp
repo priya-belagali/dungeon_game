@@ -405,7 +405,7 @@ public:
         r4.setRoomData("4. Deep Hall",
             "An old relic carries power; watch for sudden hazards if you stray.",
             "A sunken hall with a glowing relic and heavy guardian.",
-            &relicItem, &golemEnemy, false, false);
+            &relicItem, &golemEnemy, false, "");
         r5.setRoomData("5. Inner Sanctum",
             "What opens a gate is often found just before the final threshold.",
             "Quiet sanctum where an iron ward glints near the altar.",
