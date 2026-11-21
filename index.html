@@ -1269,8 +1269,8 @@
       } = st;
 
       const isRunning = runTimerFrames > 0;
-      const dirSign = (anim === 'run_south') ? -1 : 1;
-      const speed = isRunning ? (anim === 'run_south' ? -3.0 : 3.0) : 0;
+      const dirSign = (anim === 'run_west' || anim === 'run_south') ? -1 : 1;
+      const speed = isRunning ? (dirSign * 3.4) : 0;
       scrollOffset += speed;
 
       if (isRunning) {
@@ -1296,7 +1296,14 @@
 
       const isEvilTwist = (lvl === 3);
       const lungeX = heroAttackFrames > 0 ? 150 : 0;
-      const px = (isRunning ? (-35 + (1 - runTimerFrames / 120) * 195) : 160) + lungeX;
+      let baseWalkX = 160;
+      if (isRunning) {
+        const prog = 1 - runTimerFrames / 120;
+        if (anim === 'run_east') baseWalkX = 95 + prog * 175;
+        else if (anim === 'run_west') baseWalkX = 250 - prog * 155;
+        else baseWalkX = -35 + prog * 195;
+      }
+      const px = baseWalkX + lungeX;
       const py = floorY;
 
       drawHumanCharacter(px, py, {
@@ -1461,9 +1468,10 @@
           level3SecondsLeft = 90;
           setBubble('Plot twist! I am the villain—I will destroy the world with this Relic!');
         }
-      } else if ((norm === 'north' || norm === 'south' || norm === 'retreat') && nextRoom !== prevRoom) {
+      } else if ((norm === 'north' || norm === 'south' || norm === 'east' || norm === 'west' || norm === 'retreat') && nextRoom !== prevRoom) {
         runTimerFrames = 120;
-        setBubble(norm === 'south' ? 'Heading back South...' : 'Running North...');
+        const labels = { north: 'Exploring North...', south: 'Heading South (-STM)...', retreat: 'Retreating South...', east: 'Turning East into the wing...', west: 'Turning West into the wing...' };
+        setBubble(labels[norm] || 'Exploring...');
       } else if (anim === 'slash' || anim === 'vault' || anim === 'guard' || anim === 'torch') {
         heroAttackFrames = 22;
         if (nextFoeHp < prevFoeHp) enemyHurtFrames = 22;
@@ -1741,12 +1749,15 @@
             foeHp: 0, foeMaxHp: 0, foeName: '', foeKind: '', anim: 'idle', destroyed: false, avId: 1
           };
           const rooms = {
-            cell: { title: '1. Sunlit Courtyard', idx: 1, north: 'corridor', south: null, east: 'forge', west: 'cistern', item: 'Torch', foe: null },
-            cistern: { title: '2. Dead-End Cistern', idx: 3, north: null, south: 'cell', east: 'cell', west: null, item: 'Herb', foe: { name: 'Shadow Wraith', kind: 'wraith', hp: 76 } },
-            forge: { title: '3. Lethal Hazard East', idx: 4, north: null, south: null, east: null, west: 'cell', item: null, foe: null, lethal: true },
-            corridor: { title: '4. Shifting Gallery', idx: 2, north: 'sanctum', south: 'cell', east: 'forge', west: 'cistern', item: 'Blade', foe: { name: 'Demon Monkey', kind: 'monkey', hp: 66 } },
-            sanctum: { title: '5. Relic Sanctum', idx: 5, north: 'gate', south: 'corridor', east: null, west: null, item: 'Relic', foe: { name: 'Obsidian Golem', kind: 'golem', hp: 94 } },
-            gate: { title: '6. Final Gate', idx: 6, north: null, south: 'sanctum', east: null, west: null, item: 'Key', foe: { name: 'Astral Warden', kind: 'seraph', hp: 112 } }
+            cell: { title: '1. Maze Crossroads', idx: 1, north: 'corridor', south: 'cistern', east: 'forge', west: 'west1', item: 'Torch', foe: null },
+            west1: { title: '2. West Armory Wing', idx: 2, north: null, south: null, east: 'cell', west: 'west2', item: 'Blade', foe: { name: 'Demon Monkey', kind: 'monkey', hp: 68 } },
+            west2: { title: '3. West Dead-End Crypt', idx: 3, north: null, south: null, east: 'west1', west: null, item: 'Herb', foe: { name: 'Shadow Wraith', kind: 'wraith', hp: 82 } },
+            forge: { title: '4. East Demon Foundry', idx: 4, north: null, south: null, east: 'east2', west: 'cell', item: 'Relic', foe: { name: 'Obsidian Golem', kind: 'golem', hp: 96 } },
+            east2: { title: '5. East Chasm (Lethal)', idx: 4, north: null, south: null, east: null, west: 'forge', item: null, foe: null, lethal: true },
+            corridor: { title: '6. North Shifting Gallery', idx: 2, north: 'sanctum', south: 'cell', east: 'forge', west: 'west1', item: null, foe: { name: 'Demon Monkey', kind: 'monkey', hp: 70 } },
+            sanctum: { title: '7. North Relic Sanctum', idx: 5, north: 'gate', south: 'corridor', east: null, west: null, item: 'Key', foe: { name: 'Obsidian Golem', kind: 'golem', hp: 98 } },
+            cistern: { title: '8. South Sunken Vault', idx: 3, north: 'cell', south: null, east: 'forge', west: 'west1', item: 'Herb', foe: { name: 'Shadow Wraith', kind: 'wraith', hp: 84 } },
+            gate: { title: '9. Final Gate', idx: 6, north: null, south: 'sanctum', east: null, west: null, item: null, foe: { name: 'Astral Warden', kind: 'seraph', hp: 118 } }
           };
           function loadFbLevel(lv) {
             fbState.lvl = lv; fbState.room = 'cell'; fbState.stm = 100; fbState.maxStm = 100;
@@ -1828,10 +1839,10 @@
                 appendCombat('[Dead End] Dead end reached! Turn back.');
               }
             };
-            if (c === 'north') moveDir('north', 12, 'run_north');
-            else if (c === 'south' || c === 'retreat') moveDir('south', 18, 'run_south');
-            else if (c === 'east') moveDir('east', 14, 'run_north');
-            else if (c === 'west') moveDir('west', 14, 'run_north');
+            if (c === 'north') { runTimerFrames = 120; moveDir('north', 12, 'run_north'); }
+            else if (c === 'south' || c === 'retreat') { runTimerFrames = 120; moveDir('south', 18, 'run_south'); }
+            else if (c === 'east') { runTimerFrames = 120; moveDir('east', 14, 'run_east'); }
+            else if (c === 'west') { runTimerFrames = 120; moveDir('west', 14, 'run_west'); }
             else if (c === 'take') {
               if (r.item) {
                 if (r.item === 'Torch') fbState.hasTorch = true;
