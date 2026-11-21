@@ -25,10 +25,12 @@ jobs:
           em++ dungeon_engine.cpp -o dungeon.js \
             -s EXPORTED_FUNCTIONS="['_run_command','_current_room','_current_hp','_has_torch_flag']" \
             -s EXPORTED_RUNTIME_METHODS="['ccall','cwrap']"
+          mkdir -p dist
+          cp index.html dungeon.js dungeon.wasm dist/
+          ls -la dist
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: .
-          exclude_assets: "dungeon_engine.cpp,.github"
+          publish_dir: ./dist
