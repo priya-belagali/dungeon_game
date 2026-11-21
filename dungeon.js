@@ -1677,6 +1677,7 @@ var _prompt_mode = Module['_prompt_mode'] = makeInvalidEarlyAccess('_prompt_mode
 var _last_anim = Module['_last_anim'] = makeInvalidEarlyAccess('_last_anim');
 var _current_level = Module['_current_level'] = makeInvalidEarlyAccess('_current_level');
 var _is_world_destroyed = Module['_is_world_destroyed'] = makeInvalidEarlyAccess('_is_world_destroyed');
+var _is_escaped_flag = Module['_is_escaped_flag'] = makeInvalidEarlyAccess('_is_escaped_flag');
 var _current_avatar_id = Module['_current_avatar_id'] = makeInvalidEarlyAccess('_current_avatar_id');
 var _defeats_count = Module['_defeats_count'] = makeInvalidEarlyAccess('_defeats_count');
 var _fflush = makeInvalidEarlyAccess('_fflush');
@@ -1713,6 +1714,7 @@ function assignWasmExports(wasmExports) {
   assert(typeof wasmExports['last_anim'] !== 'undefined', 'missing Wasm export: last_anim');
   assert(typeof wasmExports['current_level'] !== 'undefined', 'missing Wasm export: current_level');
   assert(typeof wasmExports['is_world_destroyed'] !== 'undefined', 'missing Wasm export: is_world_destroyed');
+  assert(typeof wasmExports['is_escaped_flag'] !== 'undefined', 'missing Wasm export: is_escaped_flag');
   assert(typeof wasmExports['current_avatar_id'] !== 'undefined', 'missing Wasm export: current_avatar_id');
   assert(typeof wasmExports['defeats_count'] !== 'undefined', 'missing Wasm export: defeats_count');
   assert(typeof wasmExports['fflush'] !== 'undefined', 'missing Wasm export: fflush');
@@ -1746,6 +1748,7 @@ function assignWasmExports(wasmExports) {
   _last_anim = Module['_last_anim'] = createExportWrapper('last_anim', wasmExports['last_anim'], 0);
   _current_level = Module['_current_level'] = createExportWrapper('current_level', wasmExports['current_level'], 0);
   _is_world_destroyed = Module['_is_world_destroyed'] = createExportWrapper('is_world_destroyed', wasmExports['is_world_destroyed'], 0);
+  _is_escaped_flag = Module['_is_escaped_flag'] = createExportWrapper('is_escaped_flag', wasmExports['is_escaped_flag'], 0);
   _current_avatar_id = Module['_current_avatar_id'] = createExportWrapper('current_avatar_id', wasmExports['current_avatar_id'], 0);
   _defeats_count = Module['_defeats_count'] = createExportWrapper('defeats_count', wasmExports['defeats_count'], 0);
   _fflush = createExportWrapper('fflush', wasmExports['fflush'], 1);
