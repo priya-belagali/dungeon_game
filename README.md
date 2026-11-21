@@ -1,3 +1,3 @@
-# Astral Dungeon (C++ OOP + WebAssembly UI)
+# Idol Sprint — C++ OOP Temple Adventure
 
-A 5-chamber dungeon adventure with combat, traps, and riddles built in C++ using OOP principles and compiled to WebAssembly via GitHub Actions.
+A Temple Run-inspired 6-chamber C++ OOP adventure with a continuously scrolling runner track, stamina-driven combat moves, visible canvas fight sequences, knockdown recovery loops, longer runner backstories, difficulty levels, and four riddles compiled to WebAssembly via GitHub Actions.

@@ -23,7 +23,7 @@ jobs:
       - name: Compile C++ to WebAssembly
         run: |
           em++ dungeon_engine.cpp -o dungeon.js \
-            -s EXPORTED_FUNCTIONS="['_run_command','_current_room','_current_hp','_max_hp','_has_torch_flag','_has_blade_flag','_has_herb_flag','_has_key_flag','_enemy_hp','_enemy_max_hp','_enemy_name','_prompt_mode','_is_escaped_flag']" \
+            -s EXPORTED_FUNCTIONS="['_run_command','_current_room','_current_hp','_max_hp','_current_stamina','_max_stamina','_has_torch_flag','_has_blade_flag','_has_herb_flag','_has_key_flag','_enemy_hp','_enemy_max_hp','_enemy_name','_prompt_mode','_last_anim','_is_escaped_flag','_current_avatar_id','_defeats_count']" \
             -s EXPORTED_RUNTIME_METHODS="['ccall','cwrap']"
           mkdir -p dist
           cp index.html dungeon.js dungeon.wasm dist/

@@ -3,558 +3,731 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Astral Dungeon — C++ OOP Adventure</title>
+  <title>Idol Sprint — C++ OOP Temple Adventure</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg-0: #07090f;
-      --bg-1: #0e1320;
-      --bg-2: #151c2e;
-      --bg-3: #1d2740;
+      --bg-0: #06090d;
+      --bg-1: #0c131a;
+      --bg-2: #121c26;
+      --bg-3: #192633;
       --line: rgba(148, 163, 184, 0.16);
-      --line-strong: rgba(245, 158, 11, 0.35);
       --text: #f1f5f9;
       --muted: #94a3b8;
       --amber: #f59e0b;
-      --amber-soft: rgba(245, 158, 11, 0.14);
-      --cyan: #38bdf8;
+      --cyan: #22d3ee;
       --crimson: #ef4444;
       --emerald: #10b981;
     }
     * { box-sizing: border-box; }
-    body {
+    html, body {
       margin: 0;
-      min-height: 100vh;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
       background:
-        radial-gradient(ellipse at 20% 0%, rgba(245, 158, 11, 0.11), transparent 45%),
-        radial-gradient(ellipse at 85% 10%, rgba(56, 189, 248, 0.12), transparent 45%),
+        radial-gradient(ellipse at 18% 0%, rgba(245, 158, 11, 0.13), transparent 45%),
+        radial-gradient(ellipse at 85% 5%, rgba(16, 185, 129, 0.11), transparent 45%),
         var(--bg-0);
       color: var(--text);
-      font-family: 'Inter', system-ui, -apple-system, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
+      font-family: 'Inter', system-ui, sans-serif;
     }
-    .shell {
-      width: 100%;
-      max-width: 1080px;
-      background: linear-gradient(180deg, var(--bg-1), #0a0d16);
-      border: 1px solid var(--line);
-      border-radius: 20px;
-      overflow: hidden;
-      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    .screen {
+      width: 100vw;
+      height: 100vh;
+      padding: 8px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
     }
     header {
+      flex: 0 0 auto;
       display: flex;
-      flex-wrap: wrap;
       justify-content: space-between;
       align-items: center;
-      gap: 14px;
-      padding: 16px 24px;
-      background: rgba(15, 20, 34, 0.92);
-      border-bottom: 1px solid var(--line);
+      gap: 10px;
+      padding: 6px 14px;
+      background: var(--bg-1);
+      border: 1px solid var(--line);
+      border-radius: 11px;
     }
-    .title-wrap {
+    .head-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: nowrap;
+      min-width: 0;
+    }
+    h1 {
+      margin: 0;
+      font-family: 'Cinzel', serif;
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0.7px;
+      background: linear-gradient(90deg, #fde68a, #f59e0b, #34d399);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      white-space: nowrap;
+    }
+    .tag {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 9px;
+      border-radius: 999px;
+      background: rgba(245, 158, 11, 0.14);
+      border: 1px solid rgba(245, 158, 11, 0.35);
+      color: #fde68a;
+      white-space: nowrap;
+    }
+    .hud-bars {
       display: flex;
       align-items: center;
       gap: 12px;
       flex-wrap: wrap;
     }
-    h1 {
-      margin: 0;
-      font-family: 'Cinzel', Georgia, serif;
-      font-size: 20px;
-      font-weight: 800;
-      letter-spacing: 1px;
-      background: linear-gradient(90deg, #fde68a, #f59e0b, #7dd3fc);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-    .room-pill {
-      padding: 5px 12px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 600;
-      color: #fde68a;
-      background: var(--amber-soft);
-      border: 1px solid var(--line-strong);
-    }
-    .vitals {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 20px;
-    }
-    .vital-box {
+    .stat-meter {
       display: flex;
       align-items: center;
-      gap: 10px;
-      font-size: 13px;
+      gap: 6px;
+      font-size: 11.5px;
       font-weight: 600;
     }
-    .gauge {
-      width: 145px;
-      height: 11px;
-      background: #06080d;
+    .bar-bg {
+      width: 92px;
+      height: 7px;
+      background: #05070a;
+      border: 1px solid var(--line);
       border-radius: 999px;
       overflow: hidden;
-      border: 1px solid var(--line);
-      padding: 1px;
     }
-    .gauge-fill {
-      height: 100%;
-      width: 100%;
-      border-radius: 999px;
-      transition: width 0.25s ease;
-    }
-    .gauge-hp { background: linear-gradient(90deg, #dc2626, #f59e0b 55%, #10b981); }
-    .gauge-foe { background: linear-gradient(90deg, #ea580c, #ef4444); }
+    .bar-hp { height: 100%; width: 100%; background: linear-gradient(90deg, #ef4444, #f59e0b 55%, #10b981); transition: width 0.2s; }
+    .bar-stm { height: 100%; width: 100%; background: linear-gradient(90deg, #0284c7, #22d3ee); transition: width 0.2s; }
+    .bar-foe { height: 100%; width: 100%; background: linear-gradient(90deg, #ea580c, #ef4444); transition: width 0.2s; }
 
-    .workspace {
+    .main-area {
+      flex: 1 1 auto;
+      min-height: 0;
       display: grid;
-      grid-template-columns: 1.55fr 0.95fr;
-      border-bottom: 1px solid var(--line);
+      grid-template-columns: 1.58fr 0.96fr;
+      gap: 9px;
     }
-    @media (max-width: 860px) {
-      .workspace { grid-template-columns: 1fr; }
-    }
-    .canvas-pane {
-      border-right: 1px solid var(--line);
+    .stage-col {
+      min-height: 0;
       display: flex;
       flex-direction: column;
-      background: #070a12;
+      gap: 7px;
     }
-    #sceneCanvas {
+    .canvas-wrap {
+      flex: 1 1 auto;
+      min-height: 0;
+      background: #05080d;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    #gameCanvas {
       width: 100%;
-      height: 270px;
+      flex: 1 1 auto;
+      min-height: 0;
       display: block;
     }
-    .objective-strip {
-      padding: 11px 20px;
+    .goal-line {
+      flex: 0 0 auto;
+      padding: 5px 12px;
       background: var(--bg-2);
       border-top: 1px solid var(--line);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 13px;
+      font-size: 11.5px;
       color: #cbd5e1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
-    .objective-strip strong {
-      color: var(--amber);
-      text-transform: uppercase;
-      font-size: 11px;
-      letter-spacing: 0.8px;
-    }
+    .goal-line strong { color: var(--amber); margin-right: 6px; }
 
-    .sidebar {
-      padding: 18px 20px;
-      background: rgba(12, 16, 28, 0.85);
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-    .panel-label {
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.9px;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 8px;
-    }
-    .gear-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 8px;
-    }
-    .gear-card {
-      padding: 9px 11px;
-      border-radius: 10px;
-      background: var(--bg-2);
+    .log-box {
+      flex: 0 0 132px;
+      background: #06090f;
       border: 1px solid var(--line);
-      font-size: 12.5px;
-      color: var(--muted);
-      transition: all 0.2s ease;
-    }
-    .gear-card.owned {
-      color: var(--text);
-      background: linear-gradient(135deg, rgba(245, 158, 11, 0.16), rgba(56, 189, 248, 0.08));
-      border-color: var(--line-strong);
-      box-shadow: 0 0 18px rgba(245, 158, 11, 0.1);
-    }
-    .gear-card small {
-      display: block;
-      color: var(--muted);
-      font-size: 11px;
-      margin-top: 2px;
-    }
-    .gear-card.owned small { color: #fde68a; }
-
-    .trail {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      font-size: 12.5px;
-      color: var(--muted);
-    }
-    .trail li {
-      padding: 6px 10px;
-      border-radius: 8px;
-      background: rgba(255, 255, 255, 0.02);
-      border-left: 3px solid transparent;
-    }
-    .trail li.active {
-      color: var(--text);
-      font-weight: 600;
-      background: rgba(56, 189, 248, 0.09);
-      border-left-color: var(--cyan);
-    }
-
-    .chronicle {
-      height: 230px;
+      border-radius: 11px;
+      padding: 7px 12px;
       overflow-y: auto;
-      padding: 16px 22px;
-      background: #080b13;
-      font-family: 'JetBrains Mono', 'Cascadia Code', monospace;
-      font-size: 13px;
-      line-height: 1.55;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      line-height: 1.38;
       white-space: pre-wrap;
       color: #e2e8f0;
     }
 
-    .action-deck {
-      padding: 13px 20px;
-      background: var(--bg-2);
-      border-top: 1px solid var(--line);
+    .side-panel {
+      min-height: 0;
+      background: var(--bg-1);
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      padding: 9px 12px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      justify-content: space-between;
+      gap: 6px;
     }
-    .challenge-bar {
+    .sec-hd {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    .avatar-tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 5px;
+    }
+    .tab-btn {
+      padding: 5px 6px;
+      border-radius: 7px;
+      background: var(--bg-2);
+      border: 1px solid var(--line);
+      color: var(--text);
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .tab-btn.active {
+      border-color: rgba(34, 211, 238, 0.7);
+      background: rgba(34, 211, 238, 0.14);
+      color: #a5f3fc;
+    }
+    .lore-scroll {
+      font-size: 10.5px;
+      color: #cbd5e1;
+      line-height: 1.36;
+      padding: 6px 8px;
+      border-radius: 7px;
+      background: rgba(255, 255, 255, 0.025);
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      max-height: 82px;
+      overflow-y: auto;
+    }
+    .relics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 4px;
+    }
+    .rel-pill {
+      padding: 4px;
+      border-radius: 6px;
+      text-align: center;
+      font-size: 10.5px;
+      font-weight: 600;
+      background: var(--bg-2);
+      border: 1px solid var(--line);
+      color: var(--muted);
+    }
+    .rel-pill.got {
+      color: #fde68a;
+      border-color: rgba(245, 158, 11, 0.55);
+      background: rgba(245, 158, 11, 0.15);
+    }
+    .chambers-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 4px;
+      font-size: 10px;
+    }
+    .ch-cell {
+      padding: 3px 5px;
+      border-radius: 5px;
+      background: rgba(255, 255, 255, 0.02);
+      color: var(--muted);
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .ch-cell.here {
+      background: rgba(16, 185, 129, 0.2);
+      color: #a7f3d0;
+      font-weight: 700;
+    }
+
+    .dock {
+      flex: 0 0 auto;
+      background: var(--bg-1);
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      padding: 7px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .riddle-bar {
       display: none;
       align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 10px;
-      padding: 10px 14px;
-      border-radius: 10px;
-      background: rgba(245, 158, 11, 0.11);
-      border: 1px solid rgba(245, 158, 11, 0.4);
-      font-size: 13px;
+      gap: 8px;
+      padding: 4px 9px;
+      border-radius: 7px;
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.45);
+      font-size: 11px;
       color: #fde68a;
     }
-    .challenge-bar.show { display: flex; }
-    .challenge-bar input {
-      background: #090c14;
+    .riddle-bar.open { display: flex; }
+    .riddle-bar input {
+      flex: 1;
+      max-width: 220px;
+      background: #05070b;
       border: 1px solid rgba(245, 158, 11, 0.45);
       color: var(--text);
-      border-radius: 8px;
-      padding: 6px 10px;
-      font-size: 13px;
+      border-radius: 6px;
+      padding: 3px 8px;
+      font-size: 11.5px;
       outline: none;
-      width: 210px;
     }
-
-    .cmd-buttons {
+    .btn-strip {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
+      align-items: center;
+      gap: 5px;
     }
-    button {
-      background: var(--bg-3);
+    button.m {
+      background: var(--bg-2);
       color: var(--text);
       border: 1px solid rgba(148, 163, 184, 0.24);
-      padding: 8px 14px;
-      border-radius: 9px;
-      font-family: 'Inter', sans-serif;
-      font-size: 12.5px;
+      padding: 4px 9px;
+      border-radius: 6px;
+      font-size: 11px;
       font-weight: 600;
       cursor: pointer;
-      transition: transform 0.08s ease, background 0.15s ease, border-color 0.15s ease;
     }
-    button:hover {
-      background: #273556;
-      border-color: rgba(148, 163, 184, 0.45);
-    }
-    button:active { transform: scale(0.97); }
-    button.accent {
-      background: rgba(56, 189, 248, 0.16);
-      border-color: rgba(56, 189, 248, 0.5);
-      color: #bae6fd;
-    }
-    button.accent:hover { background: rgba(56, 189, 248, 0.26); }
-    button.combat {
-      background: rgba(239, 68, 68, 0.16);
-      border-color: rgba(239, 68, 68, 0.48);
-      color: #fecaca;
-    }
-    button.combat:hover { background: rgba(239, 68, 68, 0.26); }
-    button.gold {
-      background: rgba(245, 158, 11, 0.2);
-      border-color: rgba(245, 158, 11, 0.55);
-      color: #fde68a;
-    }
+    button.m:hover { background: var(--bg-3); }
+    button.m.atk { background: rgba(239, 68, 68, 0.16); border-color: rgba(239, 68, 68, 0.5); color: #fecaca; }
+    button.m.skl { background: rgba(34, 211, 238, 0.15); border-color: rgba(34, 211, 238, 0.48); color: #a5f3fc; }
+    button.m.gld { background: rgba(245, 158, 11, 0.18); border-color: rgba(245, 158, 11, 0.52); color: #fde68a; }
+    button.m.grn { background: rgba(16, 185, 129, 0.16); border-color: rgba(16, 185, 129, 0.48); color: #a7f3d0; }
 
-    .prompt-line {
+    .cli {
+      flex: 1 1 150px;
       display: flex;
       align-items: center;
-      background: #06080e;
-      border-top: 1px solid var(--line);
-      padding: 0 18px;
+      background: #05070b;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 0 8px;
     }
-    .prompt-line .glyph {
-      color: var(--amber);
-      font-family: 'JetBrains Mono', monospace;
-      font-weight: 700;
-      font-size: 16px;
-      margin-right: 10px;
-    }
-    .prompt-line input {
-      flex: 1;
+    .cli span { color: var(--amber); font-family: monospace; font-weight: 700; margin-right: 5px; }
+    .cli input {
+      width: 100%;
       background: transparent;
       border: none;
       color: var(--text);
-      padding: 14px 4px;
+      padding: 4px 2px;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 13.5px;
+      font-size: 11.5px;
       outline: none;
     }
   </style>
 </head>
 <body>
-  <div class="shell">
+  <div class="screen">
     <header>
-      <div class="title-wrap">
-        <h1>ASTRAL DUNGEON</h1>
-        <span class="room-pill" id="roomPill">1. Damp Dungeon Cell</span>
+      <div class="head-left">
+        <h1>IDOL SPRINT</h1>
+        <span class="tag" id="roomTag">1. Idol Courtyard</span>
+        <span class="tag" id="runTag" style="background:rgba(34,211,238,0.12);border-color:rgba(34,211,238,0.35);color:#a5f3fc;">Kaelen · Lv.1</span>
+        <span class="tag" id="lossTag" style="background:rgba(239,68,68,0.12);border-color:rgba(239,68,68,0.35);color:#fca5a5;">Knockdowns: 0</span>
       </div>
-      <div class="vitals">
-        <div class="vital-box">
-          <span>HP: <span id="hpVal">130</span>/<span id="maxHpVal">130</span></span>
-          <div class="gauge"><div class="gauge-fill gauge-hp" id="hpFill"></div></div>
+      <div class="hud-bars">
+        <div class="stat-meter">
+          <span>HP <span id="hpTxt">130</span>/<span id="maxHpTxt">130</span></span>
+          <div class="bar-bg"><div class="bar-hp" id="hpBar"></div></div>
         </div>
-        <div class="vital-box" id="foeBox" style="display:none;">
-          <span style="color:#fca5a5;"><span id="foeName">Foe</span>: <span id="foeHpVal">0</span></span>
-          <div class="gauge"><div class="gauge-fill gauge-foe" id="foeFill"></div></div>
+        <div class="stat-meter">
+          <span>STM <span id="stmTxt">100</span></span>
+          <div class="bar-bg"><div class="bar-stm" id="stmBar"></div></div>
+        </div>
+        <div class="stat-meter" id="foeBarWrap" style="display:none;">
+          <span style="color:#fca5a5;"><span id="foeNameTxt">Monkey</span> <span id="foeHpTxt">0</span></span>
+          <div class="bar-bg"><div class="bar-foe" id="foeBar"></div></div>
         </div>
       </div>
     </header>
 
-    <div class="workspace">
-      <div class="canvas-pane">
-        <canvas id="sceneCanvas" width="660" height="270"></canvas>
-        <div class="objective-strip">
-          <strong>Objective</strong>
-          <span id="objectiveText">Initializing C++ WebAssembly engine...</span>
+    <div class="main-area">
+      <div class="stage-col">
+        <div class="canvas-wrap">
+          <canvas id="gameCanvas" width="780" height="320"></canvas>
+          <div class="goal-line"><strong>OBJECTIVE</strong><span id="goalTxt">Starting temple run...</span></div>
         </div>
+        <div class="log-box" id="combatLog"></div>
       </div>
 
-      <aside class="sidebar">
+      <aside class="side-panel">
         <div>
-          <div class="panel-label">Pack &amp; Relics</div>
-          <div class="gear-grid">
-            <div class="gear-card" id="cardTorch">Torch<small>+8 ATK &amp; Light</small></div>
-            <div class="gear-card" id="cardBlade">Blade<small>+22 ATK Power</small></div>
-            <div class="gear-card" id="cardHerb">Herb<small>Heal +40 HP</small></div>
-            <div class="gear-card" id="cardKey">Key<small>Exit Gate Lock</small></div>
+          <div class="sec-hd">Select Runner &amp; Backstory</div>
+          <div class="avatar-tabs">
+            <button class="tab-btn active" id="tab1" onclick="selectRunner(1)">Kaelen</button>
+            <button class="tab-btn" id="tab2" onclick="selectRunner(2)">Lyra</button>
+            <button class="tab-btn" id="tab3" onclick="selectRunner(3)">Thorne</button>
+          </div>
+          <div class="lore-scroll" id="runnerLore" style="margin-top:5px;"></div>
+          <div style="display:flex;gap:5px;margin-top:5px;">
+            <button class="m gld" style="flex:1;" onclick="newRun(1)">Run Lv.1 Standard</button>
+            <button class="m atk" style="flex:1;" onclick="newRun(2)">Run Lv.2 Veteran</button>
           </div>
         </div>
 
         <div>
-          <div class="panel-label">Dungeon Chambers</div>
-          <ul class="trail">
-            <li id="chamber1" class="active">I. Damp Dungeon Cell</li>
-            <li id="chamber2">II. Trapped Gallery</li>
-            <li id="chamber3">III. Sunken Cistern</li>
-            <li id="chamber4">IV. Ember Sanctum</li>
-            <li id="chamber5">V. Astral Exit Gate</li>
-          </ul>
+          <div class="sec-hd">Temple Relics</div>
+          <div class="relics-grid">
+            <div class="rel-pill" id="relTorch">Torch</div>
+            <div class="rel-pill" id="relBlade">Blade</div>
+            <div class="rel-pill" id="relHerb">Herb</div>
+            <div class="rel-pill" id="relKey">Key</div>
+          </div>
+        </div>
+
+        <div>
+          <div class="sec-hd">6 Temple Chambers</div>
+          <div class="chambers-grid">
+            <div class="ch-cell here" id="ch1">1. Courtyard</div>
+            <div class="ch-cell" id="ch2">2. Gallery</div>
+            <div class="ch-cell" id="ch3">3. Cistern</div>
+            <div class="ch-cell" id="ch4">4. Forge</div>
+            <div class="ch-cell" id="ch5">5. Sanctum</div>
+            <div class="ch-cell" id="ch6">6. Gate</div>
+          </div>
         </div>
       </aside>
     </div>
 
-    <div class="chronicle" id="logBox"></div>
-
-    <div class="action-deck">
-      <div class="challenge-bar" id="challengeBar">
-        <span id="challengeLabel">Challenge active — enter your answer or move:</span>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-          <input id="challengeInput" type="text" placeholder="Type answer or action..." />
-          <button class="gold" onclick="submitChallenge()">Submit</button>
-        </div>
+    <div class="dock">
+      <div class="riddle-bar" id="riddleBar">
+        <span id="riddlePrompt">Challenge active:</span>
+        <input id="riddleAns" type="text" placeholder="Type move or riddle answer..." />
+        <button class="m gld" onclick="submitRiddle()">Submit</button>
       </div>
 
-      <div class="cmd-buttons">
-        <button class="accent" onclick="runCmd('take')">Take Item</button>
-        <button class="combat" onclick="runCmd('attack')">Attack</button>
-        <button onclick="runCmd('search')">Inspect / Riddle</button>
-        <button onclick="runCmd('use herb')">Use Herb</button>
-        <button onclick="runCmd('door')">Exit Gate</button>
-        <button onclick="runCmd('north')">Go North</button>
-        <button onclick="runCmd('south')">Go South</button>
-        <button onclick="runCmd('inventory')">Inventory</button>
+      <div class="btn-strip">
+        <button class="m atk" onclick="runAction('slash')">Slash</button>
+        <button class="m skl" onclick="runAction('vault')">Vault (-25 STM)</button>
+        <button class="m skl" onclick="runAction('guard')">Guard &amp; Riposte</button>
+        <button class="m gld" onclick="runAction('torch')">Torch Flare (-20 STM)</button>
+        <button class="m grn" onclick="runAction('rest')">Rest (+STM)</button>
+        <button class="m" onclick="runAction('take')">Take</button>
+        <button class="m" onclick="runAction('search')">Inspect / Riddle</button>
+        <button class="m" onclick="runAction('use herb')">Use Herb</button>
+        <button class="m" onclick="runAction('door')">Gate</button>
+        <button class="m" onclick="runAction('north')">North</button>
+        <button class="m" onclick="runAction('south')">South</button>
+        <form class="cli" onsubmit="event.preventDefault(); submitCli();">
+          <span>&gt;</span>
+          <input id="cliInput" type="text" placeholder="slash, vault, guard, torch, rest, take, search, north..." autocomplete="off" />
+        </form>
       </div>
     </div>
-
-    <form class="prompt-line" onsubmit="event.preventDefault(); submitMain();">
-      <span class="glyph">&gt;</span>
-      <input id="mainInput" type="text" placeholder="Enter command (take, attack, search, use herb, door, north, south, inventory)..." autocomplete="off" />
-    </form>
   </div>
 
   <script>
-    const canvas = document.getElementById('sceneCanvas');
+    const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
-    const logBox = document.getElementById('logBox');
-    let engineReady = false;
+    const combatLog = document.getElementById('combatLog');
+    let wasmReady = false;
+    let chosenRunner = 1;
+    let chosenDiff = 1;
+    let animPhase = 0;
+    let scrollOffset = 0;
 
-    const chamberInfo = {
-      cell:     { label: '1. Damp Dungeon Cell', obj: 'Pick up the Torch, then head North into the gallery.', idx: 1 },
-      corridor: { label: '2. Trapped Gallery',    obj: 'Defeat the Crypt Stalker, take the Blade, and inspect traps/crevice for the Key.', idx: 2 },
-      cistern:  { label: '3. Sunken Cistern',     obj: 'Defeat the Mire Lurker and inspect the bell shrine to solve its riddle.', idx: 3 },
-      sanctum:  { label: '4. Ember Sanctum',      obj: 'Inspect the braziers, take the Herb, and defeat the Shadow Warden.', idx: 4 },
-      gate:     { label: '5. Astral Exit Gate',   obj: 'Unlock the gate with your Key and solve the guardian riddle to escape.', idx: 5 }
+    let cachedState = {
+      roomId: 'cell',
+      hp: 130,
+      maxHp: 130,
+      stm: 100,
+      maxStm: 100,
+      hasTorch: false,
+      hasBlade: false,
+      hasHerb: false,
+      hasKey: false,
+      foeHp: 0,
+      foeMaxHp: 0,
+      foeName: '',
+      mode: '',
+      anim: 'idle',
+      avId: 1,
+      defeats: 0
     };
 
-    function appendLog(text) {
-      logBox.textContent += text + '\n';
-      logBox.scrollTop = logBox.scrollHeight;
+    const runnerProfiles = {
+      1: {
+        name: 'Kaelen',
+        bio: 'Kaelen grew up on the cliff paths overlooking the sunken jungle temple where his older brother vanished chasing a stolen sun-idol. Trained in ruined watchtowers, Kaelen reads crumbling stonework and demon monkey pack calls by instinct—balanced enough to endure long sprints, traps, and riddles without burning out too soon.'
+      },
+      2: {
+        name: 'Lyra',
+        bio: 'Lyra was a sky-bridge courier hired by rival expedition guilds before the temple’s ancient wards sealed the valley. Fast, daring, and deadly with a tempered blade, she vaults over hazards and punishes demon monkeys with heavy bursts, though her lighter armor leaves little room for sloppy mistakes.'
+      },
+      3: {
+        name: 'Thorne',
+        bio: 'Thorne spent twelve winters guarding a storm-battered monastery at the edge of the basin, learning to absorb punishing blows and steady his breathing under pressure. His strikes start measured, but his towering stamina and resilience let him outlast brutal demon monkey ambushes and recover from setbacks.'
+      }
+    };
+
+    const chamberMap = {
+      cell:     { label: '1. Idol Courtyard',    goal: 'Grab the Torch, then run North into the Trapped Gallery.', idx: 1 },
+      corridor: { label: '2. Trapped Gallery',   goal: 'Battle the Crimson Demon Monkey (slash/vault/guard/torch), grab Blade, inspect traps for Key.', idx: 2 },
+      cistern:  { label: '3. Sunken Cistern',    goal: 'Battle the Fang Demon Monkey & inspect the gong shrine for Riddle I.', idx: 3 },
+      forge:    { label: '4. Obsidian Forge',    goal: 'Battle the Ember Demon Monkey, grab Herb, inspect anvil for Riddle III.', idx: 4 },
+      sanctum:  { label: '5. Ember Sanctum',     goal: 'Inspect braziers (Riddle II), grab Herb, defeat the Alpha Idol Monkey.', idx: 5 },
+      gate:     { label: '6. Outer Temple Gate', goal: 'Unlock with Key & solve Riddle IV to escape the temple.', idx: 6 }
+    };
+
+    function selectRunner(id) {
+      chosenRunner = id;
+      for (let i = 1; i <= 3; i++) {
+        document.getElementById('tab' + i).classList.toggle('active', i === id);
+      }
+      document.getElementById('runnerLore').innerHTML =
+        '<strong>' + runnerProfiles[id].name + ':</strong> ' + runnerProfiles[id].bio;
     }
 
-    function drawChamber(roomId, hasTorch, hasBlade, foeHp, foeMaxHp, foeName) {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    function appendCombat(msg) {
+      combatLog.textContent += msg + '\n';
+      combatLog.scrollTop = combatLog.scrollHeight;
+    }
 
-      const sky = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      if (roomId === 'gate') {
-        sky.addColorStop(0, '#0c2d48');
-        sky.addColorStop(1, '#14192b');
-      } else if (roomId === 'cistern') {
-        sky.addColorStop(0, '#0b2530');
-        sky.addColorStop(1, '#111827');
+    function newRun(lv) {
+      chosenDiff = lv;
+      if (!wasmReady) return;
+      const rName = runnerProfiles[chosenRunner].name.toLowerCase();
+      const dWord = lv === 2 ? 'veteran' : 'standard';
+      const reply = Module.ccall('run_command', 'string', ['string'], [`start ${rName} ${dWord}`]);
+      combatLog.textContent = '';
+      appendCombat(reply);
+      animPhase = 14;
+      syncState();
+    }
+
+    function drawTempleBattle(st) {
+      const w = canvas.width, h = canvas.height;
+      const { roomId, avId, hasTorch, hasBlade, foeHp, foeMaxHp, foeName, anim } = st;
+      ctx.clearRect(0, 0, w, h);
+
+      // Temple jungle-stone atmosphere
+      const bg = ctx.createLinearGradient(0, 0, 0, h);
+      if (roomId === 'cistern') {
+        bg.addColorStop(0, '#061c26');
+        bg.addColorStop(1, '#0e2536');
+      } else if (roomId === 'forge') {
+        bg.addColorStop(0, '#29120a');
+        bg.addColorStop(1, '#14111c');
       } else if (roomId === 'sanctum') {
-        sky.addColorStop(0, '#2e101d');
-        sky.addColorStop(1, '#121524');
-      } else {
-        sky.addColorStop(0, '#0b1120');
-        sky.addColorStop(1, '#151c2e');
-      }
-      ctx.fillStyle = sky;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Subtle starlight / ember particles
-      for (let i = 0; i < 18; i++) {
-        const sx = ((i * 73 + 29) % canvas.width);
-        const sy = ((i * 41 + 17) % 155);
-        ctx.fillStyle = roomId === 'sanctum' ? 'rgba(251, 146, 60, 0.25)' : 'rgba(148, 163, 184, 0.22)';
-        ctx.fillRect(sx, sy, 2, 2);
-      }
-
-      // Floor
-      ctx.fillStyle = roomId === 'cistern' ? '#0f293a' : '#182034';
-      ctx.fillRect(0, 200, canvas.width, 70);
-      ctx.strokeStyle = 'rgba(148, 163, 184, 0.25)';
-      ctx.beginPath();
-      ctx.moveTo(0, 200);
-      ctx.lineTo(canvas.width, 200);
-      ctx.stroke();
-
-      // Center architectural landmark
-      ctx.strokeStyle = roomId === 'gate' ? '#38bdf8' : '#475569';
-      ctx.lineWidth = 3;
-      ctx.strokeRect(265, 62, 130, 138);
-
-      if (roomId === 'cell') {
-        ctx.strokeStyle = '#64748b';
-        for (let x = 280; x <= 380; x += 20) {
-          ctx.beginPath(); ctx.moveTo(x, 62); ctx.lineTo(x, 200); ctx.stroke();
-        }
-      } else if (roomId === 'corridor') {
-        ctx.fillStyle = 'rgba(239, 68, 68, 0.35)';
-        ctx.fillRect(290, 192, 80, 8);
-      } else if (roomId === 'cistern') {
-        ctx.fillStyle = 'rgba(56, 189, 248, 0.16)';
-        ctx.fillRect(0, 192, canvas.width, 22);
-      } else if (roomId === 'sanctum') {
-        const glow = ctx.createRadialGradient(330, 125, 6, 330, 125, 68);
-        glow.addColorStop(0, 'rgba(251, 191, 36, 0.45)');
-        glow.addColorStop(1, 'rgba(251, 191, 36, 0)');
-        ctx.fillStyle = glow;
-        ctx.beginPath(); ctx.arc(330, 125, 68, 0, Math.PI * 2); ctx.fill();
+        bg.addColorStop(0, '#2a0d19');
+        bg.addColorStop(1, '#111524');
       } else if (roomId === 'gate') {
-        ctx.fillStyle = 'rgba(56, 189, 248, 0.22)';
-        ctx.fillRect(270, 67, 120, 130);
+        bg.addColorStop(0, '#0a2942');
+        bg.addColorStop(1, '#131b2e');
+      } else {
+        bg.addColorStop(0, '#08131a');
+        bg.addColorStop(1, '#11212b');
+      }
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, w, h);
+
+      // Continuously scrolling temple pillars & hanging vines
+      const colSpan = 220;
+      const colStart = -((scrollOffset * 0.7) % colSpan) - 40;
+      ctx.strokeStyle = 'rgba(167, 243, 208, 0.14)';
+      ctx.lineWidth = 2;
+      for (let cx = colStart; cx < w + colSpan; cx += colSpan) {
+        ctx.strokeRect(cx - 22, 38, 44, 200);
+        ctx.beginPath(); ctx.arc(cx, 38, 22, Math.PI, 0); ctx.stroke();
       }
 
-      // Explorer sprite
-      const px = 130, py = 162;
-      ctx.fillStyle = '#38bdf8';
-      ctx.beginPath(); ctx.arc(px, py - 18, 13, 0, Math.PI * 2); ctx.fill();
-      ctx.fillRect(px - 10, py - 4, 20, 26);
-      ctx.fillStyle = '#f8fafc';
-      ctx.font = 'bold 12px Inter, sans-serif';
-      ctx.fillText('YOU', px - 12, py + 35);
+      const vineSpan = 175;
+      const vineStart = -((scrollOffset * 1.1) % vineSpan);
+      ctx.strokeStyle = 'rgba(16, 185, 129, 0.28)';
+      for (let vx = vineStart; vx < w + vineSpan; vx += vineSpan) {
+        ctx.beginPath();
+        ctx.moveTo(vx, 0);
+        ctx.quadraticCurveTo(vx + 8, 26, vx - 3, 54);
+        ctx.stroke();
+      }
+
+      // Continuously scrolling temple run track & flagstones
+      const floorY = 238;
+      ctx.fillStyle = roomId === 'cistern' ? '#0b2c3d' : '#15222e';
+      ctx.fillRect(0, floorY, w, h - floorY);
+      ctx.strokeStyle = 'rgba(245, 158, 11, 0.34)';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(0, floorY); ctx.lineTo(w, floorY); ctx.stroke();
+
+      const tileSpan = 72;
+      const tileStart = -((scrollOffset * 2.6) % tileSpan);
+      ctx.strokeStyle = 'rgba(245, 158, 11, 0.18)';
+      ctx.lineWidth = 1.5;
+      for (let tx = tileStart; tx < w + tileSpan; tx += tileSpan) {
+        ctx.beginPath();
+        ctx.moveTo(tx, floorY);
+        ctx.lineTo(tx - 24, h);
+        ctx.stroke();
+      }
+
+      // Chamber landmark (subtle background detail)
+      if (roomId === 'forge') {
+        ctx.fillStyle = 'rgba(249, 115, 22, 0.16)';
+        ctx.beginPath(); ctx.arc(390, floorY - 34, 34, 0, Math.PI * 2); ctx.fill();
+      } else if (roomId === 'gate') {
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.35)';
+        ctx.lineWidth = 2.5;
+        ctx.strokeRect(345, 76, 90, floorY - 76);
+      }
+
+      // Dynamic fight & continuous running stride offsets
+      const active = animPhase > 0;
+      const strideBob = Math.abs(Math.sin(scrollOffset * 0.14)) * 7;
+      const legSwing = Math.sin(scrollOffset * 0.14) * 9;
+
+      const lungeX = (active && (anim === 'slash' || anim === 'vault' || anim === 'torch')) ? 135 : 0;
+      const vaultY = (active && anim === 'vault') ? -46 : (active && anim === 'defeat' ? 14 : -strideBob);
+      const foeRecoilX = (active && (anim === 'slash' || anim === 'vault' || anim === 'torch' || anim === 'guard')) ? 36 : 0;
+      const foeLungeX = (active && foeHp > 0 && anim !== 'vault') ? -24 : Math.sin(scrollOffset * 0.11) * 5;
+
+      // Runner sprite
+      const px = 175 + lungeX;
+      const py = floorY + vaultY;
+      const capeCol = avId === 2 ? '#22d3ee' : (avId === 3 ? '#10b981' : '#f59e0b');
+
+      // Flowing scarf/cape animated by track speed
+      const capeWave = Math.sin(scrollOffset * 0.22) * 5;
+      ctx.fillStyle = capeCol;
+      ctx.beginPath();
+      ctx.moveTo(px - 5, py - 56);
+      ctx.lineTo(px - 30, py - 18 + capeWave);
+      ctx.lineTo(px + 4, py - 10);
+      ctx.closePath();
+      ctx.fill();
+
+      // Armor torso & animated running legs
+      ctx.fillStyle = '#334155';
+      ctx.beginPath(); ctx.roundRect(px - 13, py - 58, 26, 34, 6); ctx.fill();
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(px - 10 + legSwing * 0.5, py - 24, 8, 24);
+      ctx.fillRect(px + 2 - legSwing * 0.5, py - 24, 8, 24);
+
+      // Headband / helm
+      ctx.fillStyle = '#64748b';
+      ctx.beginPath(); ctx.arc(px, py - 71, 13, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = capeCol;
+      ctx.fillRect(px - 13, py - 75, 26, 5);
 
       if (hasBlade) {
         ctx.strokeStyle = '#f8fafc';
-        ctx.lineWidth = 3;
-        ctx.beginPath(); ctx.moveTo(px + 12, py + 6); ctx.lineTo(px + 29, py - 13); ctx.stroke();
+        ctx.lineWidth = anim === 'slash' ? 6 : 3.5;
+        ctx.beginPath();
+        ctx.moveTo(px + 14, py - 44);
+        ctx.lineTo(px + (anim === 'slash' ? 54 : 38), py - (anim === 'slash' ? 64 : 74));
+        ctx.stroke();
       }
 
       if (hasTorch) {
-        const torchGlow = ctx.createRadialGradient(px + 25, py - 8, 4, px + 25, py - 8, 100);
-        torchGlow.addColorStop(0, 'rgba(245, 158, 11, 0.55)');
-        torchGlow.addColorStop(1, 'rgba(245, 158, 11, 0)');
-        ctx.fillStyle = torchGlow;
-        ctx.beginPath(); ctx.arc(px + 25, py - 8, 100, 0, Math.PI * 2); ctx.fill();
+        const flareR = (active && anim === 'torch') ? 165 : 105;
+        const g = ctx.createRadialGradient(px + 30, py - 52, 4, px + 30, py - 52, flareR);
+        g.addColorStop(0, (active && anim === 'torch') ? 'rgba(251, 191, 36, 0.8)' : 'rgba(245, 158, 11, 0.48)');
+        g.addColorStop(1, 'rgba(245, 158, 11, 0)');
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(px + 30, py - 52, flareR, 0, Math.PI * 2); ctx.fill();
 
         ctx.fillStyle = '#fbbf24';
-        ctx.beginPath(); ctx.arc(px + 25, py - 8, 6, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(px + 30, py - 52, 7, 0, Math.PI * 2); ctx.fill();
       }
 
-      // Enemy sprite
+      if (active && anim === 'guard') {
+        ctx.strokeStyle = '#22d3ee';
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(px + 18, py - 38, 34, -0.9, 0.9); ctx.stroke();
+      }
+
+      ctx.fillStyle = '#f8fafc';
+      ctx.font = 'bold 11.5px Inter, sans-serif';
+      ctx.fillText(runnerProfiles[avId].name.toUpperCase(), px - 18, floorY + 18);
+
+      // Demon Monkey enemy sprite
       if (foeHp > 0) {
-        const ex = 520, ey = 160;
-        ctx.fillStyle = '#ef4444';
-        ctx.beginPath(); ctx.arc(ex, ey - 20, 16, 0, Math.PI * 2); ctx.fill();
-        ctx.fillRect(ex - 13, ey - 3, 26, 30);
+        const ex = 575 + foeRecoilX + foeLungeX;
+        const ey = floorY - Math.abs(Math.cos(scrollOffset * 0.16)) * 5;
+
+        ctx.fillStyle = '#7c2d12';
+        ctx.beginPath(); ctx.ellipse(ex, ey - 42, 24, 28, 0.2, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#9a3412';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(ex + 18, ey - 28);
+        ctx.bezierCurveTo(ex + 46, ey - 48 + capeWave, ex + 44, ey - 84, ex + 22, ey - 78);
+        ctx.stroke();
+
+        ctx.fillStyle = '#991b1b';
+        ctx.beginPath(); ctx.arc(ex - 6, ey - 74, 16, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#fde047';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.moveTo(ex - 14, ey - 86); ctx.lineTo(ex - 22, ey - 102); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(ex + 2, ey - 86); ctx.lineTo(ex + 10, ey - 102); ctx.stroke();
+
+        ctx.fillStyle = '#fef08a';
+        ctx.fillRect(ex - 15, ey - 77, 5, 4);
+        ctx.fillRect(ex - 5, ey - 77, 5, 4);
+
         ctx.fillStyle = '#fca5a5';
-        ctx.font = 'bold 12px Inter, sans-serif';
-        ctx.fillText(`${foeName} (${foeHp}/${foeMaxHp})`, ex - 52, ey + 37);
+        ctx.font = 'bold 11.5px Inter, sans-serif';
+        ctx.fillText(`${foeName} (${foeHp}/${foeMaxHp})`, ex - 65, floorY + 18);
+      }
+
+      if (active) {
+        ctx.fillStyle = anim === 'defeat' ? '#ef4444' : '#fde68a';
+        ctx.font = 'bold 13px Inter, sans-serif';
+        const banner = {
+          slash: 'SLASH STRIKE!',
+          vault: 'VAULT SLAM!',
+          guard: 'GUARD RIPOSTE!',
+          torch: 'TORCH FLARE!',
+          defeat: 'KNOCKED DOWN — REGROUPING AT COURTYARD!',
+          escape: 'TEMPLE ESCAPED!'
+        }[anim] || '';
+        if (banner) ctx.fillText(banner, 305, 44);
+        animPhase--;
       }
     }
 
-    function syncChallengeBar(mode) {
-      const bar = document.getElementById('challengeBar');
-      const lbl = document.getElementById('challengeLabel');
-      const inp = document.getElementById('challengeInput');
-
-      const labels = {
-        trap:        'Floor Trap active — enter your action in the box or prompt below:',
-        crevice:     'Wall Crevice active — enter which side you search:',
-        riddle_bell: 'Bell Shrine Riddle active — enter your one-word answer:',
-        brazier:     'Twin Braziers Puzzle active — enter your answer:',
-        riddle_gate: 'Astral Gate Riddle active — enter your answer:'
+    function syncRiddleBar(mode) {
+      const bar = document.getElementById('riddleBar');
+      const txt = document.getElementById('riddlePrompt');
+      const inp = document.getElementById('riddleAns');
+      const prompts = {
+        trap:         'Run Hazard active — type move (slide, leap, brace):',
+        crevice:      'Carved Niche active — type side (left or right):',
+        riddle_bell:  'Riddle I active — type your answer:',
+        riddle_forge: 'Riddle III active — type your answer:',
+        brazier:      'Riddle II active — type your answer:',
+        riddle_gate:  'Riddle IV active — type your answer:'
       };
-
-      if (labels[mode]) {
-        bar.classList.add('show');
-        lbl.textContent = labels[mode];
+      if (prompts[mode]) {
+        bar.classList.add('open');
+        txt.textContent = prompts[mode];
         inp.focus();
       } else {
-        bar.classList.remove('show');
+        bar.classList.remove('open');
         inp.value = '';
       }
     }
 
-    function syncHud() {
+    function syncState() {
       const roomId = Module.ccall('current_room', 'string', [], []);
       const hp = Module.ccall('current_hp', 'number', [], []);
       const maxHp = Module.ccall('max_hp', 'number', [], []);
+      const stm = Module.ccall('current_stamina', 'number', [], []);
+      const maxStm = Module.ccall('max_stamina', 'number', [], []);
       const hasTorch = Module.ccall('has_torch_flag', 'number', [], []) === 1;
       const hasBlade = Module.ccall('has_blade_flag', 'number', [], []) === 1;
       const hasHerb = Module.ccall('has_herb_flag', 'number', [], []) === 1;
@@ -563,73 +736,91 @@
       const foeMaxHp = Module.ccall('enemy_max_hp', 'number', [], []);
       const foeName = Module.ccall('enemy_name', 'string', [], []);
       const mode = Module.ccall('prompt_mode', 'string', [], []);
+      const anim = Module.ccall('last_anim', 'string', [], []);
+      const avId = Module.ccall('current_avatar_id', 'number', [], []);
+      const defeats = Module.ccall('defeats_count', 'number', [], []);
 
-      const info = chamberInfo[roomId] || { label: roomId, obj: '', idx: 1 };
-      document.getElementById('roomPill').textContent = info.label;
-      document.getElementById('objectiveText').textContent = info.obj;
-      document.getElementById('hpVal').textContent = hp;
-      document.getElementById('maxHpVal').textContent = maxHp;
-      document.getElementById('hpFill').style.width = Math.max(0, Math.min(100, (hp / maxHp) * 100)) + '%';
+      cachedState = {
+        roomId, hp, maxHp, stm, maxStm,
+        hasTorch, hasBlade, hasHerb, hasKey,
+        foeHp, foeMaxHp, foeName, mode, anim, avId, defeats
+      };
 
-      const foeBox = document.getElementById('foeBox');
+      const cInfo = chamberMap[roomId] || { label: roomId, goal: '', idx: 1 };
+      document.getElementById('roomTag').textContent = cInfo.label;
+      document.getElementById('runTag').textContent = `${runnerProfiles[avId].name} · Lv.${chosenDiff}`;
+      document.getElementById('lossTag').textContent = `Knockdowns: ${defeats}`;
+      document.getElementById('goalTxt').textContent = cInfo.goal;
+
+      document.getElementById('hpTxt').textContent = hp;
+      document.getElementById('maxHpTxt').textContent = maxHp;
+      document.getElementById('hpBar').style.width = Math.max(0, Math.min(100, (hp / maxHp) * 100)) + '%';
+
+      document.getElementById('stmTxt').textContent = stm;
+      document.getElementById('stmBar').style.width = Math.max(0, Math.min(100, (stm / maxStm) * 100)) + '%';
+
+      const foeWrap = document.getElementById('foeBarWrap');
       if (foeHp > 0) {
-        foeBox.style.display = 'flex';
-        document.getElementById('foeName').textContent = foeName;
-        document.getElementById('foeHpVal').textContent = `${foeHp}/${foeMaxHp}`;
-        document.getElementById('foeFill').style.width = Math.max(0, Math.min(100, (foeHp / foeMaxHp) * 100)) + '%';
+        foeWrap.style.display = 'flex';
+        document.getElementById('foeNameTxt').textContent = foeName;
+        document.getElementById('foeHpTxt').textContent = `${foeHp}/${foeMaxHp}`;
+        document.getElementById('foeBar').style.width = Math.max(0, Math.min(100, (foeHp / foeMaxHp) * 100)) + '%';
       } else {
-        foeBox.style.display = 'none';
+        foeWrap.style.display = 'none';
       }
 
-      document.getElementById('cardTorch').classList.toggle('owned', hasTorch);
-      document.getElementById('cardBlade').classList.toggle('owned', hasBlade);
-      document.getElementById('cardHerb').classList.toggle('owned', hasHerb);
-      document.getElementById('cardKey').classList.toggle('owned', hasKey);
+      document.getElementById('relTorch').classList.toggle('got', hasTorch);
+      document.getElementById('relBlade').classList.toggle('got', hasBlade);
+      document.getElementById('relHerb').classList.toggle('got', hasHerb);
+      document.getElementById('relKey').classList.toggle('got', hasKey);
 
-      for (let i = 1; i <= 5; i++) {
-        document.getElementById('chamber' + i).classList.toggle('active', i === info.idx);
+      for (let i = 1; i <= 6; i++) {
+        document.getElementById('ch' + i).classList.toggle('here', i === cInfo.idx);
       }
 
-      syncChallengeBar(mode);
-      drawChamber(roomId, hasTorch, hasBlade, foeHp, foeMaxHp, foeName);
+      syncRiddleBar(mode);
+      drawTempleBattle(cachedState);
     }
 
-    function runCmd(cmd) {
-      if (!engineReady) {
-        appendLog('[System] C++ WebAssembly engine is starting up...');
-        return;
-      }
-      appendLog('> ' + cmd);
-      const reply = Module.ccall('run_command', 'string', ['string'], [cmd]);
-      appendLog(reply);
-      syncHud();
+    function runAction(cmd) {
+      if (!wasmReady) return;
+      appendCombat('> ' + cmd);
+      const out = Module.ccall('run_command', 'string', ['string'], [cmd]);
+      appendCombat(out);
+      animPhase = 14;
+      syncState();
     }
 
-    function submitChallenge() {
-      const inp = document.getElementById('challengeInput');
+    function submitRiddle() {
+      const inp = document.getElementById('riddleAns');
       const v = inp.value.trim();
       if (!v) return;
-      runCmd(v);
+      runAction(v);
       inp.value = '';
     }
 
-    function submitMain() {
-      const inp = document.getElementById('mainInput');
+    function submitCli() {
+      const inp = document.getElementById('cliInput');
       const v = inp.value.trim();
       if (!v) return;
-      runCmd(v);
+      runAction(v);
       inp.value = '';
     }
 
     var Module = {
       onRuntimeInitialized: function () {
-        engineReady = true;
-        appendLog('=== ASTRAL DUNGEON (5 CHAMBERS) ===');
-        const opening = Module.ccall('run_command', 'string', ['string'], ['look']);
-        appendLog(opening);
-        syncHud();
+        wasmReady = true;
+        selectRunner(1);
+        newRun(1);
       }
     };
+
+    function loopFrame() {
+      scrollOffset += 2.2;
+      drawTempleBattle(cachedState);
+      requestAnimationFrame(loopFrame);
+    }
+    requestAnimationFrame(loopFrame);
   </script>
   <script src="dungeon.js"></script>
 </body>

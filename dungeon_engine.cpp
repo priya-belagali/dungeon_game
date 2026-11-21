@@ -48,9 +48,9 @@ public:
 
 class TorchItem : public Item {
 public:
-    TorchItem() : Item("Torch", "A blazing torch that pierces darkness and scorches shadow foes.") {}
+    TorchItem() : Item("Torch", "Blazing idol torch (+8 ATK; scorches shadow & pursuit foes).") {}
     bool use(Player&, std::ostringstream& out) override {
-        out << "\n[Torch] You raise the flame high! Shadows recoil across the dungeon walls.\n";
+        out << "\n[Torch] You hoist the idol torch—flames lick across the temple carvings!\n";
         return false;
     }
 };
@@ -60,8 +60,8 @@ private:
     int healAmount;
 
 public:
-    HerbItem(int heal = 40)
-        : Item("Herb", "A glowing crimson herb that restores 40 HP."), healAmount(heal) {}
+    HerbItem(int heal = 45)
+        : Item("Herb", "Sacred temple leaf that restores 45 HP."), healAmount(heal) {}
 
     int getHealAmount() const { return healAmount; }
     bool use(Player& player, std::ostringstream& out) override;
@@ -73,20 +73,20 @@ private:
 
 public:
     BladeItem(int dmg = 22)
-        : Item("Blade", "A tempered steel shortblade (+22 strike power)."), bonusDamage(dmg) {}
+        : Item("Blade", "Tempered temple edge (+22 strike damage)."), bonusDamage(dmg) {}
 
     int getBonusDamage() const { return bonusDamage; }
     bool use(Player&, std::ostringstream& out) override {
-        out << "\n[Blade] You test the edge—steel glints sharply in your grip. Use 'attack' during combat!\n";
+        out << "\n[Blade] You flick your wrist—the temple edge sings in the torchlight.\n";
         return false;
     }
 };
 
 class KeyItem : public Item {
 public:
-    KeyItem() : Item("Key", "An ancient runed key that unlocks the final exit gate.") {}
+    KeyItem() : Item("Key", "Sun-glyph key that unlocks the outer temple gate.") {}
     bool use(Player&, std::ostringstream& out) override {
-        out << "\n[Key] Ancient runes pulse along the brass teeth. Head to the exit gate and type 'door'.\n";
+        out << "\n[Key] The sun-glyph key hums warmly as you hold it.\n";
         return false;
     }
 };
@@ -102,9 +102,12 @@ private:
 
 public:
     Inventory() : itemCount(0) {
-        for (int i = 0; i < MAX_ITEMS; ++i) {
-            items[i] = nullptr;
-        }
+        for (int i = 0; i < MAX_ITEMS; ++i) items[i] = nullptr;
+    }
+
+    void reset() {
+        itemCount = 0;
+        for (int i = 0; i < MAX_ITEMS; ++i) items[i] = nullptr;
     }
 
     bool addItem(Item* item, std::ostringstream& out) {
@@ -115,10 +118,10 @@ public:
         }
         if (itemCount < MAX_ITEMS) {
             items[itemCount++] = item;
-            out << "\n[+] Picked up: [" << item->getName() << "] — " << item->getDescription() << "\n";
+            out << "\n[+] Claimed [" << item->getName() << "]: " << item->getDescription() << "\n";
             return true;
         }
-        out << "\n[!] Your pack is full!\n";
+        out << "\n[!] Pack is full!\n";
         return false;
     }
 
@@ -143,29 +146,13 @@ public:
     bool removeItem(const std::string& itemName) {
         for (int i = 0; i < itemCount; ++i) {
             if (items[i] != nullptr && toLowerStr(items[i]->getName()) == toLowerStr(itemName)) {
-                for (int j = i; j < itemCount - 1; ++j) {
-                    items[j] = items[j + 1];
-                }
+                for (int j = i; j < itemCount - 1; ++j) items[j] = items[j + 1];
                 items[itemCount - 1] = nullptr;
                 itemCount--;
                 return true;
             }
         }
         return false;
-    }
-
-    void display(std::ostringstream& out) const {
-        out << "\n--- INVENTORY ---\n";
-        if (itemCount == 0) {
-            out << "Your pack is empty. Try 'take' to pick up items in a room.\n";
-        } else {
-            for (int i = 0; i < itemCount; ++i) {
-                if (items[i] != nullptr) {
-                    out << "* " << items[i]->getName() << ": " << items[i]->getDescription() << "\n";
-                }
-            }
-        }
-        out << "-----------------\n";
     }
 };
 
@@ -184,16 +171,22 @@ public:
     int getMaxHealth() const { return maxHealth; }
     bool isAlive() const { return health > 0; }
 
+    void setStats(std::string n, int hp) {
+        name = n;
+        health = hp;
+        maxHealth = hp;
+    }
+
     virtual void takeDamage(int amount, std::ostringstream& out) {
         health -= amount;
         if (health < 0) health = 0;
-        out << " [!] " << name << " takes " << amount << " damage! (" << name << " HP: " << health << "/" << maxHealth << ")\n";
+        out << " [!] " << name << " takes " << amount << " DMG (" << health << "/" << maxHealth << " HP)\n";
     }
 
     virtual void heal(int amount, std::ostringstream& out) {
         health += amount;
         if (health > maxHealth) health = maxHealth;
-        out << " [+] " << name << " heals +" << amount << " HP! (" << name << " HP: " << health << "/" << maxHealth << ")\n";
+        out << " [+] " << name << " recovers +" << amount << " HP (" << health << "/" << maxHealth << " HP)\n";
     }
 };
 
@@ -201,9 +194,53 @@ class Player : public Entity {
 private:
     Inventory inventory;
     int baseAttack;
+    int avatarId;
+    int stamina;
+    int maxStamina;
 
 public:
-    Player(std::string name) : Entity(name, 130), baseAttack(22) {}
+    Player() : Entity("Kaelen", 130), baseAttack(22), avatarId(1), stamina(100), maxStamina(100) {}
+
+    void configureAvatar(int id) {
+        avatarId = id;
+        inventory.reset();
+        stamina = 100;
+        maxStamina = 100;
+        if (id == 2) {
+            setStats("Lyra", 115);
+            baseAttack = 28;
+        } else if (id == 3) {
+            setStats("Thorne", 150);
+            baseAttack = 20;
+        } else {
+            avatarId = 1;
+            setStats("Kaelen", 130);
+            baseAttack = 22;
+        }
+    }
+
+    void reviveAtSanctuary(std::ostringstream& out) {
+        health = static_cast<int>(maxHealth * 0.65);
+        if (health < 45) health = 45;
+        stamina = maxStamina;
+        out << "\n[Sanctuary Recovery] You drag yourself back to the Sanctum steps and regain "
+            << health << "/" << maxHealth << " HP and full stamina!\n";
+    }
+
+    int getAvatarId() const { return avatarId; }
+    int getStamina() const { return stamina; }
+    int getMaxStamina() const { return maxStamina; }
+
+    bool spendStamina(int cost) {
+        if (stamina < cost) return false;
+        stamina -= cost;
+        return true;
+    }
+
+    void gainStamina(int amount) {
+        stamina += amount;
+        if (stamina > maxStamina) stamina = maxStamina;
+    }
 
     Inventory& getInventory() { return inventory; }
     const Inventory& getInventory() const { return inventory; }
@@ -218,7 +255,7 @@ public:
     void useItem(const std::string& itemName, std::ostringstream& out) {
         Item* item = inventory.getItem(itemName);
         if (item == nullptr) {
-            out << "\n[!] You don't have '" << itemName << "' in your inventory.\n";
+            out << "\n[!] No '" << itemName << "' in your pack.\n";
             return;
         }
         bool consumed = item->use(*this, out);
@@ -234,42 +271,67 @@ bool HerbItem::use(Player& player, std::ostringstream& out) {
 }
 
 // ==========================================
-// 3. POLYMORPHISM: Enemies & Obstacles
+// 3. POLYMORPHISM: Demon Monkeys & Obstacles
 // ==========================================
 class Enemy : public Entity {
 protected:
     int attackDamage;
     std::string taunt;
+    int initialHp;
+    int initialDmg;
 
 public:
     Enemy(std::string n, int hp, int dmg, std::string t)
-        : Entity(n, hp), attackDamage(dmg), taunt(t) {}
+        : Entity(n, hp), attackDamage(dmg), taunt(t), initialHp(hp), initialDmg(dmg) {}
+
+    void resetEnemy(int hp, int dmg, std::string t) {
+        initialHp = hp;
+        initialDmg = dmg;
+        health = hp;
+        maxHealth = hp;
+        attackDamage = dmg;
+        taunt = t;
+    }
+
+    void partialHealOnLoss() {
+        health = static_cast<int>(maxHealth * 0.75);
+        if (health < 25) health = 25;
+    }
 
     int getAttackDamage() const { return attackDamage; }
-    std::string getTaunt() const { return taunt; }
 
-    virtual void strikePlayer(Player& player, std::ostringstream& out) {
+    virtual void strikePlayer(Player& player, std::ostringstream& out, bool guarded = false) {
         out << " [" << name << "] \"" << taunt << "\"\n";
-        player.takeDamage(attackDamage, out);
+        int dmg = guarded ? (attackDamage / 2) : attackDamage;
+        if (guarded) {
+            out << " [Guard] Your stance cuts the demon's lunge in half!\n";
+        }
+        player.takeDamage(dmg, out);
     }
 };
 
-class CryptStalker : public Enemy {
+class CrimsonHowler : public Enemy {
 public:
-    CryptStalker()
-        : Enemy("Crypt Stalker", 45, 16, "Fresh bones step into my dark gallery!") {}
+    CrimsonHowler()
+        : Enemy("Crimson Demon Monkey", 60, 19, "Screech! Another runner slips on the wet flagstones!") {}
 };
 
-class MireLurker : public Enemy {
+class FangBrute : public Enemy {
 public:
-    MireLurker()
-        : Enemy("Mire Lurker", 55, 18, "The sunken cistern claims every wandering eye!") {}
+    FangBrute()
+        : Enemy("Fang Demon Monkey", 75, 22, "Chatter-snarl! Nowhere left to vault in this corridor!") {}
 };
 
-class ShadowWarden : public Enemy {
+class EmberAlpha : public Enemy {
 public:
-    ShadowWarden()
-        : Enemy("Shadow Warden", 75, 24, "None pass the Sanctum without answering to the gloom!") {}
+    EmberAlpha()
+        : Enemy("Ember Demon Monkey", 90, 25, "Roar-shriek! The temple's cursed pack hunts as one!") {}
+};
+
+class IdolColossus : public Enemy {
+public:
+    IdolColossus()
+        : Enemy("Alpha Idol Monkey", 115, 29, "THUNDEROUS SCREECH! Drop the idol or fall beneath the pack!") {}
 };
 
 class Obstacle {
@@ -281,36 +343,34 @@ public:
     Obstacle(std::string n) : name(n), resolved(false) {}
     virtual ~Obstacle() = default;
 
-    std::string getName() const { return name; }
+    void resetResolved() { resolved = false; }
     bool isResolved() const { return resolved; }
-    virtual std::string getPromptTag() const = 0;
     virtual void startEncounter(Player& player, std::ostringstream& out) = 0;
     virtual bool handleInput(Player& player, const std::string& input, std::ostringstream& out) = 0;
 };
 
 class FloorTrap : public Obstacle {
 public:
-    FloorTrap() : Obstacle("Dart Pressure Plate") {}
-    std::string getPromptTag() const override { return "trap"; }
+    FloorTrap() : Obstacle("Spike & Dart Run") {}
 
     void startEncounter(Player& player, std::ostringstream& out) override {
         if (!player.getInventory().hasItem("Torch")) {
-            out << "\n[Darkness] Without a Torch, you step blindly onto a raised stone!\n";
-            player.takeDamage(15, out);
+            out << "\n[Shadow Slip] Without a Torch, you clip a mossy trip-stone!\n";
+            player.takeDamage(16, out);
         }
-        out << "\n[Hazard: Dart Pressure Plate] Poison darts click inside the walls. Type your move (e.g., dodge, block).\n";
+        out << "\n[Run Hazard] Floor spikes snap ahead while darts hiss from the wall! Choose your move: slide, leap, or brace.\n";
     }
 
     bool handleInput(Player& player, const std::string& input, std::ostringstream& out) override {
         std::string c = toLowerStr(trimStr(input));
-        if (c == "dodge") {
-            out << "\n[Success] You dive low as poison darts zip overhead!\n";
-        } else if (c == "block") {
-            out << "\n[Guard] Darts rattle off your forearm—minor sting, no poison!\n";
-            player.takeDamage(8, out);
+        if (c == "slide" || c == "dodge" || c == "leap") {
+            out << "\n[Clean Run] You drop into a low temple slide beneath the volley!\n";
+        } else if (c == "brace" || c == "block") {
+            out << "\n[Glancing Hit] You brace your arm—light scrape, no poison.\n";
+            player.takeDamage(9, out);
         } else {
-            out << "\n[!] That choice leaves you exposed to the volley!\n";
-            player.takeDamage(15, out);
+            out << "\n[Stumble] Late footwork catches a dart on the shoulder!\n";
+            player.takeDamage(16, out);
         }
         resolved = true;
         return true;
@@ -322,48 +382,44 @@ private:
     KeyItem* keyRef;
 
 public:
-    CreviceSearch(KeyItem* key) : Obstacle("Runed Wall Crevice"), keyRef(key) {}
-    std::string getPromptTag() const override { return "crevice"; }
+    CreviceSearch(KeyItem* key) : Obstacle("Carved Idol Niche"), keyRef(key) {}
 
     void startEncounter(Player&, std::ostringstream& out) override {
-        out << "\n[Hazard: Runed Wall Crevice] Something metallic glints inside.\n";
-        out << "Type which side of the crevice you search (e.g., left or right).\n";
+        out << "\n[Niche] A sun-glyph key glints inside a split stone wall. Which side do you reach into?\n";
     }
 
     bool handleInput(Player& player, const std::string& input, std::ostringstream& out) override {
         std::string c = toLowerStr(trimStr(input));
         if (c == "right") {
-            out << "\n[Found] You reach into the right gap and pull out the ancient brass Key!\n";
+            out << "\n[Claimed] You reach right and snatch the sun-glyph Key!\n";
             player.getInventory().addItem(keyRef, out);
             resolved = true;
             return true;
         }
-        out << "\n[Venom] A cave spider snaps from that gap!\n";
-        player.takeDamage(15, out);
+        out << "\n[Ambush] A venomous temple crawler snaps from that side!\n";
+        player.takeDamage(16, out);
         return false;
     }
 };
 
 class CisternRiddle : public Obstacle {
 public:
-    CisternRiddle() : Obstacle("Sunken Bell Shrine") {}
-    std::string getPromptTag() const override { return "riddle_bell"; }
+    CisternRiddle() : Obstacle("Sunken Gong Shrine") {}
 
     void startEncounter(Player&, std::ostringstream& out) override {
-        out << "\n[Riddle Shrine] A bronze bell tolls once as etched runes glow:\n";
+        out << "\n[Riddle I] Water ripples around a bronze gong as runes glow:\n";
         out << "\"I speak without a mouth and hear without ears. I have no body, but I come alive with wind. What am I?\"\n";
-        out << "Type your single-word answer.\n";
     }
 
     bool handleInput(Player& player, const std::string& input, std::ostringstream& out) override {
         std::string c = toLowerStr(trimStr(input));
         if (c == "echo" || c == "an echo") {
-            out << "\n[Riddle Solved] The water parts along a hidden causeway and the way forward opens!\n";
+            out << "\n[Solved] Stone stepping-stones rise above the floodwater!\n";
             resolved = true;
             return true;
         }
-        out << "\n[Refused] Freezing mist surges from the cistern!\n";
-        player.takeDamage(16, out);
+        out << "\n[Wrong] Freezing spray lashes across the flooded hall!\n";
+        player.takeDamage(17, out);
         return false;
     }
 };
@@ -371,51 +427,69 @@ public:
 class BrazierPuzzle : public Obstacle {
 public:
     BrazierPuzzle() : Obstacle("Twin Flame Braziers") {}
-    std::string getPromptTag() const override { return "brazier"; }
 
     void startEncounter(Player&, std::ostringstream& out) override {
-        out << "\n[Puzzle: Twin Flame Braziers] Carved runes read:\n";
-        out << "\"Speak the element that lights the dark and chars the shadow.\"\n";
-        out << "Type your answer.\n";
+        out << "\n[Riddle II] Carved temple runes read:\n";
+        out << "\"I consume forests, drink rivers, and fear no blade—yet a single raindrop can end me. What am I?\"\n";
     }
 
     bool handleInput(Player& player, const std::string& input, std::ostringstream& out) override {
         std::string c = toLowerStr(trimStr(input));
         if (c == "fire" || c == "flame") {
-            out << "\n[Puzzle Solved] Golden flame leaps across both braziers, weakening the Warden's shadow armor!\n";
+            out << "\n[Solved] Golden flame leaps across both braziers, scorching nearby shadow foes!\n";
             resolved = true;
             return true;
         }
-        out << "\n[Backfire] Cold ash erupts from the braziers!\n";
-        player.takeDamage(16, out);
+        out << "\n[Wrong] Cold ash bursts from the unlit braziers!\n";
+        player.takeDamage(17, out);
+        return false;
+    }
+};
+
+class ForgeRiddle : public Obstacle {
+public:
+    ForgeRiddle() : Obstacle("Obsidian Anvil Seal") {}
+
+    void startEncounter(Player&, std::ostringstream& out) override {
+        out << "\n[Riddle III] Glowing runes pulse across the obsidian anvil:\n";
+        out << "\"The more you take from me, the bigger I grow. What am I?\"\n";
+    }
+
+    bool handleInput(Player& player, const std::string& input, std::ostringstream& out) override {
+        std::string c = toLowerStr(trimStr(input));
+        if (c == "hole" || c == "a hole") {
+            out << "\n[Solved] The obsidian seal cracks open in a shower of sparks!\n";
+            resolved = true;
+            return true;
+        }
+        out << "\n[Wrong] Molten cinders spurt from the anvil!\n";
+        player.takeDamage(18, out);
         return false;
     }
 };
 
 class RiddleDoor : public Obstacle {
 public:
-    RiddleDoor() : Obstacle("Astral Exit Gate") {}
-    std::string getPromptTag() const override { return "riddle_gate"; }
+    RiddleDoor() : Obstacle("Outer Temple Gate") {}
 
     void startEncounter(Player& player, std::ostringstream& out) override {
         if (!player.getInventory().hasItem("Key")) {
-            out << "\n[Locked] The Astral Exit Gate is sealed tight. Find the [Key] in the Trapped Gallery first!\n";
+            out << "\n[Sealed] The Outer Temple Gate requires the [Key] from the Trapped Gallery.\n";
             return;
         }
-        out << "\n[Final Gate] You turn the runed Key. The gate guardian asks:\n";
+        out << "\n[Riddle IV — Final Gate] The stone guardian speaks:\n";
         out << "\"What gets wetter the more it dries?\"\n";
-        out << "Type your answer to unseal the exit.\n";
     }
 
     bool handleInput(Player& player, const std::string& input, std::ostringstream& out) override {
         std::string c = toLowerStr(trimStr(input));
         if (c == "towel" || c == "a towel") {
-            out << "\n[VICTORY] Massive stone wings swing open to cool starlight—you escaped the dungeon!\n";
+            out << "\n[ESCAPED] Heavy temple doors thunder open to sunlight and jungle air!\n";
             resolved = true;
             return true;
         }
-        out << "\n[Shockwave] Runic lightning arcs from the lock!\n";
-        player.takeDamage(20, out);
+        out << "\n[Wrong] Shock-runes flash across the gate lock!\n";
+        player.takeDamage(22, out);
         return false;
     }
 };
@@ -430,6 +504,7 @@ private:
     std::string objectiveHint;
     std::string description;
     Item* roomItem;
+    Item* initialItem;
     Enemy* enemy;
     Room* northRoom;
     Room* southRoom;
@@ -438,10 +513,14 @@ public:
     Room(std::string roomId, std::string t, std::string hint, std::string desc,
          Item* item = nullptr, Enemy* roomEnemy = nullptr)
         : id(roomId), title(t), objectiveHint(hint), description(desc),
-          roomItem(item), enemy(roomEnemy), northRoom(nullptr), southRoom(nullptr) {}
+          roomItem(item), initialItem(item), enemy(roomEnemy),
+          northRoom(nullptr), southRoom(nullptr) {}
 
     const std::string& getId() const { return id; }
     const std::string& getTitle() const { return title; }
+    const std::string& getObjective() const { return objectiveHint; }
+
+    void resetItem() { roomItem = initialItem; }
 
     void setExits(Room* north, Room* south) {
         northRoom = north;
@@ -458,22 +537,16 @@ public:
         return temp;
     }
 
-    void describe(std::ostringstream& out, int hp, int maxHp) const {
-        out << "\n========================================================\n";
-        out << title << "  |  HP: " << hp << "/" << maxHp << "\n";
-        out << "Objective: " << objectiveHint << "\n";
-        out << "--------------------------------------------------------\n";
+    void describe(std::ostringstream& out, int hp, int maxHp, int stam) const {
+        out << "\n[" << title << "] HP " << hp << "/" << maxHp << " | STM " << stam << " — " << objectiveHint << "\n";
         out << description << "\n";
         if (roomItem != nullptr) {
-            out << "[Item Here] You spot a [" << roomItem->getName() << "] — use 'take' to pick it up.\n";
+            out << " * Relic: [" << roomItem->getName() << "] ('take')\n";
         }
         if (enemy != nullptr && enemy->isAlive()) {
-            out << "[Enemy Ahead] " << enemy->getName() << " (HP: " << enemy->getHealth()
-                << "/" << enemy->getMaxHealth() << ") blocks the way! Use 'attack'!\n";
+            out << " * Demon Monkey: " << enemy->getName() << " (" << enemy->getHealth()
+                << "/" << enemy->getMaxHealth() << " HP) — moves: slash, vault, guard, torch\n";
         }
-        if (northRoom != nullptr) out << "-> North: " << northRoom->getTitle() << "\n";
-        if (southRoom != nullptr) out << "-> South: " << southRoom->getTitle() << "\n";
-        out << "========================================================\n";
     }
 };
 
@@ -482,115 +555,158 @@ private:
     Player player;
     TorchItem torchItem;
     BladeItem bladeItem;
-    HerbItem herbItem;
+    HerbItem herbItem1;
+    HerbItem herbItem2;
     KeyItem keyItem;
 
-    CryptStalker stalker;
-    MireLurker lurker;
-    ShadowWarden warden;
+    CrimsonHowler howler;
+    FangBrute brute;
+    EmberAlpha emberAlpha;
+    IdolColossus colossus;
 
     FloorTrap floorTrap;
     CreviceSearch creviceSearch;
     CisternRiddle cisternRiddle;
     BrazierPuzzle brazierPuzzle;
+    ForgeRiddle forgeRiddle;
     RiddleDoor riddleDoor;
 
     Room cellRoom;
     Room corridorRoom;
     Room cisternRoom;
+    Room forgeRoom;
     Room sanctumRoom;
     Room gateRoom;
 
     Room* currentRoom;
-    std::string activePrompt; // "", "trap", "crevice", "riddle_bell", "brazier", "riddle_gate"
+    std::string activePrompt;
+    std::string lastAnimAction;
+    int difficulty;
+    int defeatsCount;
     bool escaped;
 
 public:
     GameEngine()
-        : player("Adventurer"),
+        : player(),
           torchItem(),
           bladeItem(22),
-          herbItem(40),
+          herbItem1(45),
+          herbItem2(45),
           keyItem(),
-          stalker(),
-          lurker(),
-          warden(),
+          howler(),
+          brute(),
+          emberAlpha(),
+          colossus(),
           floorTrap(),
           creviceSearch(&keyItem),
           cisternRiddle(),
           brazierPuzzle(),
+          forgeRiddle(),
           riddleDoor(),
-          cellRoom(
-              "cell",
-              "1. Damp Dungeon Cell",
-              "Claim the Torch, then push North.",
-              "Cold water drips down mossy stones. A bright Torch rests beside the iron bars.",
-              &torchItem,
-              nullptr
-          ),
-          corridorRoom(
-              "corridor",
-              "2. Trapped Gallery",
-              "Defeat the Crypt Stalker, claim the Blade, and search the room for the Key.",
-              "A torchlit stone gallery lined with dart slits and a cracked wall crevice."
-              " A tempered Blade leans against a pillar.",
-              &bladeItem,
-              &stalker
-          ),
-          cisternRoom(
-              "cistern",
-              "3. Sunken Cistern",
-              "Defeat the Mire Lurker and solve the bell shrine riddle to cross the flooded causeway.",
-              "Black water laps against submerged pillars beneath a vaulted stone dome."
-              " An ancient bronze bell hangs over a glowing inscription.",
-              nullptr,
-              &lurker
-          ),
-          sanctumRoom(
-              "sanctum",
-              "4. Ember Sanctum",
-              "Solve the brazier puzzle, grab the Herb, and defeat the Shadow Warden.",
-              "Two unlit braziers flank a shadowy altar where a glowing crimson Herb grows."
-              " The Shadow Warden guards the northern archway.",
-              &herbItem,
-              &warden
-          ),
-          gateRoom(
-              "gate",
-              "5. Astral Exit Gate",
-              "Unlock with the Key and answer the gate guardian's riddle to escape!",
-              "Cool night air seeps through towering runed doors leading up to freedom."
-          ),
+          cellRoom("cell", "1. Idol Courtyard", "Claim Torch, then sprint North.",
+                   "Mossy temple steps lead past a flickering Torch toward the demon-haunted corridor.", &torchItem, nullptr),
+          corridorRoom("corridor", "2. Trapped Gallery", "Fight Crimson Demon Monkey, claim Blade, inspect traps for Key.",
+                       "A narrow run-gallery with dart slits, a Blade, and a carved niche.", &bladeItem, &howler),
+          cisternRoom("cistern", "3. Sunken Cistern", "Fight Fang Demon Monkey & solve Riddle I at the gong shrine.",
+                      "Flooded stone slabs and a sunken gong shrine where a Fang Demon Monkey lurks.", nullptr, &brute),
+          forgeRoom("forge", "4. Obsidian Forge", "Fight Ember Demon Monkey, claim Herb, solve Riddle III at anvil.",
+                    "Heat rises over dark slag, a crimson Herb, and a runed anvil.", &herbItem1, &emberAlpha),
+          sanctumRoom("sanctum", "5. Ember Sanctum", "Solve Riddle II at braziers, claim Herb, defeat Alpha Idol Monkey.",
+                      "Twin braziers flank a sacred altar with a Herb before the Alpha Idol Monkey.", &herbItem2, &colossus),
+          gateRoom("gate", "6. Outer Temple Gate", "Unlock with Key & solve Riddle IV to escape.",
+                   "Sunlight pours through towering temple doors ahead."),
           currentRoom(&cellRoom),
           activePrompt(""),
+          lastAnimAction("idle"),
+          difficulty(1),
+          defeatsCount(0),
           escaped(false)
     {
         cellRoom.setExits(&corridorRoom, nullptr);
         corridorRoom.setExits(&cisternRoom, &cellRoom);
-        cisternRoom.setExits(&sanctumRoom, &corridorRoom);
-        sanctumRoom.setExits(&gateRoom, &cisternRoom);
+        cisternRoom.setExits(&forgeRoom, &corridorRoom);
+        forgeRoom.setExits(&sanctumRoom, &cisternRoom);
+        sanctumRoom.setExits(&gateRoom, &forgeRoom);
         gateRoom.setExits(nullptr, &sanctumRoom);
+    }
+
+    void startNewRun(int avatarId, int levelDiff, std::ostringstream& out) {
+        difficulty = (levelDiff == 2) ? 2 : 1;
+        player.configureAvatar(avatarId);
+
+        cellRoom.resetItem();
+        corridorRoom.resetItem();
+        cisternRoom.resetItem();
+        forgeRoom.resetItem();
+        sanctumRoom.resetItem();
+        gateRoom.resetItem();
+
+        floorTrap.resetResolved();
+        creviceSearch.resetResolved();
+        cisternRiddle.resetResolved();
+        brazierPuzzle.resetResolved();
+        forgeRiddle.resetResolved();
+        riddleDoor.resetResolved();
+
+        double mult = (difficulty == 2) ? 1.25 : 1.0;
+        howler.resetEnemy(static_cast<int>(60 * mult), static_cast<int>(19 * mult), "Screech! Another runner slips!");
+        brute.resetEnemy(static_cast<int>(75 * mult), static_cast<int>(22 * mult), "Chatter-snarl! Nowhere to vault!");
+        emberAlpha.resetEnemy(static_cast<int>(90 * mult), static_cast<int>(25 * mult), "Roar-shriek! The cursed pack hunts!");
+        colossus.resetEnemy(static_cast<int>(115 * mult), static_cast<int>(29 * mult), "THUNDEROUS SCREECH! Kneel!");
+
+        currentRoom = &cellRoom;
+        activePrompt = "";
+        lastAnimAction = "idle";
+        defeatsCount = 0;
+        escaped = false;
+
+        out << "\n=== NEW RUN: " << player.getName()
+            << (difficulty == 2 ? " [Lv.2 Veteran]" : " [Lv.1 Standard]") << " ===\n";
+        currentRoom->describe(out, player.getHealth(), player.getMaxHealth(), player.getStamina());
+    }
+
+    void handlePlayerDefeat(Enemy* foe, std::ostringstream& out) {
+        defeatsCount++;
+        lastAnimAction = "defeat";
+        if (foe != nullptr) {
+            foe->partialHealOnLoss();
+        }
+        out << "\n[KNOCKED DOWN #" << defeatsCount << "] The demon monkey overwhelms you!\n";
+        out << "[Recovery Trial] Retreat to the Idol Courtyard ('south' / 'retreat') to claim missed relics, use 'herb', or 'rest' to recover stamina!\n";
+        currentRoom = &cellRoom;
+        player.reviveAtSanctuary(out);
+        currentRoom->describe(out, player.getHealth(), player.getMaxHealth(), player.getStamina());
     }
 
     std::string step(const std::string& rawInput) {
         std::ostringstream out;
         std::string input = trimStr(rawInput);
         std::string lower = toLowerStr(input);
+        lastAnimAction = "idle";
 
-        if (!player.isAlive()) {
-            out << "\n*** YOU FELL IN THE DUNGEON. Refresh the page to try a new run! ***\n";
+        if (lower.rfind("start ", 0) == 0) {
+            std::string rest = trimStr(lower.substr(6));
+            int av = 1;
+            int lv = 1;
+            if (rest.find("lyra") != std::string::npos || rest.find("2") != std::string::npos) av = 2;
+            if (rest.find("thorne") != std::string::npos || rest.find("3") != std::string::npos) av = 3;
+            if (rest.find("veteran") != std::string::npos || rest.find("hard") != std::string::npos) lv = 2;
+            startNewRun(av, lv, out);
             return out.str();
         }
+
         if (escaped) {
-            out << "\n*** CONGRATULATIONS! You escaped the dungeon alive! ***\n";
+            lastAnimAction = "escape";
+            out << "\n*** TEMPLE ESCAPED! Final HP: " << player.getHealth() << " | Knockdowns: " << defeatsCount << " ***\n";
             return out.str();
         }
 
         if (activePrompt == "trap") {
             activePrompt = "";
             floorTrap.handleInput(player, input, out);
+            lastAnimAction = "vault";
             if (!player.isAlive()) {
-                out << "\n*** YOU FELL IN THE DUNGEON. Refresh to retry! ***\n";
+                handlePlayerDefeat(currentRoom->getEnemy(), out);
                 return out.str();
             }
             if (!creviceSearch.isResolved() && !player.getInventory().hasItem("Key")) {
@@ -598,7 +714,7 @@ public:
                 creviceSearch.startEncounter(player, out);
                 return out.str();
             }
-            currentRoom->describe(out, player.getHealth(), player.getMaxHealth());
+            currentRoom->describe(out, player.getHealth(), player.getMaxHealth(), player.getStamina());
             return out.str();
         }
 
@@ -606,10 +722,10 @@ public:
             activePrompt = "";
             creviceSearch.handleInput(player, input, out);
             if (!player.isAlive()) {
-                out << "\n*** YOU FELL IN THE DUNGEON. Refresh to retry! ***\n";
+                handlePlayerDefeat(currentRoom->getEnemy(), out);
                 return out.str();
             }
-            currentRoom->describe(out, player.getHealth(), player.getMaxHealth());
+            currentRoom->describe(out, player.getHealth(), player.getMaxHealth(), player.getStamina());
             return out.str();
         }
 
@@ -617,10 +733,21 @@ public:
             activePrompt = "";
             cisternRiddle.handleInput(player, input, out);
             if (!player.isAlive()) {
-                out << "\n*** YOU FELL IN THE DUNGEON. Refresh to retry! ***\n";
+                handlePlayerDefeat(currentRoom->getEnemy(), out);
                 return out.str();
             }
-            currentRoom->describe(out, player.getHealth(), player.getMaxHealth());
+            currentRoom->describe(out, player.getHealth(), player.getMaxHealth(), player.getStamina());
+            return out.str();
+        }
+
+        if (activePrompt == "riddle_forge") {
+            activePrompt = "";
+            forgeRiddle.handleInput(player, input, out);
+            if (!player.isAlive()) {
+                handlePlayerDefeat(currentRoom->getEnemy(), out);
+                return out.str();
+            }
+            currentRoom->describe(out, player.getHealth(), player.getMaxHealth(), player.getStamina());
             return out.str();
         }
 
@@ -628,10 +755,10 @@ public:
             activePrompt = "";
             brazierPuzzle.handleInput(player, input, out);
             if (!player.isAlive()) {
-                out << "\n*** YOU FELL IN THE DUNGEON. Refresh to retry! ***\n";
+                handlePlayerDefeat(currentRoom->getEnemy(), out);
                 return out.str();
             }
-            currentRoom->describe(out, player.getHealth(), player.getMaxHealth());
+            currentRoom->describe(out, player.getHealth(), player.getMaxHealth(), player.getStamina());
             return out.str();
         }
 
@@ -639,14 +766,15 @@ public:
             activePrompt = "";
             if (riddleDoor.handleInput(player, input, out)) {
                 escaped = true;
-                out << "\n*** ESCAPE COMPLETE! Score HP remaining: " << player.getHealth() << " ***\n";
+                lastAnimAction = "escape";
+                out << "\n*** VICTORY! Escaped with " << player.getHealth() << " HP (Knockdowns: " << defeatsCount << ") ***\n";
                 return out.str();
             }
             if (!player.isAlive()) {
-                out << "\n*** YOU FELL IN THE DUNGEON. Refresh to retry! ***\n";
+                handlePlayerDefeat(nullptr, out);
                 return out.str();
             }
-            currentRoom->describe(out, player.getHealth(), player.getMaxHealth());
+            currentRoom->describe(out, player.getHealth(), player.getMaxHealth(), player.getStamina());
             return out.str();
         }
 
@@ -655,28 +783,90 @@ public:
             if (item != nullptr) {
                 player.getInventory().addItem(item, out);
             } else {
-                out << "\n[Info] No items left to pick up in this room.\n";
+                out << "\n[Info] No relic left in this chamber.\n";
             }
         } else if (lower.rfind("use ", 0) == 0) {
-            std::string itemName = trimStr(input.substr(4));
-            player.useItem(itemName, out);
-        } else if (lower == "attack") {
+            player.useItem(trimStr(input.substr(4)), out);
+        } else if (lower == "rest") {
+            player.gainStamina(40);
+            player.heal(15, out);
+            out << "[Breath] You catch your breath (+40 STM, +15 HP).\n";
+        } else if (lower == "slash" || lower == "attack") {
             Enemy* foe = currentRoom->getEnemy();
             if (foe != nullptr && foe->isAlive()) {
+                lastAnimAction = "slash";
                 int dmg = player.getAttackPower();
                 if (currentRoom == &sanctumRoom && brazierPuzzle.isResolved()) {
                     dmg += 16;
-                    out << "\n[Brazier Bonus] Blazing embers empower your strike (+16 DMG)!\n";
+                    out << "\n[Ember Blessing] Blazing braziers add +16 DMG!\n";
                 }
-                out << "\nYou strike " << foe->getName() << " for " << dmg << " damage!\n";
+                out << "\n[Slash] " << player.getName() << " lunges with a wide strike for " << dmg << " DMG!\n";
                 foe->takeDamage(dmg, out);
                 if (foe->isAlive()) {
-                    foe->strikePlayer(player, out);
+                    foe->strikePlayer(player, out, false);
                 } else {
-                    out << "\n[Victory] " << foe->getName() << " is defeated!\n";
+                    out << "\n[Foe Down] " << foe->getName() << " is driven back!\n";
                 }
             } else {
-                out << "\n[Info] There is no enemy to fight in this room.\n";
+                out << "\n[Info] No demon monkey here.\n";
+            }
+        } else if (lower == "vault") {
+            Enemy* foe = currentRoom->getEnemy();
+            if (foe != nullptr && foe->isAlive()) {
+                lastAnimAction = "vault";
+                if (!player.spendStamina(25)) {
+                    out << "\n[Low Stamina] Need 25 STM to vault! Use 'rest' or 'slash'.\n";
+                    foe->strikePlayer(player, out, false);
+                } else {
+                    int dmg = static_cast<int>(player.getAttackPower() * 1.45) + 10;
+                    out << "\n[Temple Vault] You spring off the pillar and crash down for " << dmg << " DMG! (-25 STM)\n";
+                    foe->takeDamage(dmg, out);
+                    if (foe->isAlive()) {
+                        out << " [Agile Leap] Your mid-air vault dodges the monkey's counter!\n";
+                    } else {
+                        out << "\n[Foe Down] " << foe->getName() << " is crushed!\n";
+                    }
+                }
+            } else {
+                out << "\n[Info] No demon monkey to vault over here.\n";
+            }
+        } else if (lower == "guard") {
+            Enemy* foe = currentRoom->getEnemy();
+            if (foe != nullptr && foe->isAlive()) {
+                lastAnimAction = "guard";
+                player.gainStamina(25);
+                int counterDmg = player.getAttackPower() / 2;
+                out << "\n[Iron Guard] You plant your stance (+25 STM) and riposte for " << counterDmg << " DMG!\n";
+                foe->takeDamage(counterDmg, out);
+                if (foe->isAlive()) {
+                    foe->strikePlayer(player, out, true);
+                } else {
+                    out << "\n[Foe Down] " << foe->getName() << " falls to your riposte!\n";
+                }
+            } else {
+                out << "\n[Info] No demon monkey attacking right now.\n";
+            }
+        } else if (lower == "torch") {
+            Enemy* foe = currentRoom->getEnemy();
+            if (foe != nullptr && foe->isAlive()) {
+                if (!player.getInventory().hasItem("Torch")) {
+                    out << "\n[No Torch] Claim the Torch in Room 1 first!\n";
+                } else if (!player.spendStamina(20)) {
+                    out << "\n[Low Stamina] Need 20 STM for a Torch flare!\n";
+                } else {
+                    lastAnimAction = "torch";
+                    int dmg = 26 + (player.getInventory().hasItem("Blade") ? 8 : 0);
+                    out << "\n[Torch Flare] Blinding flame sears " << foe->getName() << " for " << dmg << " DMG! (-20 STM)\n";
+                    foe->takeDamage(dmg, out);
+                    if (foe->isAlive()) {
+                        out << " [Dazed] Singed fur slows the demon's strike!\n";
+                        player.takeDamage(foe->getAttackDamage() / 2, out);
+                    } else {
+                        out << "\n[Foe Down] " << foe->getName() << " flees the flame!\n";
+                    }
+                }
+            } else {
+                out << "\n[Info] No demon monkey to scorch here.\n";
             }
         } else if (lower == "search") {
             if (currentRoom == &corridorRoom) {
@@ -689,7 +879,7 @@ public:
                     creviceSearch.startEncounter(player, out);
                     return out.str();
                 } else {
-                    out << "\n[Info] You've already cleared the traps and crevice here.\n";
+                    out << "\n[Info] Gallery traps and niche already resolved.\n";
                 }
             } else if (currentRoom == &cisternRoom) {
                 if (!cisternRiddle.isResolved()) {
@@ -697,7 +887,15 @@ public:
                     cisternRiddle.startEncounter(player, out);
                     return out.str();
                 } else {
-                    out << "\n[Info] The sunken bell shrine has already been answered.\n";
+                    out << "\n[Info] Gong shrine already solved.\n";
+                }
+            } else if (currentRoom == &forgeRoom) {
+                if (!forgeRiddle.isResolved()) {
+                    activePrompt = "riddle_forge";
+                    forgeRiddle.startEncounter(player, out);
+                    return out.str();
+                } else {
+                    out << "\n[Info] Anvil riddle already solved.\n";
                 }
             } else if (currentRoom == &sanctumRoom) {
                 if (!brazierPuzzle.isResolved()) {
@@ -705,10 +903,10 @@ public:
                     brazierPuzzle.startEncounter(player, out);
                     return out.str();
                 } else {
-                    out << "\n[Info] Both braziers are already burning bright.\n";
+                    out << "\n[Info] Braziers already lit.\n";
                 }
             } else {
-                out << "\n[Info] Nothing hidden to search here. Try 'take' or move 'north'.\n";
+                out << "\n[Info] Nothing hidden to inspect here.\n";
             }
         } else if (lower == "door") {
             if (currentRoom == &gateRoom) {
@@ -720,45 +918,49 @@ public:
                     return out.str();
                 }
             } else {
-                out << "\n[Info] The Astral Exit Gate is in Room 5 (keep heading 'north').\n";
+                out << "\n[Info] Reach Room 6 (Outer Temple Gate) to unlock the exit.\n";
             }
         } else if (lower == "north") {
             Enemy* foe = currentRoom->getEnemy();
             if (foe != nullptr && foe->isAlive()) {
-                out << "\n[Blocked] " << foe->getName() << " blocks the northern path! Defeat it with 'attack' first.\n";
+                out << "\n[Blocked] " << foe->getName() << " blocks the path! Fight with slash, vault, guard, or torch.\n";
             } else if (currentRoom == &cisternRoom && !cisternRiddle.isResolved()) {
-                out << "\n[Flooded] The causeway ahead is submerged! Inspect the bell shrine ('search') and solve its riddle first.\n";
+                out << "\n[Flooded] Inspect ('search') and solve Riddle I first.\n";
+            } else if (currentRoom == &forgeRoom && !forgeRiddle.isResolved()) {
+                out << "\n[Sealed] Inspect ('search') and solve Riddle III first.\n";
             } else if (currentRoom->getNorth() != nullptr) {
                 currentRoom = currentRoom->getNorth();
+                player.gainStamina(10);
             } else {
-                out << "\n[Info] No exit north from here.\n";
+                out << "\n[Info] No northern path here.\n";
             }
-        } else if (lower == "south") {
+        } else if (lower == "south" || lower == "retreat") {
             if (currentRoom->getSouth() != nullptr) {
                 currentRoom = currentRoom->getSouth();
+                player.gainStamina(15);
             } else {
-                out << "\n[Info] No path south from here.\n";
+                out << "\n[Info] Already at the southern idol courtyard.\n";
             }
-        } else if (lower == "inventory") {
-            player.getInventory().display(out);
-        } else if (lower == "help" || lower == "look") {
-            out << "\n[Quick Guide] take | attack | search | use herb | door | north | south | inventory\n";
+        } else if (lower == "look" || lower == "help") {
+            out << "\n[Moves] slash | vault | guard | torch | rest | take | search | use herb | door | north | south\n";
         } else {
-            out << "\n[?] Unknown command '" << input << "'. Try: take, attack, search, use herb, door, north, south, inventory\n";
+            out << "\n[?] Unknown command '" << input << "'.\n";
         }
 
         if (!player.isAlive()) {
-            out << "\n*** YOU FELL IN THE DUNGEON. Refresh the page to try a new run! ***\n";
+            handlePlayerDefeat(currentRoom->getEnemy(), out);
             return out.str();
         }
 
-        currentRoom->describe(out, player.getHealth(), player.getMaxHealth());
+        currentRoom->describe(out, player.getHealth(), player.getMaxHealth(), player.getStamina());
         return out.str();
     }
 
     std::string getRoomId() const { return currentRoom->getId(); }
     int getHp() const { return player.getHealth(); }
     int getMaxHp() const { return player.getMaxHealth(); }
+    int getStamina() const { return player.getStamina(); }
+    int getMaxStamina() const { return player.getMaxStamina(); }
     int getHasTorch() const { return player.getInventory().hasItem("Torch") ? 1 : 0; }
     int getHasBlade() const { return player.getInventory().hasItem("Blade") ? 1 : 0; }
     int getHasHerb() const { return player.getInventory().hasItem("Herb") ? 1 : 0; }
@@ -777,10 +979,11 @@ public:
         ename = (foe != nullptr && foe->isAlive()) ? foe->getName() : "";
         return ename.c_str();
     }
-    const char* getPromptModeCstr() const {
-        return activePrompt.c_str();
-    }
+    const char* getPromptModeCstr() const { return activePrompt.c_str(); }
+    const char* getLastAnimCstr() const { return lastAnimAction.c_str(); }
     int getEscapedFlag() const { return escaped ? 1 : 0; }
+    int getAvatarId() const { return player.getAvatarId(); }
+    int getDefeatsCount() const { return defeatsCount; }
 };
 
 static GameEngine g_engine;
@@ -799,6 +1002,8 @@ EXPORT const char* current_room() {
 
 EXPORT int current_hp() { return g_engine.getHp(); }
 EXPORT int max_hp() { return g_engine.getMaxHp(); }
+EXPORT int current_stamina() { return g_engine.getStamina(); }
+EXPORT int max_stamina() { return g_engine.getMaxStamina(); }
 EXPORT int has_torch_flag() { return g_engine.getHasTorch(); }
 EXPORT int has_blade_flag() { return g_engine.getHasBlade(); }
 EXPORT int has_herb_flag() { return g_engine.getHasHerb(); }
@@ -807,4 +1012,7 @@ EXPORT int enemy_hp() { return g_engine.getEnemyHp(); }
 EXPORT int enemy_max_hp() { return g_engine.getEnemyMaxHp(); }
 EXPORT const char* enemy_name() { return g_engine.getEnemyNameCstr(); }
 EXPORT const char* prompt_mode() { return g_engine.getPromptModeCstr(); }
+EXPORT const char* last_anim() { return g_engine.getLastAnimCstr(); }
 EXPORT int is_escaped_flag() { return g_engine.getEscapedFlag(); }
+EXPORT int current_avatar_id() { return g_engine.getAvatarId(); }
+EXPORT int defeats_count() { return g_engine.getDefeatsCount(); }
