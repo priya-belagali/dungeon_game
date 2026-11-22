@@ -1777,7 +1777,7 @@
         const av = fbState.avId;
         if (av === 1) {
           if (fbState.stm < 15) {
-            appendCombat('[Low STM] Need 15 STM for Scout's Flare.');
+            appendCombat("[Low STM] Need 15 STM for Scout's Flare.");
             playSfx('dead_end');
           } else {
             fbState.stm = Math.min(fbState.maxStm, fbState.stm - 15 + 25);
