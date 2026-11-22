@@ -1,4 +1,4 @@
-# Eclipse of the Relic — 3-Level C++ OOP Adventure (v16)
+# Eclipse of the Relic — 3-Level C++ OOP Adventure (v29)
 
-- Free 4-directional movement: North, South, East, and West buttons remain active in every chamber so characters can move in whichever direction they choose.
-- Preserves balanced combat challenge, character hurt screams, cheerful victory exclamations, and level-clear victory fanfare music.
+- **5-Second Rest & Sleep Lock:** Resting places your character lying down asleep on the ground with animated `Zzz` and a countdown for 5 seconds, locking other actions until they wake up.
+- **Unique Character Powers (`special` / `skill`):** Distinct skills for Kaelen (`Scout's Flare`), Lyra (`Seal Surge`), and Thorne (`Iron Bulwark`).
