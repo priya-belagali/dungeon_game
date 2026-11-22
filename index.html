@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Eclipse of the Relic — 3-Level C++ OOP Adventure</title>
+  <title>Eclipse of the Relic - 3-Level C++ OOP Adventure</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -486,7 +486,7 @@
     <div class="intro-grid">
       <div class="intro-card">
         <h2>1. The Story</h2>
-        <p>Beneath the ancient ruins lies a 9-chamber labyrinth caught between freezing winter tides and molten forge-fire—a quiet song of ice and fire woven into stone.</p>
+        <p>Beneath the ancient ruins lies a 9-chamber labyrinth caught between freezing winter tides and molten forge-fire-a quiet song of ice and fire woven into stone.</p>
         <p>You can play as <strong>Kaelen</strong> (balanced scout), <strong>Lyra</strong> (swift relic seeker), or <strong>Thorne</strong> (tough iron warrior). Each chamber holds useful gear, helpful hints, or ancient guardians standing watch over the path ahead.</p>
         <p>Across <strong>3 levels</strong>, you must gather what you need, defeat the guardian of Chamber 9, and unlock the Final Gate before the shadows overtake the realm.</p>
       </div>
@@ -688,7 +688,7 @@
 
     const baseChamberMeta = {
       cell:       { num: 1, title: '1. Courtyard',       hint: 'Torch awaits here; winding paths branch out in every direction.',         item: 'Torch', foe: null },
-      east_wing:  { num: 2, title: '2. East Wing',       hint: 'A forged Blade rests here—claim it before deeper encounters.',           item: 'Blade', foe: { name: 'Demon Monkey',   kind: 'monkey', hp: 72,  dmg: 20 } },
+      east_wing:  { num: 2, title: '2. East Wing',       hint: 'A forged Blade rests here-claim it before deeper encounters.',           item: 'Blade', foe: { name: 'Demon Monkey',   kind: 'monkey', hp: 72,  dmg: 20 } },
       cistern:    { num: 3, title: '3. Sunken Cistern',  hint: 'Cool waters hide restorative herbs; backtrack along crooked tunnels.',     item: 'Herb',  foe: null },
       corridor:   { num: 4, title: '4. Lantern Gallery', hint: 'Wraiths haunt these crooked arches; step back anytime to recover.',     item: null,    foe: { name: 'Shadow Wraith',  kind: 'wraith', hp: 88,  dmg: 24 } },
       archives:   { num: 5, title: '5. Shadow Archives', hint: 'Scrolls point toward the Ancient Relic inside Chamber 6 (Deep Hall).',   item: 'Herb',  foe: { name: 'Shadow Wraith',  kind: 'wraith', hp: 88,  dmg: 24 } },
@@ -966,22 +966,34 @@
     document.addEventListener('keydown', unlockAudioAndStartMusic, { once: false });
 
     function startGameFromIntro() {
-      unlockAudioAndStartMusic();
       const introEl = document.getElementById('introPage');
       if (introEl) {
         introEl.classList.add('fade-out');
+        introEl.style.pointerEvents = 'none';
+        setTimeout(() => {
+          if (introEl.classList.contains('fade-out')) {
+            introEl.style.display = 'none';
+          }
+        }, 680);
       }
-      if (sfxEnabled) {
-        speakDramaticVoice('A song of ice and fire begins. Step into the labyrinth!', 'normal', chosenRunner);
-      }
+      try { unlockAudioAndStartMusic(); } catch (e) {}
+      try {
+        if (sfxEnabled) {
+          speakDramaticVoice('A song of ice and fire begins. Step into the labyrinth!', 'normal', chosenRunner);
+        }
+      } catch (e) {}
     }
+    window.startGameFromIntro = startGameFromIntro;
 
     function reopenIntroPage() {
       const introEl = document.getElementById('introPage');
       if (introEl) {
-        introEl.classList.remove('fade-out');
+        introEl.style.display = 'flex';
+        introEl.style.pointerEvents = 'auto';
+        requestAnimationFrame(() => introEl.classList.remove('fade-out'));
       }
     }
+    window.reopenIntroPage = reopenIntroPage;
 
     function speakDramaticVoice(line, mood = 'normal', avId = chosenRunner) {
       if (!sfxEnabled || !('speechSynthesis' in window)) return;
@@ -1378,7 +1390,7 @@
         syncWasmState();
       } else {
         loadMazeLevel(lvl);
-        combatLog.textContent = `[Level ${lvl} — ${runnerProfiles[fbState.avId].name}] 9-Chamber Labyrinth ready. Move freely between higher and lower chambers!\n`;
+        combatLog.textContent = `[Level ${lvl} - ${runnerProfiles[fbState.avId].name}] 9-Chamber Labyrinth ready. Move freely between higher and lower chambers!\n`;
         setBubble(`Chamber 1: ${mazeRooms.cell.hint}`);
         pushFallbackState();
       }
@@ -2789,6 +2801,8 @@
     };
 
     window.addEventListener('DOMContentLoaded', () => {
+      const sBtn = document.getElementById('startGameBtn');
+      if (sBtn) sBtn.addEventListener('click', startGameFromIntro);
       startIceFireMusicLoop();
       selectRunner(1);
       newRun(1);
