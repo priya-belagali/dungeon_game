@@ -35,6 +35,159 @@
       color: var(--text);
       font-family: 'Inter', system-ui, sans-serif;
     }
+
+    /* Full-canvas Introductory Story, Objectives & Rules Page */
+    #introPage {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 18px 24px 20px;
+      background:
+        radial-gradient(ellipse at 15% 0%, rgba(56, 189, 248, 0.14), transparent 48%),
+        radial-gradient(ellipse at 85% 10%, rgba(245, 158, 11, 0.16), transparent 50%),
+        radial-gradient(ellipse at 50% 100%, rgba(168, 85, 247, 0.14), transparent 55%),
+        #05080d;
+      overflow-y: auto;
+      opacity: 1;
+      transition: opacity 0.65s ease, transform 0.65s ease, visibility 0.65s ease;
+    }
+    #introPage.fade-out {
+      opacity: 0;
+      transform: scale(0.985);
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .intro-header {
+      text-align: center;
+      max-width: 920px;
+      margin: 0 auto 10px;
+    }
+    .intro-badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 3px 12px;
+      border-radius: 999px;
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      color: #fde68a;
+      margin-bottom: 6px;
+    }
+    .intro-title {
+      margin: 0;
+      font-family: 'Cinzel', serif;
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: 1.2px;
+      background: linear-gradient(90deg, #fde68a, #f59e0b, #c084fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .intro-subtitle {
+      margin: 5px 0 0;
+      font-size: 13px;
+      color: #cbd5e1;
+    }
+    .intro-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      max-width: 1180px;
+      width: 100%;
+      margin: 6px auto 12px;
+      flex: 1 1 auto;
+      min-height: 0;
+    }
+    .intro-card {
+      background: rgba(11, 18, 25, 0.92);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      overflow-y: auto;
+    }
+    .intro-card h2 {
+      margin: 0;
+      font-family: 'Cinzel', serif;
+      font-size: 15px;
+      color: #fde68a;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+      padding-bottom: 6px;
+    }
+    .intro-card p {
+      margin: 0;
+      font-size: 12.2px;
+      line-height: 1.48;
+      color: #e2e8f0;
+    }
+    .intro-card ul {
+      margin: 0;
+      padding-left: 17px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 12px;
+      line-height: 1.42;
+      color: #cbd5e1;
+    }
+    .intro-card li strong {
+      color: #f8fafc;
+    }
+    .rule-pill-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 11.8px;
+      color: #cbd5e1;
+    }
+    .rule-box {
+      padding: 7px 10px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(148, 163, 184, 0.13);
+      line-height: 1.38;
+    }
+    .rule-box strong { color: #a5f3fc; }
+    .intro-footer {
+      max-width: 1180px;
+      width: 100%;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding-top: 4px;
+    }
+    #startGameBtn {
+      padding: 12px 36px;
+      font-family: 'Cinzel', serif;
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      color: #090d16;
+      background: linear-gradient(90deg, #fde68a, #f59e0b, #fbbf24);
+      border: none;
+      border-radius: 999px;
+      cursor: pointer;
+      box-shadow: 0 6px 26px rgba(245, 158, 11, 0.38);
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+    #startGameBtn:hover {
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 10px 30px rgba(245, 158, 11, 0.55);
+    }
+    .intro-hint {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
     .screen {
       width: 100vw;
       height: 100vh;
@@ -48,8 +201,8 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 10px;
-      padding: 6px 14px;
+      gap: 8px;
+      padding: 6px 12px;
       background: var(--bg-1);
       border: 1px solid var(--line);
       border-radius: 11px;
@@ -57,14 +210,14 @@
     .head-left {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       flex-wrap: nowrap;
       min-width: 0;
     }
     h1 {
       margin: 0;
       font-family: 'Cinzel', serif;
-      font-size: 14.5px;
+      font-size: 14px;
       font-weight: 800;
       letter-spacing: 0.7px;
       background: linear-gradient(90deg, #fde68a, #f59e0b, #c084fc);
@@ -73,9 +226,9 @@
       white-space: nowrap;
     }
     .tag {
-      font-size: 11px;
+      font-size: 10.5px;
       font-weight: 600;
-      padding: 2px 9px;
+      padding: 2px 8px;
       border-radius: 999px;
       background: rgba(245, 158, 11, 0.14);
       border: 1px solid rgba(245, 158, 11, 0.35);
@@ -90,18 +243,18 @@
     .hud-bars {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       flex-wrap: wrap;
     }
     .stat-meter {
       display: flex;
       align-items: center;
-      gap: 6px;
-      font-size: 11.5px;
+      gap: 5px;
+      font-size: 11px;
       font-weight: 600;
     }
     .bar-bg {
-      width: 88px;
+      width: 82px;
       height: 7px;
       background: #05070a;
       border: 1px solid var(--line);
@@ -116,7 +269,7 @@
       flex: 1 1 auto;
       min-height: 0;
       display: grid;
-      grid-template-columns: 1.62fr 0.94fr;
+      grid-template-columns: 1.62fr 0.96fr;
       gap: 9px;
     }
     .stage-col {
@@ -155,7 +308,7 @@
     .goal-line strong { color: var(--amber); margin-right: 6px; }
 
     .log-box {
-      flex: 0 0 124px;
+      flex: 0 0 116px;
       background: #06090f;
       border: 1px solid var(--line);
       border-radius: 11px;
@@ -163,7 +316,7 @@
       overflow-y: auto;
       font-family: 'JetBrains Mono', monospace;
       font-size: 11px;
-      line-height: 1.36;
+      line-height: 1.35;
       white-space: pre-wrap;
       color: #e2e8f0;
     }
@@ -173,11 +326,11 @@
       background: var(--bg-1);
       border: 1px solid var(--line);
       border-radius: 11px;
-      padding: 9px 12px;
+      padding: 8px 11px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      gap: 6px;
+      gap: 5px;
     }
     .sec-hd {
       font-size: 10px;
@@ -185,7 +338,7 @@
       letter-spacing: 0.8px;
       text-transform: uppercase;
       color: var(--muted);
-      margin-bottom: 4px;
+      margin-bottom: 3px;
     }
     .avatar-tabs {
       display: grid;
@@ -210,12 +363,12 @@
     .lore-scroll {
       font-size: 10.5px;
       color: #cbd5e1;
-      line-height: 1.35;
-      padding: 6px 8px;
+      line-height: 1.32;
+      padding: 5px 8px;
       border-radius: 7px;
       background: rgba(255, 255, 255, 0.025);
       border: 1px solid rgba(148, 163, 184, 0.12);
-      max-height: 76px;
+      max-height: 54px;
       overflow-y: auto;
     }
     .relics-grid {
@@ -246,13 +399,13 @@
     .chambers-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 4px;
-      font-size: 10px;
+      gap: 3px;
+      font-size: 9.5px;
     }
     .ch-cell {
-      padding: 3px 5px;
+      padding: 3px 4px;
       border-radius: 5px;
-      background: rgba(255, 255, 255, 0.02);
+      background: rgba(255, 255, 255, 0.025);
       color: var(--muted);
       text-align: center;
       white-space: nowrap;
@@ -260,13 +413,10 @@
       text-overflow: ellipsis;
     }
     .ch-cell.here {
-      background: rgba(16, 185, 129, 0.2);
+      background: rgba(16, 185, 129, 0.22);
       color: #a7f3d0;
       font-weight: 700;
-    }
-    .ch-cell.locked {
-      opacity: 0.45;
-      text-decoration: line-through;
+      border: 1px solid rgba(16, 185, 129, 0.45);
     }
 
     .dock {
@@ -325,6 +475,49 @@
   </style>
 </head>
 <body>
+  <!-- Full-Viewport Introductory Story, Objectives & Rules Page -->
+  <section id="introPage" aria-label="Game Story, Objectives, and Rules">
+    <div class="intro-header">
+      <div class="intro-badge">3-Level C++ OOP Adventure</div>
+      <h1 class="intro-title">ECLIPSE OF THE RELIC</h1>
+      <p class="intro-subtitle">A song of frost and ember echoes beneath the sunken labyrinth. Read the guide below, then begin your quest.</p>
+    </div>
+
+    <div class="intro-grid">
+      <div class="intro-card">
+        <h2>1. The Story</h2>
+        <p>Beneath the ancient ruins lies a 9-chamber labyrinth caught between freezing winter tides and molten forge-fire—a quiet song of ice and fire woven into stone.</p>
+        <p>You can play as <strong>Kaelen</strong> (balanced scout), <strong>Lyra</strong> (swift relic seeker), or <strong>Thorne</strong> (tough iron warrior). Each chamber holds useful gear, helpful hints, or ancient guardians standing watch over the path ahead.</p>
+        <p>Across <strong>3 levels</strong>, you must gather what you need, defeat the guardian of Chamber 9, and unlock the Final Gate before the shadows overtake the realm.</p>
+      </div>
+
+      <div class="intro-card">
+        <h2>2. Your Objectives</h2>
+        <ul>
+          <li><strong>Explore the 9 Chambers:</strong> Travel freely between lower and higher chambers using <em>North</em>, <em>South</em>, <em>East</em>, and <em>West</em>.</li>
+          <li><strong>Collect Helpful Items:</strong> Pick up the <strong>Torch</strong>, <strong>Blade</strong>, <strong>Herb</strong>, <strong>Relic</strong>, and <strong>Key</strong> using <em>Take</em> to boost your strength, energy, or healing.</li>
+          <li><strong>Defeat Chamber Guardians:</strong> Battle monsters like the Demon Monkey, Shadow Wraith, Obsidian Golem, and Astral Warden.</li>
+          <li><strong>Open the Final Gate:</strong> Defeat the Astral Warden in <strong>Chamber 9</strong> while holding the <strong>Key</strong>, then use <em>Final Gate</em> to advance through all 3 levels.</li>
+        </ul>
+      </div>
+
+      <div class="intro-card">
+        <h2>3. Rules &amp; How to Play</h2>
+        <div class="rule-pill-list">
+          <div class="rule-box"><strong>Movement &amp; Energy (STM):</strong> Moving costs 10 STM. If your STM hits 0, you lose 10 HP from exhaustion. Use <em>Rest</em> or a <em>Torch</em> to recover energy.</div>
+          <div class="rule-box"><strong>Health (HP) &amp; Healing:</strong> If your HP reaches 0, the current level restarts. Use <em>Use Herb</em> (+45 HP) or <em>Rest</em> (+6 HP) when wounded.</div>
+          <div class="rule-box"><strong>Combat Choices:</strong> Use <em>Slash</em> for a steady hit, <em>Vault</em> (-25 STM) for heavy damage, <em>Guard &amp; Riposte</em> to cut incoming damage in half and gain +20 STM, or <em>Torch Flare</em> (-20 STM) when carrying a Torch.</div>
+          <div class="rule-box"><strong>Restart &amp; Audio:</strong> Use <em>Restart Level</em> or <em>Restart Game</em> anytime in the top bar. Toggle the <em>Music</em> or <em>SFX &amp; Voice</em> buttons whenever you like.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="intro-footer">
+      <button id="startGameBtn" type="button" onclick="startGameFromIntro()">START GAME</button>
+      <div class="intro-hint">Clicking Start Game fades out this page and opens the gameplay canvas.</div>
+    </div>
+  </section>
+
   <div class="screen">
     <header>
       <div class="head-left">
@@ -332,7 +525,11 @@
         <span class="tag" id="lvlTag">Level 1</span>
         <span class="tag" id="roomTag">1. Courtyard</span>
         <span class="tag timer" id="timerTag" style="display:none;">Time Left: 90s</span>
-        <button class="m" id="sfxBtn" onclick="toggleSfx()">SFX: ON</button>
+        <button class="m" id="storyBtn" onclick="reopenIntroPage()">Story &amp; Rules</button>
+        <button class="m gld" id="musicBtn" onclick="toggleIceFireMusic()">Music: ON</button>
+        <button class="m" id="sfxBtn" onclick="toggleSfx()">SFX &amp; Voice: ON</button>
+        <button class="m gld" id="btnRestartLevel" onclick="restartLevelAction()">Restart Level</button>
+        <button class="m atk" id="btnRestartGame" onclick="restartGameAction()">Restart Game</button>
       </div>
       <div class="hud-bars">
         <div class="stat-meter">
@@ -353,7 +550,7 @@
     <div class="main-area">
       <div class="stage-col">
         <div class="canvas-wrap">
-          <canvas id="gameCanvas" width="800" height="325"></canvas>
+          <canvas id="gameCanvas" width="840" height="340"></canvas>
           <div class="goal-line"><strong>HINT</strong><span id="goalTxt">Starting Level 1...</span></div>
         </div>
         <div class="log-box" id="combatLog"></div>
@@ -367,8 +564,8 @@
             <button class="tab-btn" id="tab2" onclick="selectRunner(2)">Lyra</button>
             <button class="tab-btn" id="tab3" onclick="selectRunner(3)">Thorne</button>
           </div>
-          <div class="lore-scroll" id="runnerLore" style="margin-top:5px;"></div>
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:5px;">
+          <div class="lore-scroll" id="runnerLore" style="margin-top:4px;"></div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:4px;">
             <button class="m gld" onclick="newRun(1)">Lv.1 Ruins</button>
             <button class="m skl" onclick="newRun(2)">Lv.2 Relic Hunt</button>
             <button class="m atk" onclick="newRun(3)">Lv.3 Endgame</button>
@@ -387,14 +584,17 @@
         </div>
 
         <div>
-          <div class="sec-hd">6 Chambers (Free Direction Exploration)</div>
+          <div class="sec-hd">9-Chamber Labyrinth (Higher &harr; Lower Freely)</div>
           <div class="chambers-grid">
             <div class="ch-cell here" id="ch1">1. Courtyard</div>
             <div class="ch-cell" id="ch2">2. East Wing</div>
-            <div class="ch-cell" id="ch3">3. Gallery</div>
-            <div class="ch-cell" id="ch4">4. Deep Hall</div>
-            <div class="ch-cell" id="ch5">5. Sanctum</div>
-            <div class="ch-cell" id="ch6">6. Final Gate</div>
+            <div class="ch-cell" id="ch3">3. Cistern</div>
+            <div class="ch-cell" id="ch4">4. Gallery</div>
+            <div class="ch-cell" id="ch5">5. Archives</div>
+            <div class="ch-cell" id="ch6">6. Deep Hall</div>
+            <div class="ch-cell" id="ch7">7. Vault</div>
+            <div class="ch-cell" id="ch8">8. Sanctum</div>
+            <div class="ch-cell" id="ch9">9. Final Gate</div>
           </div>
         </div>
       </aside>
@@ -405,6 +605,7 @@
         <button class="m atk" onclick="runAction('slash')">Slash</button>
         <button class="m skl" onclick="runAction('vault')">Vault (-25 STM)</button>
         <button class="m skl" onclick="runAction('guard')">Guard &amp; Riposte</button>
+        <button class="m gld" id="btnSpecial" onclick="runAction('special')">Character Skill</button>
         <button class="m gld" onclick="runAction('torch')">Torch Flare (-20 STM)</button>
         <button class="m grn" onclick="runAction('rest')">Rest (+STM)</button>
         <button class="m" onclick="runAction('take')">Take</button>
@@ -412,12 +613,12 @@
         <button class="m" onclick="runAction('use herb')">Use Herb</button>
         <button class="m" onclick="runAction('door')">Final Gate</button>
         <button class="m" id="btnNorth" onclick="runAction('north')">North</button>
-        <button class="m" id="btnSouth" onclick="runAction('south')">South (-STM)</button>
+        <button class="m" id="btnSouth" onclick="runAction('south')">South</button>
         <button class="m" id="btnEast" onclick="runAction('east')">East</button>
         <button class="m" id="btnWest" onclick="runAction('west')">West</button>
         <form class="cli" onsubmit="event.preventDefault(); submitCli();">
           <span>&gt;</span>
-          <input id="cliInput" type="text" placeholder="slash, vault, guard, torch, take, search, north, east..." autocomplete="off" />
+          <input id="cliInput" type="text" placeholder="slash, vault, guard, torch, take, north, south, east, west..." autocomplete="off" />
         </form>
       </div>
     </div>
@@ -441,10 +642,34 @@
     let bubbleText = '';
     let bubbleTimer = 0;
     let sfxEnabled = true;
+    let musicEnabled = true;
     let audioCtx = null;
+    let musicTimerId = null;
+    let musicStepIdx = 0;
     let shakeFrames = 0;
+    let sleepFrames = 0;
+    let totalSleepFrames = 300;
     let particles = [];
+    let ambientEmbers = [];
     let facingDir = 'east';
+    let speechVoices = [];
+
+    if ('speechSynthesis' in window) {
+      const loadVoices = () => { speechVoices = window.speechSynthesis.getVoices() || []; };
+      loadVoices();
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+    }
+
+    for (let i = 0; i < 28; i++) {
+      ambientEmbers.push({
+        x: Math.random() * 840,
+        y: Math.random() * 260,
+        r: 1 + Math.random() * 2.2,
+        vx: (Math.random() - 0.5) * 0.4,
+        vy: -0.25 - Math.random() * 0.5,
+        alpha: 0.25 + Math.random() * 0.65
+      });
+    }
 
     const runnerProfiles = {
       1: {
@@ -461,21 +686,122 @@
       }
     };
 
-    // 6-chamber forward maze:
-    // Ch.1 (cell) -> East to Ch.2 (east_wing) or North to Ch.3 (corridor)
-    // Ch.2 (east_wing) -> East to Ch.3 (corridor)
-    // Ch.3 (corridor) -> North to Ch.4 (forge)
-    // Ch.4 (forge) -> North to Ch.5 (sanctum) or East to Ch.5 (sanctum)
-    // Ch.5 (sanctum) -> North to Ch.6 (gate)
-    // Ch.6 (gate) -> Final Gate
-    const mazeRooms = {
-      cell:      { num: 1, title: '1. Courtyard',       x: 68,  y: 92, hint: 'Steel sometimes waits off the main path.',       north: 'corridor', south: 'sanctum',   east: 'east_wing', west: 'forge',     item: 'Torch', foe: null },
-      east_wing: { num: 2, title: '2. East Wing',       x: 138, y: 92, hint: 'A sharp edge helps before deeper halls.',       north: 'forge',    south: 'cell',      east: 'corridor',  west: 'cell',      item: 'Blade', foe: { name: 'Demon Monkey', kind: 'monkey', hp: 72, dmg: 20 } },
-      corridor:  { num: 3, title: '3. Lantern Gallery', x: 103, y: 62, hint: 'Save healing for deep wardens, or step back.',  north: 'forge',    south: 'cell',      east: 'east_wing', west: 'east_wing', item: 'Herb',  foe: { name: 'Shadow Wraith', kind: 'wraith', hp: 88, dmg: 24 } },
-      forge:     { num: 4, title: '4. Deep Hall',       x: 103, y: 34, hint: 'Ancient relics carry unseen strength.',         north: 'sanctum',  south: 'corridor',  east: 'sanctum',   west: 'east_wing', item: 'Relic', foe: { name: 'Obsidian Golem', kind: 'golem', hp: 106, dmg: 27 } },
-      sanctum:   { num: 5, title: '5. Inner Sanctum',   x: 103, y: 14, hint: 'What opens a gate often waits just before it.', north: 'gate',     south: 'forge',     east: 'forge',     west: 'cell',      item: 'Key',   foe: { name: 'Obsidian Golem', kind: 'golem', hp: 106, dmg: 27 } },
-      gate:      { num: 6, title: '6. Final Gate',      x: 162, y: 24, hint: 'Defeat the ward and use the door once fitted.',north: 'cell',     south: 'sanctum',   east: 'sanctum',   west: 'forge',     item: null,    foe: { name: 'Astral Warden', kind: 'seraph', hp: 126, dmg: 31 } }
+    const baseChamberMeta = {
+      cell:       { num: 1, title: '1. Courtyard',       hint: 'Torch awaits here; winding paths branch out in every direction.',         item: 'Torch', foe: null },
+      east_wing:  { num: 2, title: '2. East Wing',       hint: 'A forged Blade rests here—claim it before deeper encounters.',           item: 'Blade', foe: { name: 'Demon Monkey',   kind: 'monkey', hp: 72,  dmg: 20 } },
+      cistern:    { num: 3, title: '3. Sunken Cistern',  hint: 'Cool waters hide restorative herbs; backtrack along crooked tunnels.',     item: 'Herb',  foe: null },
+      corridor:   { num: 4, title: '4. Lantern Gallery', hint: 'Wraiths haunt these crooked arches; step back anytime to recover.',     item: null,    foe: { name: 'Shadow Wraith',  kind: 'wraith', hp: 88,  dmg: 24 } },
+      archives:   { num: 5, title: '5. Shadow Archives', hint: 'Scrolls point toward the Ancient Relic inside Chamber 6 (Deep Hall).',   item: 'Herb',  foe: { name: 'Shadow Wraith',  kind: 'wraith', hp: 88,  dmg: 24 } },
+      forge:      { num: 6, title: '6. Deep Hall',       hint: 'The Ancient Relic boosts your strike power across all chambers.',        item: 'Relic', foe: { name: 'Obsidian Golem', kind: 'golem',  hp: 106, dmg: 27 } },
+      vault_hall: { num: 7, title: '7. Crystal Vault',   hint: 'High crystal vaults twist unexpectedly toward the Inner Sanctum.',      item: null,    foe: { name: 'Demon Monkey',   kind: 'monkey', hp: 76,  dmg: 21 } },
+      sanctum:    { num: 8, title: '8. Inner Sanctum',   hint: 'Claim the Gate Key here before confronting Chamber 9.',                  item: 'Key',   foe: { name: 'Obsidian Golem', kind: 'golem',  hp: 106, dmg: 27 } },
+      gate:       { num: 9, title: '9. Final Gate',      hint: 'Defeat the Astral Warden and use the door with your Key!',               item: null,    foe: { name: 'Astral Warden',  kind: 'seraph', hp: 126, dmg: 31 } }
     };
+
+    const mazeRooms = {};
+    let labyrinthEdges = [];
+    let labyrinthSeed = 1;
+
+    function seededRand() {
+      labyrinthSeed = (labyrinthSeed * 1664525 + 1013904223) >>> 0;
+      return labyrinthSeed / 4294967296;
+    }
+
+    function generateOrganicLabyrinth(lv) {
+      labyrinthSeed = (lv * 7919 + chosenRunner * 104729) >>> 0;
+      const ids = ['cell', 'east_wing', 'cistern', 'corridor', 'archives', 'forge', 'vault_hall', 'sanctum', 'gate'];
+
+      const baseCoords = {
+        cell:       { x: 54,  y: 102 },
+        east_wing:  { x: 112, y: 102 },
+        cistern:    { x: 172, y: 102 },
+        corridor:   { x: 54,  y: 68  },
+        archives:   { x: 112, y: 68  },
+        forge:      { x: 172, y: 68  },
+        vault_hall: { x: 54,  y: 34  },
+        sanctum:    { x: 112, y: 34  },
+        gate:       { x: 172, y: 34  }
+      };
+
+      const jitter = lv === 1 ? 3 : (lv === 2 ? 9 : 16);
+      const scale = (lv - 1) * 24;
+      const dmgScale = (lv - 1) * 7;
+
+      ids.forEach((id) => {
+        const meta = baseChamberMeta[id];
+        const pt = baseCoords[id];
+        mazeRooms[id] = {
+          num: meta.num,
+          title: meta.title,
+          hint: meta.hint,
+          x: Math.max(20, Math.min(198, pt.x + (seededRand() - 0.5) * jitter * 2)),
+          y: Math.max(24, Math.min(112, pt.y + (seededRand() - 0.5) * jitter * 1.4)),
+          north: null,
+          south: null,
+          east: null,
+          west: null,
+          item: meta.item,
+          foe: meta.foe ? {
+            name: meta.foe.name,
+            kind: meta.foe.kind,
+            hp: meta.foe.hp + scale,
+            dmg: meta.foe.dmg + dmgScale
+          } : null
+        };
+      });
+
+      const levelExits = lv === 1 ? {
+        cell:       { north: 'corridor', south: null, east: 'east_wing', west: 'cistern' },
+        east_wing:  { north: 'archives', south: null, east: 'forge',     west: 'cell' },
+        cistern:    { north: 'corridor', south: null, east: 'cell',      west: null },
+        corridor:   { north: 'vault_hall', south: 'cell', east: 'archives', west: 'cistern' },
+        archives:   { north: 'sanctum', south: 'east_wing', east: 'forge', west: 'corridor' },
+        forge:      { north: 'gate', south: 'east_wing', east: null, west: 'archives' },
+        vault_hall: { north: null, south: 'corridor', east: 'sanctum', west: null },
+        sanctum:    { north: null, south: 'archives', east: 'gate', west: 'vault_hall' },
+        gate:       { north: null, south: 'forge', east: null, west: 'sanctum' }
+      } : lv === 2 ? {
+        cell:       { north: 'archives', south: null, east: 'east_wing', west: 'cistern' },
+        east_wing:  { north: 'forge', south: 'cistern', east: 'archives', west: 'cell' },
+        cistern:    { north: 'corridor', south: 'east_wing', east: 'cell', west: 'vault_hall' },
+        corridor:   { north: 'vault_hall', south: 'cistern', east: 'forge', west: 'sanctum' },
+        archives:   { north: 'sanctum', south: 'cell', east: 'forge', west: 'east_wing' },
+        forge:      { north: 'gate', south: 'corridor', east: 'sanctum', west: 'archives' },
+        vault_hall: { north: 'sanctum', south: 'cistern', east: 'corridor', west: null },
+        sanctum:    { north: 'gate', south: 'archives', east: 'forge', west: 'vault_hall' },
+        gate:       { north: null, south: 'forge', east: 'vault_hall', west: 'sanctum' }
+      } : {
+        cell:       { north: 'forge', south: 'sanctum', east: 'east_wing', west: 'cistern' },
+        east_wing:  { north: 'archives', south: 'gate', east: 'cistern', west: 'cell' },
+        cistern:    { north: 'corridor', south: 'vault_hall', east: 'cell', west: 'east_wing' },
+        corridor:   { north: 'vault_hall', south: 'cistern', east: 'forge', west: 'archives' },
+        archives:   { north: 'gate', south: 'east_wing', east: 'corridor', west: 'forge' },
+        forge:      { north: 'sanctum', south: 'cell', east: 'archives', west: 'corridor' },
+        vault_hall: { north: 'cistern', south: 'corridor', east: 'sanctum', west: 'gate' },
+        sanctum:    { north: 'cell', south: 'forge', east: 'gate', west: 'vault_hall' },
+        gate:       { north: 'east_wing', south: 'archives', east: 'vault_hall', west: 'sanctum' }
+      };
+
+      const edgeSet = new Set();
+      ids.forEach(id => {
+        const ex = levelExits[id];
+        mazeRooms[id].north = ex.north;
+        mazeRooms[id].south = ex.south;
+        mazeRooms[id].east = ex.east;
+        mazeRooms[id].west = ex.west;
+        ['north', 'south', 'east', 'west'].forEach(d => {
+          const nb = ex[d];
+          if (nb) {
+            const key = id < nb ? `${id}|${nb}` : `${nb}|${id}`;
+            edgeSet.add(key);
+          }
+        });
+      });
+
+      labyrinthEdges = Array.from(edgeSet).map(k => k.split('|'));
+    }
+
+    generateOrganicLabyrinth(1);
 
     let fbState = {
       lvl: 1, room: 'cell', hp: 140, maxHp: 140, stm: 100, maxStm: 100,
@@ -491,7 +817,6 @@
     };
 
     function getAudio() {
-      if (!sfxEnabled) return null;
       if (!audioCtx) {
         const AC = window.AudioContext || window.webkitAudioContext;
         if (AC) audioCtx = new AC();
@@ -502,15 +827,209 @@
       return audioCtx;
     }
 
-    function playHeroScream(avId = chosenRunner) {
+    // Audible 6/8 orchestral theme loop via Web Audio API (cello/horn bass, string chords, soaring lead, and bell)
+    const themeMeasures = [
+      { bass: 110.00, bass2: 164.81, lead: [440.00, 659.25, 783.99, 698.46, 659.25, 587.33], bell: 880.00, chord: [220.00, 261.63, 329.63] },
+      { bass: 87.31,  bass2: 130.81, lead: [349.23, 523.25, 587.33, 659.25, 698.46, 523.25], bell: 698.46, chord: [174.61, 220.00, 261.63] },
+      { bass: 130.81, bass2: 196.00, lead: [261.63, 392.00, 440.00, 493.88, 523.25, 392.00], bell: 783.99, chord: [261.63, 329.63, 392.00] },
+      { bass: 98.00,  bass2: 123.47, lead: [196.00, 293.66, 329.63, 369.99, 415.30, 329.63], bell: 659.25, chord: [196.00, 246.94, 293.66] }
+    ];
+
+    function triggerIceFireNote() {
+      if (!musicEnabled) return;
       const ac = getAudio();
       if (!ac) return;
+      if (ac.state === 'suspended') {
+        ac.resume().catch(() => {});
+      }
       const now = ac.currentTime;
 
-      // Vocal formant scream: pitch spike followed by strained descending cry
-      const basePitch = avId === 2 ? 520 : (avId === 3 ? 210 : 330);
-      const peakPitch = avId === 2 ? 780 : (avId === 3 ? 340 : 510);
-      const endPitch  = avId === 2 ? 290 : (avId === 3 ? 115 : 185);
+      const barIdx = Math.floor(musicStepIdx / 6) % themeMeasures.length;
+      const beatInBar = musicStepIdx % 6;
+      const m = themeMeasures[barIdx];
+
+      if (beatInBar === 0 || beatInBar === 3) {
+        const bOsc = ac.createOscillator();
+        const bFilter = ac.createBiquadFilter();
+        const bGain = ac.createGain();
+        bOsc.type = 'sawtooth';
+        bOsc.frequency.setValueAtTime(beatInBar === 0 ? m.bass : m.bass2, now);
+        bFilter.type = 'lowpass';
+        bFilter.frequency.setValueAtTime(beatInBar === 0 ? 360 : 280, now);
+
+        bGain.gain.setValueAtTime(0.001, now);
+        bGain.gain.linearRampToValueAtTime(beatInBar === 0 ? 0.095 : 0.068, now + 0.08);
+        bGain.gain.exponentialRampToValueAtTime(0.0008, now + 1.05);
+
+        bOsc.connect(bFilter);
+        bFilter.connect(bGain);
+        bGain.connect(ac.destination);
+        bOsc.start(now);
+        bOsc.stop(now + 1.1);
+      }
+
+      if (beatInBar === 1 || beatInBar === 4) {
+        m.chord.forEach((fFreq, idx) => {
+          const fOsc = ac.createOscillator();
+          const fGain = ac.createGain();
+          fOsc.type = idx === 0 ? 'triangle' : 'sine';
+          fOsc.frequency.setValueAtTime(fFreq, now);
+
+          fGain.gain.setValueAtTime(0.001, now);
+          fGain.gain.linearRampToValueAtTime(0.042, now + 0.06);
+          fGain.gain.exponentialRampToValueAtTime(0.0006, now + 0.62);
+
+          fOsc.connect(fGain);
+          fGain.connect(ac.destination);
+          fOsc.start(now);
+          fOsc.stop(now + 0.66);
+        });
+      }
+
+      const leadFreq = m.lead[beatInBar];
+      const lOsc = ac.createOscillator();
+      const lGain = ac.createGain();
+      lOsc.type = 'triangle';
+      lOsc.frequency.setValueAtTime(leadFreq, now);
+
+      lGain.gain.setValueAtTime(0.001, now);
+      lGain.gain.linearRampToValueAtTime(beatInBar === 0 || beatInBar === 1 ? 0.088 : 0.062, now + 0.03);
+      lGain.gain.exponentialRampToValueAtTime(0.0006, now + 0.52);
+
+      lOsc.connect(lGain);
+      lGain.connect(ac.destination);
+      lOsc.start(now);
+      lOsc.stop(now + 0.56);
+
+      if (beatInBar === 0) {
+        const bellOsc = ac.createOscillator();
+        const bellGain = ac.createGain();
+        bellOsc.type = 'sine';
+        bellOsc.frequency.setValueAtTime(m.bell, now);
+        bellGain.gain.setValueAtTime(0.001, now);
+        bellGain.gain.linearRampToValueAtTime(0.045, now + 0.02);
+        bellGain.gain.exponentialRampToValueAtTime(0.0004, now + 0.80);
+        bellOsc.connect(bellGain);
+        bellGain.connect(ac.destination);
+        bellOsc.start(now);
+        bellOsc.stop(now + 0.85);
+      }
+
+      musicStepIdx++;
+    }
+
+    function startIceFireMusicLoop() {
+      if (musicTimerId !== null) clearInterval(musicTimerId);
+      musicTimerId = setInterval(triggerIceFireNote, 350);
+    }
+
+    const linkedSongUrl = "https://www.jiosaavn.com/song/a-song-of-ice-and-fire/Rww-aTdiRAA";
+    let externalAudioReady = false;
+
+    function attachExternalSongTrack() {
+      const el = document.getElementById('jiosaavnTrackAudio');
+      if (!el || externalAudioReady) return;
+      externalAudioReady = true;
+      el.volume = 0.45;
+      // Direct stream URLs are not exposed statically on JioSaavn HTML pages;
+      // Web Audio 6/8 orchestral synthesizer plays seamlessly with toggle support.
+      el.dataset.source = linkedSongUrl;
+    }
+
+    function toggleIceFireMusic() {
+      musicEnabled = !musicEnabled;
+      attachExternalSongTrack();
+      const btn = document.getElementById('musicBtn');
+      if (btn) btn.textContent = musicEnabled ? 'Music: ON' : 'Music: OFF';
+      const el = document.getElementById('jiosaavnTrackAudio');
+      if (musicEnabled) {
+        const ac = getAudio();
+        if (ac) {
+          ac.resume().then(() => triggerIceFireNote()).catch(() => triggerIceFireNote());
+        }
+        if (el && el.src) {
+          el.play().catch(() => {});
+        }
+      } else if (el && !el.paused) {
+        el.pause();
+      }
+    }
+
+    function unlockAudioAndStartMusic() {
+      const ac = getAudio();
+      if (ac && musicEnabled) {
+        triggerIceFireNote();
+      }
+    }
+
+    document.addEventListener('pointerdown', unlockAudioAndStartMusic, { once: false });
+    document.addEventListener('keydown', unlockAudioAndStartMusic, { once: false });
+
+    function startGameFromIntro() {
+      unlockAudioAndStartMusic();
+      const introEl = document.getElementById('introPage');
+      if (introEl) {
+        introEl.classList.add('fade-out');
+      }
+      if (sfxEnabled) {
+        speakDramaticVoice('A song of ice and fire begins. Step into the labyrinth!', 'normal', chosenRunner);
+      }
+    }
+
+    function reopenIntroPage() {
+      const introEl = document.getElementById('introPage');
+      if (introEl) {
+        introEl.classList.remove('fade-out');
+      }
+    }
+
+    function speakDramaticVoice(line, mood = 'normal', avId = chosenRunner) {
+      if (!sfxEnabled || !('speechSynthesis' in window)) return;
+      try {
+        window.speechSynthesis.cancel();
+        const utter = new SpeechSynthesisUtterance(line);
+        const voices = speechVoices.length ? speechVoices : window.speechSynthesis.getVoices();
+        if (voices && voices.length) {
+          const enVoices = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith('en'));
+          const pool = enVoices.length ? enVoices : voices;
+          if (avId === 2) {
+            const fem = pool.find(v => /female|samantha|victoria|zira|aria|jenny|karen|moira/i.test(v.name));
+            if (fem) utter.voice = fem;
+          } else {
+            const male = pool.find(v => /male|daniel|david|alex|fred|guy|christopher|james/i.test(v.name));
+            if (male) utter.voice = male;
+          }
+        }
+        if (avId === 2) {
+          utter.pitch = mood === 'hurt' ? 1.48 : (mood === 'cheer' ? 1.38 : 1.18);
+          utter.rate  = mood === 'hurt' ? 1.18 : (mood === 'cheer' ? 1.10 : 1.02);
+        } else if (avId === 3) {
+          utter.pitch = mood === 'hurt' ? 0.92 : (mood === 'cheer' ? 0.88 : 0.76);
+          utter.rate  = mood === 'hurt' ? 1.12 : (mood === 'cheer' ? 1.02 : 0.95);
+        } else {
+          utter.pitch = mood === 'hurt' ? 1.24 : (mood === 'cheer' ? 1.16 : 0.98);
+          utter.rate  = mood === 'hurt' ? 1.16 : (mood === 'cheer' ? 1.06 : 1.00);
+        }
+        utter.volume = 0.95;
+        window.speechSynthesis.speak(utter);
+      } catch (e) {}
+    }
+
+    function playHeroScream(avId = chosenRunner) {
+      const cries = {
+        1: ["Aaargh! That cut deep!", "Nngh! Stand back!", "Gah! I won't fall here!"],
+        2: ["Aah! Stay back, beast!", "Nngh! My guard slipped!", "Aaargh! Feel the arcane light!"],
+        3: ["Grrraagh! Is that all you have?!", "Aaargh! Steel holds firm!", "Urgh! A heavy blow!"]
+      };
+      const list = cries[avId] || cries[1];
+      speakDramaticVoice(list[Math.floor(Math.random() * list.length)], 'hurt', avId);
+
+      const ac = getAudio();
+      if (!ac || !sfxEnabled) return;
+      const now = ac.currentTime;
+      const basePitch = avId === 2 ? 490 : (avId === 3 ? 195 : 310);
+      const peakPitch = avId === 2 ? 740 : (avId === 3 ? 320 : 480);
+      const endPitch  = avId === 2 ? 260 : (avId === 3 ? 110 : 175);
 
       const osc1 = ac.createOscillator();
       const osc2 = ac.createOscillator();
@@ -520,19 +1039,19 @@
       osc1.type = 'sawtooth';
       osc2.type = 'triangle';
       filter.type = 'bandpass';
-      filter.frequency.setValueAtTime(avId === 2 ? 1350 : 950, now);
-      filter.Q.setValueAtTime(3.2, now);
+      filter.frequency.setValueAtTime(avId === 2 ? 1320 : 900, now);
+      filter.Q.setValueAtTime(3.0, now);
 
       osc1.frequency.setValueAtTime(basePitch, now);
-      osc1.frequency.exponentialRampToValueAtTime(peakPitch, now + 0.07);
-      osc1.frequency.exponentialRampToValueAtTime(endPitch, now + 0.44);
+      osc1.frequency.exponentialRampToValueAtTime(peakPitch, now + 0.08);
+      osc1.frequency.exponentialRampToValueAtTime(endPitch, now + 0.45);
 
       osc2.frequency.setValueAtTime(basePitch * 1.5, now);
-      osc2.frequency.exponentialRampToValueAtTime(peakPitch * 1.45, now + 0.07);
-      osc2.frequency.exponentialRampToValueAtTime(endPitch * 1.35, now + 0.44);
+      osc2.frequency.exponentialRampToValueAtTime(peakPitch * 1.4, now + 0.08);
+      osc2.frequency.exponentialRampToValueAtTime(endPitch * 1.3, now + 0.45);
 
       gain.gain.setValueAtTime(0.001, now);
-      gain.gain.linearRampToValueAtTime(0.22, now + 0.04);
+      gain.gain.linearRampToValueAtTime(0.18, now + 0.04);
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.46);
 
       osc1.connect(filter);
@@ -542,16 +1061,23 @@
 
       osc1.start(now);
       osc2.start(now);
-      osc1.stop(now + 0.47);
-      osc2.stop(now + 0.47);
+      osc1.stop(now + 0.48);
+      osc2.stop(now + 0.48);
     }
 
-    function playCheerfulExclamation(avId = chosenRunner) {
+    function playCheerfulExclamation(avId = chosenRunner, customLine = null) {
+      const cheers = {
+        1: ["Huzzah! The path is clear!", "Victory is ours! Onward!", "Ha! Another guardian falls!"],
+        2: ["Splendid! The seal weakens!", "Huzzah! Light prevails!", "We did it! Forward into the ruins!"],
+        3: ["For glory! The guardian is vanquished!", "Huzzah! Nothing stands in our way!", "Triumph! On to the next trial!"]
+      };
+      const list = cheers[avId] || cheers[1];
+      speakDramaticVoice(customLine || list[Math.floor(Math.random() * list.length)], 'cheer', avId);
+
       const ac = getAudio();
-      if (!ac) return;
+      if (!ac || !sfxEnabled) return;
       const now = ac.currentTime;
-      // Cheerful two-syllable rising exclamation ("Woo-hoo!" / "Huzzah!")
-      const root = avId === 2 ? 523.25 : (avId === 3 ? 329.63 : 440.0); // C5 / E4 / A4
+      const root = avId === 2 ? 523.25 : (avId === 3 ? 329.63 : 440.0);
       const notes = [
         { t: 0.00, dur: 0.13, f1: root,        f2: root * 1.25 },
         { t: 0.14, dur: 0.28, f1: root * 1.25, f2: root * 1.68 }
@@ -574,7 +1100,7 @@
         sub.frequency.exponentialRampToValueAtTime(n.f2 * 2, now + n.t + n.dur);
 
         gain.gain.setValueAtTime(0.001, now + n.t);
-        gain.gain.linearRampToValueAtTime(0.18, now + n.t + 0.03);
+        gain.gain.linearRampToValueAtTime(0.15, now + n.t + 0.03);
         gain.gain.exponentialRampToValueAtTime(0.001, now + n.t + n.dur);
 
         osc.connect(filter);
@@ -591,23 +1117,22 @@
 
     function playVictoryMusic(isGrandFinale = false) {
       const ac = getAudio();
-      if (!ac) return;
+      if (!ac || !sfxEnabled) return;
       const now = ac.currentTime;
-      // Triumphant brass/chime victory fanfare melody
       const melody = isGrandFinale
         ? [
-            { f: 523.25, t: 0.00, d: 0.16 }, // C5
-            { f: 659.25, t: 0.17, d: 0.16 }, // E5
-            { f: 783.99, t: 0.34, d: 0.16 }, // G5
-            { f: 1046.50, t: 0.52, d: 0.34 }, // C6
-            { f: 880.00, t: 0.88, d: 0.18 }, // A5
-            { f: 1046.50, t: 1.08, d: 0.65 }  // C6
+            { f: 523.25, t: 0.00, d: 0.16 },
+            { f: 659.25, t: 0.17, d: 0.16 },
+            { f: 783.99, t: 0.34, d: 0.16 },
+            { f: 1046.50, t: 0.52, d: 0.34 },
+            { f: 880.00, t: 0.88, d: 0.18 },
+            { f: 1046.50, t: 1.08, d: 0.65 }
           ]
         : [
-            { f: 440.00, t: 0.00, d: 0.14 }, // A4
-            { f: 554.37, t: 0.15, d: 0.14 }, // C#5
-            { f: 659.25, t: 0.30, d: 0.14 }, // E5
-            { f: 880.00, t: 0.46, d: 0.48 }  // A5
+            { f: 440.00, t: 0.00, d: 0.14 },
+            { f: 554.37, t: 0.15, d: 0.14 },
+            { f: 659.25, t: 0.30, d: 0.14 },
+            { f: 880.00, t: 0.46, d: 0.48 }
           ];
 
       melody.forEach(note => {
@@ -635,9 +1160,32 @@
       });
     }
 
+    function playNoiseBurst(duration = 0.16, filterFreq = 900, gainAmt = 0.14) {
+      const ac = getAudio();
+      if (!ac || !sfxEnabled) return;
+      const now = ac.currentTime;
+      const bufferSize = Math.floor(ac.sampleRate * duration);
+      const buffer = ac.createBuffer(1, bufferSize, ac.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.45));
+      }
+      const noise = ac.createBufferSource();
+      noise.buffer = buffer;
+      const filter = ac.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(filterFreq, now);
+      const gain = ac.createGain();
+      gain.gain.setValueAtTime(gainAmt, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(ac.destination);
+      noise.start(now);
+    }
+
     function playSfx(type) {
       const ac = getAudio();
-      if (!ac) return;
       if (type === 'scream' || type === 'hurt') {
         playHeroScream(cachedState.avId || chosenRunner);
         return;
@@ -647,17 +1195,60 @@
         return;
       }
       if (type === 'level_clear') {
-        playCheerfulExclamation(cachedState.avId || chosenRunner);
+        playCheerfulExclamation(cachedState.avId || chosenRunner, 'Huzzah! Level cleared! Onward!');
         setTimeout(() => playVictoryMusic(false), 260);
         return;
       }
       if (type === 'campaign_win') {
-        playCheerfulExclamation(cachedState.avId || chosenRunner);
+        playCheerfulExclamation(cachedState.avId || chosenRunner, 'Victory! All three levels are conquered!');
         setTimeout(() => playVictoryMusic(true), 280);
         return;
       }
 
+      if (!ac || !sfxEnabled) return;
       const now = ac.currentTime;
+
+      if (type === 'slash') {
+        playNoiseBurst(0.14, 1800, 0.18);
+      } else if (type === 'vault') {
+        playNoiseBurst(0.22, 650, 0.16);
+      } else if (type === 'guard') {
+        playNoiseBurst(0.10, 2600, 0.16);
+      } else if (type === 'torch') {
+        playNoiseBurst(0.28, 420, 0.20);
+      } else if (type === 'move') {
+        playNoiseBurst(0.09, 320, 0.12);
+        setTimeout(() => playNoiseBurst(0.09, 280, 0.11), 130);
+      } else if (type === 'heal') {
+        const chime = [523.25, 659.25, 783.99, 1046.5];
+        chime.forEach((f, idx) => {
+          const o = ac.createOscillator();
+          const g = ac.createGain();
+          o.type = 'sine';
+          o.frequency.setValueAtTime(f, now + idx * 0.06);
+          g.gain.setValueAtTime(0.11, now + idx * 0.06);
+          g.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.06 + 0.25);
+          o.connect(g); g.connect(ac.destination);
+          o.start(now + idx * 0.06); o.stop(now + idx * 0.06 + 0.26);
+        });
+        return;
+      } else if (type === 'pickup') {
+        const arp = [440, 587.33, 880];
+        arp.forEach((f, idx) => {
+          const o = ac.createOscillator();
+          const g = ac.createGain();
+          o.type = 'triangle';
+          o.frequency.setValueAtTime(f, now + idx * 0.055);
+          g.gain.setValueAtTime(0.13, now + idx * 0.055);
+          g.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.055 + 0.22);
+          o.connect(g); g.connect(ac.destination);
+          o.start(now + idx * 0.055); o.stop(now + idx * 0.055 + 0.24);
+        });
+        return;
+      } else if (type === 'door_open') {
+        playNoiseBurst(0.35, 190, 0.22);
+      }
+
       const osc = ac.createOscillator();
       const osc2 = ac.createOscillator();
       const gain = ac.createGain();
@@ -666,13 +1257,13 @@
       gain.connect(ac.destination);
 
       const freqs = {
-        slash: [640, 110],
-        vault: [220, 840],
-        guard: [390, 620],
-        torch: [210, 60],
-        move: [165, 98],
+        slash: [680, 105],
+        vault: [220, 860],
+        guard: [480, 740],
+        torch: [210, 58],
+        move: [155, 92],
         dead_end: [240, 130],
-        death: [240, 42],
+        death: [230, 38],
         win: [440, 659],
         click: [420, 340]
       };
@@ -695,17 +1286,22 @@
     function toggleSfx() {
       sfxEnabled = !sfxEnabled;
       const btn = document.getElementById('sfxBtn');
-      if (btn) btn.textContent = sfxEnabled ? 'SFX: ON' : 'SFX: OFF';
-      if (sfxEnabled) playSfx('click');
+      if (btn) btn.textContent = sfxEnabled ? 'SFX & Voice: ON' : 'SFX & Voice: OFF';
+      if (sfxEnabled) {
+        playSfx('click');
+        speakDramaticVoice('Voice and sound active.', 'normal', chosenRunner);
+      } else if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
     }
 
     function spawnBurst(x, y, color, count = 16) {
       for (let i = 0; i < count; i++) {
         const ang = Math.random() * Math.PI * 2;
-        const spd = 1.2 + Math.random() * 4;
+        const spd = 1.2 + Math.random() * 4.2;
         particles.push({
-          x, y, vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd - 1,
-          life: 24 + Math.floor(Math.random() * 14), maxLife: 38, color, r: 2 + Math.random() * 2.5
+          x, y, vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd - 1.1,
+          life: 24 + Math.floor(Math.random() * 14), maxLife: 38, color, r: 2 + Math.random() * 2.6
         });
       }
     }
@@ -713,6 +1309,10 @@
     function setBubble(text, frames = 130) {
       bubbleText = text;
       bubbleTimer = frames;
+    }
+
+    function isSleepingNow() {
+      return sleepFrames > 0;
     }
 
     function appendCombat(msg) {
@@ -736,20 +1336,7 @@
       fbState.hasKey = false;
       fbState.hasRelic = false;
 
-      const s = (lv - 1) * 18;
-      const d = (lv - 1) * 5;
-      mazeRooms.cell.item = 'Torch';
-      mazeRooms.cell.foe = null;
-      mazeRooms.east_wing.item = 'Blade';
-      mazeRooms.east_wing.foe = { name: 'Demon Monkey', kind: 'monkey', hp: 72 + s, dmg: 20 + d };
-      mazeRooms.corridor.item = 'Herb';
-      mazeRooms.corridor.foe = { name: 'Shadow Wraith', kind: 'wraith', hp: 88 + s, dmg: 24 + d };
-      mazeRooms.forge.item = 'Relic';
-      mazeRooms.forge.foe = { name: 'Obsidian Golem', kind: 'golem', hp: 106 + s, dmg: 27 + d };
-      mazeRooms.sanctum.item = 'Key';
-      mazeRooms.sanctum.foe = { name: 'Obsidian Golem', kind: 'golem', hp: 106 + s, dmg: 27 + d };
-      mazeRooms.gate.item = null;
-      mazeRooms.gate.foe = { name: 'Astral Warden', kind: 'seraph', hp: 126 + s, dmg: 31 + d };
+      generateOrganicLabyrinth(lv);
     }
 
     function selectRunner(id) {
@@ -760,6 +1347,12 @@
       }
       document.getElementById('runnerLore').innerHTML =
         '<strong>' + runnerProfiles[id].name + ':</strong> ' + runnerProfiles[id].bio;
+      const introLines = {
+        1: 'Kaelen ready. Into the ruins!',
+        2: 'Lyra ready. The ancient seals call.',
+        3: 'Thorne ready. My axe is yours.'
+      };
+      speakDramaticVoice(introLines[id] || 'Ready.', 'normal', id);
       if (wasmReady && !useFallback) {
         const rName = runnerProfiles[chosenRunner].name.toLowerCase();
         Module.ccall('run_command', 'string', ['string'], [`start ${rName} level${cachedState.lvl || 1}`]);
@@ -785,10 +1378,23 @@
         syncWasmState();
       } else {
         loadMazeLevel(lvl);
-        combatLog.textContent = `[Level ${lvl} — ${runnerProfiles[fbState.avId].name}] Start in Chamber 1. Move North, South, East, or West freely to explore.\n`;
+        combatLog.textContent = `[Level ${lvl} — ${runnerProfiles[fbState.avId].name}] 9-Chamber Labyrinth ready. Move freely between higher and lower chambers!\n`;
         setBubble(`Chamber 1: ${mazeRooms.cell.hint}`);
         pushFallbackState();
       }
+    }
+
+    function restartLevelAction() {
+      const curLv = cachedState.lvl || fbState.lvl || 1;
+      playSfx('click');
+      speakDramaticVoice(`Restarting Level ${curLv}. Ready once more!`, 'normal', chosenRunner);
+      newRun(curLv);
+    }
+
+    function restartGameAction() {
+      playSfx('click');
+      speakDramaticVoice('A fresh expedition begins from Level 1!', 'normal', chosenRunner);
+      newRun(1);
     }
 
     function pushFallbackState() {
@@ -887,12 +1493,15 @@
       document.getElementById('relKey').classList.toggle('got', st.hasKey);
       document.getElementById('relRelic').classList.toggle('got', st.hasRelic);
 
-      for (let i = 1; i <= 6; i++) {
+      for (let i = 1; i <= 9; i++) {
         const el = document.getElementById('ch' + i);
-        el.classList.toggle('here', i === r.num);
-        el.classList.remove('locked');
+        if (el) el.classList.toggle('here', i === r.num);
       }
 
+      const specBtn = document.getElementById('btnSpecial');
+      if (specBtn) {
+        specBtn.textContent = st.avId === 1 ? "Scout's Flare" : (st.avId === 2 ? "Seal Surge" : "Iron Bulwark");
+      }
       document.getElementById('btnNorth').disabled = false;
       document.getElementById('btnSouth').disabled = false;
       document.getElementById('btnEast').disabled  = false;
@@ -900,8 +1509,16 @@
     }
 
     function runAction(cmd) {
+      unlockAudioAndStartMusic();
       const c = cmd.trim().toLowerCase();
       if (!c) return;
+
+      if (isSleepingNow()) {
+        const secsLeft = Math.max(1, Math.ceil(sleepFrames / 60));
+        appendCombat(`[Sleeping] ${runnerProfiles[cachedState.avId || fbState.avId].name} is fast asleep (${secsLeft}s left) and cannot act right now.`);
+        playSfx('dead_end');
+        return;
+      }
 
       if (c === 'east') facingDir = 'east';
       else if (c === 'west') facingDir = 'west';
@@ -923,14 +1540,17 @@
         const isWon = Module.ccall('is_world_destroyed', 'number', [], []) === 1;
         const anim = Module.ccall('last_anim', 'string', [], []);
 
+        if (nextLvl !== prevLvl) {
+          generateOrganicLabyrinth(nextLvl);
+        }
         if (isWon) {
           playSfx('campaign_win');
           setBubble('Huzzah! All 3 levels conquered!');
-          spawnBurst(400, 150, '#fde047', 36);
+          spawnBurst(420, 150, '#fde047', 40);
         } else if (nextLvl > prevLvl || anim === 'level_up') {
           playSfx('level_clear');
           setBubble(`Woo-hoo! Level ${nextLvl} unlocked!`);
-          spawnBurst(400, 150, '#38bdf8', 28);
+          spawnBurst(420, 150, '#38bdf8', 30);
         } else if ((c === 'north' || c === 'south' || c === 'east' || c === 'west' || c === 'retreat') && nextRoom !== prevRoom) {
           runTimerFrames = 100;
           setBubble((mazeRooms[nextRoom] && mazeRooms[nextRoom].hint) || 'Moving forward...');
@@ -942,13 +1562,13 @@
           heroAttackFrames = 20;
           if (nextFoeHp < prevFoeHp) enemyHurtFrames = 20;
           playSfx(anim);
-          shakeFrames = 8;
-          spawnBurst(540, 195, '#fbbf24', 16);
+          shakeFrames = 9;
+          spawnBurst(565, 195, '#fbbf24', 18);
           if (prevFoeHp > 0 && nextFoeHp === 0) {
             setTimeout(() => {
               playSfx('cheer');
               setBubble('Huzzah! Guardian defeated!');
-              spawnBurst(540, 180, '#a855f7', 24);
+              spawnBurst(565, 180, '#a855f7', 26);
             }, 220);
           } else if (nextHp < prevHp && nextFoeHp > 0) {
             setTimeout(() => {
@@ -958,6 +1578,20 @@
               setBubble('Aaargh! That stung!');
             }, 220);
           }
+        } else if (c === 'take') {
+          playSfx('pickup');
+          spawnBurst(210, 190, '#e879f9', 20);
+        } else if (c === 'rest') {
+          sleepFrames = 300;
+          totalSleepFrames = 300;
+          setBubble('Zzz... sleeping for 5s...');
+          playSfx('heal');
+          spawnBurst(180, 190, '#34d399', 18);
+        } else if (c === 'use herb') {
+          playSfx('heal');
+          spawnBurst(180, 190, '#34d399', 18);
+        } else if (c === 'door') {
+          playSfx('door_open');
         } else {
           playSfx('click');
         }
@@ -965,16 +1599,10 @@
         return;
       }
 
-      // Standalone 6-chamber forward maze engine
       appendCombat('> ' + cmd);
       const r = mazeRooms[fbState.room] || mazeRooms.cell;
 
       const moveDir = (dir, cost, animName) => {
-        if (dir === 'north' && r.foe && r.foe.hp > 0) {
-          appendCombat(`[Blocked] Defeat ${r.foe.name} before moving North.`);
-          playSfx('dead_end');
-          return;
-        }
         const nextId = r[dir];
         if (!nextId || !mazeRooms[nextId]) {
           appendCombat(`[No Path] No route ${dir} from Chamber ${r.num}.`);
@@ -982,17 +1610,19 @@
           return;
         }
         const nr = mazeRooms[nextId];
+        const moveCost = fbState.lvl === 2 ? (fbState.hasTorch ? 12 : 15) : cost;
         fbState.room = nextId;
         fbState.anim = animName;
         runTimerFrames = 100;
-        fbState.stm = Math.max(0, fbState.stm - cost);
-        appendCombat(`[Move ${dir.toUpperCase()} -> Chamber ${nr.num}] -${cost} STM (STM: ${fbState.stm})`);
+        fbState.stm = Math.max(0, fbState.stm - moveCost);
+        appendCombat(`[Move ${dir.toUpperCase()} -> Chamber ${nr.num}] -${moveCost} STM (STM: ${fbState.stm})`);
         playSfx('move');
         setBubble(nr.hint);
 
         if (fbState.stm === 0) {
           fbState.hp -= 10;
           appendCombat('[Exhausted] 0 stamina! -10 HP.');
+          playSfx('scream');
         }
         if (fbState.hp <= 0) {
           appendCombat('[Restarted] You fell! Restarting level...');
@@ -1004,10 +1634,10 @@
         }
       };
 
-      if (c === 'north') moveDir('north', 12, 'run_north');
-      else if (c === 'south' || c === 'retreat') moveDir('south', 16, 'run_south');
-      else if (c === 'east') moveDir('east', 12, 'run_east');
-      else if (c === 'west') moveDir('west', 12, 'run_west');
+      if (c === 'north') moveDir('north', 10, 'run_north');
+      else if (c === 'south' || c === 'retreat') moveDir('south', 10, 'run_south');
+      else if (c === 'east') moveDir('east', 10, 'run_east');
+      else if (c === 'west') moveDir('west', 10, 'run_west');
       else if (c === 'take') {
         if (r.item) {
           if (r.item === 'Torch') fbState.hasTorch = true;
@@ -1016,32 +1646,48 @@
           if (r.item === 'Key') fbState.hasKey = true;
           if (r.item === 'Relic') fbState.hasRelic = true;
           appendCombat(`[Taken] Picked up ${r.item}!`);
-          playSfx('win'); spawnBurst(200, 190, '#e879f9', 18);
+          playSfx('pickup');
+          speakDramaticVoice(`Found the ${r.item}!`, 'normal', fbState.avId);
+          spawnBurst(200, 190, '#e879f9', 20);
           r.item = null;
         } else {
           appendCombat('[Info] Nothing here to take.');
+          playSfx('click');
         }
       } else if (c === 'search') {
         appendCombat(`[Hint] ${r.hint}`);
         setBubble(r.hint);
+        playSfx('click');
       } else if (c === 'rest') {
         fbState.stm = Math.min(fbState.maxStm, fbState.stm + 25);
         fbState.hp = Math.min(fbState.maxHp, fbState.hp + 6);
-        appendCombat('[Rest] +25 STM, +6 HP.');
+        sleepFrames = 300;
+        totalSleepFrames = 300;
+        fbState.anim = 'sleeping';
+        appendCombat('[Rest] Lying down to sleep for 5 seconds (+25 STM, +6 HP). Cannot act while sleeping.');
+        setBubble('Zzz... resting (5s)...', 300);
+        playSfx('heal');
+        spawnBurst(180, 190, '#34d399', 16);
       } else if (c === 'use herb') {
         if (fbState.hasHerb) {
           fbState.hasHerb = false;
           fbState.hp = Math.min(fbState.maxHp, fbState.hp + 45);
           appendCombat('[Herb] +45 HP.');
+          playSfx('heal');
+          speakDramaticVoice('Strength restored!', 'normal', fbState.avId);
+          spawnBurst(180, 190, '#10b981', 22);
         } else {
           appendCombat('[!] No Herb in pack.');
+          playSfx('dead_end');
         }
       } else if (c === 'slash' || c === 'attack' || c === 'vault' || c === 'guard' || c === 'torch') {
         if (r.foe && r.foe.hp > 0) {
           if (c === 'vault' && fbState.stm < 25) {
             appendCombat('[Low STM] Need 25 STM for Vault.');
+            playSfx('dead_end');
           } else if (c === 'torch' && (!fbState.hasTorch || fbState.stm < 20)) {
             appendCombat(!fbState.hasTorch ? '[No Torch] You need a Torch first.' : '[Low STM] Need 20 STM for Torch Flare.');
+            playSfx('dead_end');
           } else {
             if (c === 'vault') fbState.stm -= 25;
             if (c === 'torch') fbState.stm -= 20;
@@ -1056,8 +1702,8 @@
             fbState.anim = c === 'attack' ? 'slash' : c;
             appendCombat(`[${c.toUpperCase()}] ${dmg} DMG to ${r.foe.name}!`);
             playSfx(c === 'attack' ? 'slash' : c);
-            shakeFrames = 8;
-            spawnBurst(540, 195, '#fbbf24', 16);
+            shakeFrames = 9;
+            spawnBurst(565, 195, '#fbbf24', 18);
             if (r.foe.hp > 0) {
               const eDmg = c === 'guard' ? Math.max(6, Math.floor(r.foe.dmg / 2)) : r.foe.dmg;
               fbState.hp -= eDmg;
@@ -1078,37 +1724,106 @@
               setTimeout(() => {
                 playSfx('cheer');
                 setBubble('Huzzah! Victory!');
-                spawnBurst(540, 180, '#a855f7', 24);
+                spawnBurst(565, 180, '#a855f7', 26);
               }, 180);
             }
           }
         } else {
           appendCombat('[Info] No enemy here.');
+          playSfx('click');
         }
       } else if (c === 'door') {
         if (fbState.room === 'gate') {
           if (r.foe && r.foe.hp > 0) {
             appendCombat(`[Gate] Defeat ${r.foe.name} first.`);
+            playSfx('dead_end');
+          } else if (fbState.lvl === 2 && !fbState.hasRelic) {
+            appendCombat('[Sealed] Level 2 Final Gate requires Relic Shard II (Chamber 6).');
           } else if (!fbState.hasKey) {
-            appendCombat('[Locked] A Key is needed to open the gate.');
+            appendCombat('[Locked] A Key is needed to open the gate (Chamber 8).');
+            playSfx('dead_end');
           } else if (fbState.lvl < 3) {
             appendCombat(`[Cleared] Advancing to Level ${fbState.lvl + 1}!`);
+            playSfx('door_open');
             playSfx('level_clear');
             loadMazeLevel(fbState.lvl + 1);
             setBubble(`Woo-hoo! Level ${fbState.lvl} unlocked!`);
-            spawnBurst(400, 150, '#38bdf8', 28);
+            spawnBurst(420, 150, '#38bdf8', 30);
           } else {
             fbState.destroyed = true;
             appendCombat('*** VICTORY! ALL 3 LEVELS CONQUERED! ***');
+            playSfx('door_open');
             playSfx('campaign_win');
             setBubble('Huzzah! All 3 levels conquered!');
-            spawnBurst(400, 150, '#fde047', 36);
+            spawnBurst(420, 150, '#fde047', 40);
           }
         } else {
-          appendCombat('[Info] Reach Chamber 6 (Final Gate) to use \'door\'.');
+          appendCombat('[Info] Reach Chamber 9 (Final Gate) to use \'door\'.');
+          playSfx('click');
+        }
+      } else if (c === 'special' || c === 'skill') {
+        const av = fbState.avId;
+        if (av === 1) {
+          if (fbState.stm < 15) {
+            appendCombat('[Low STM] Need 15 STM for Scout's Flare.');
+            playSfx('dead_end');
+          } else {
+            fbState.stm = Math.min(fbState.maxStm, fbState.stm - 15 + 25);
+            appendCombat(`[Scout's Flare] +25 STM recovered! Hint: ${r.hint}`);
+            playSfx('torch');
+            if (r.foe && r.foe.hp > 0) {
+              const dmg = 18 + fbState.lvl * 5;
+              r.foe.hp = Math.max(0, r.foe.hp - dmg);
+              heroAttackFrames = 20; enemyHurtFrames = 20;
+              appendCombat(`[Flare Bolt] ${dmg} DMG to ${r.foe.name}!`);
+              spawnBurst(565, 195, '#fbbf24', 18);
+            }
+          }
+        } else if (av === 2) {
+          if (fbState.stm < 20) {
+            appendCombat('[Low STM] Need 20 STM for Seal Surge.');
+            playSfx('dead_end');
+          } else {
+            fbState.stm -= 20;
+            heroAttackFrames = 20;
+            if (r.foe && r.foe.hp > 0) {
+              const pow = 30 + (fbState.lvl - 1) * 5 + (fbState.hasBlade ? 18 + fbState.lvl * 4 : 0) + (fbState.hasRelic ? 24 : 0);
+              const dmg = Math.floor(pow * 1.55) + 10;
+              r.foe.hp = Math.max(0, r.foe.hp - dmg);
+              enemyHurtFrames = 20;
+              appendCombat(`[Seal Surge] Lyra strikes ${r.foe.name} for ${dmg} DMG! (-20 STM)`);
+              playSfx('vault');
+              spawnBurst(565, 195, '#22d3ee', 22);
+            } else {
+              fbState.hp = Math.min(fbState.maxHp, fbState.hp + 25);
+              appendCombat('[Archive Ward] Lyra recovers +25 HP! (-20 STM)');
+              playSfx('heal');
+              spawnBurst(180, 190, '#22d3ee', 20);
+            }
+          }
+        } else {
+          if (fbState.stm < 20) {
+            appendCombat('[Low STM] Need 20 STM for Iron Bulwark.');
+            playSfx('dead_end');
+          } else {
+            fbState.stm -= 20;
+            fbState.hp = Math.min(fbState.maxHp, fbState.hp + 25);
+            heroAttackFrames = 20;
+            appendCombat('[Iron Bulwark] Thorne fortifies (+25 HP)! (-20 STM)');
+            playSfx('guard');
+            if (r.foe && r.foe.hp > 0) {
+              const pow = 22 + (fbState.lvl - 1) * 5 + (fbState.hasBlade ? 18 + fbState.lvl * 4 : 0) + (fbState.hasRelic ? 24 : 0);
+              const dmg = Math.floor(pow * 1.35) + 8;
+              r.foe.hp = Math.max(0, r.foe.hp - dmg);
+              enemyHurtFrames = 20;
+              appendCombat(`[Bulwark Slam] ${dmg} DMG to ${r.foe.name}!`);
+              spawnBurst(565, 195, '#10b981', 20);
+            }
+          }
         }
       } else {
         appendCombat(`[Info] Command '${cmd}' executed.`);
+        playSfx('click');
       }
 
       pushFallbackState();
@@ -1123,41 +1838,44 @@
     }
 
     function drawMazeMinimap(st) {
-      const boxX = canvas.width - 214;
+      const boxX = canvas.width - 228;
       const boxY = 10;
-      const boxW = 204;
-      const boxH = 118;
+      const boxW = 218;
+      const boxH = 124;
 
       ctx.save();
-      ctx.fillStyle = 'rgba(7, 12, 20, 0.88)';
-      ctx.strokeStyle = 'rgba(245, 158, 11, 0.55)';
-      ctx.lineWidth = 1.5;
+      const mapGrad = ctx.createLinearGradient(boxX, boxY, boxX, boxY + boxH);
+      mapGrad.addColorStop(0, 'rgba(9, 15, 26, 0.92)');
+      mapGrad.addColorStop(1, 'rgba(5, 9, 16, 0.92)');
+      ctx.fillStyle = mapGrad;
+      ctx.strokeStyle = 'rgba(245, 158, 11, 0.6)';
+      ctx.lineWidth = 1.6;
       ctx.beginPath();
-      ctx.roundRect(boxX, boxY, boxW, boxH, 8);
+      ctx.roundRect(boxX, boxY, boxW, boxH, 9);
       ctx.fill();
       ctx.stroke();
 
       ctx.fillStyle = '#fde68a';
       ctx.font = 'bold 9.5px Inter, sans-serif';
-      ctx.fillText('CHAMBER MAP (All Directions)', boxX + 9, boxY + 13);
+      ctx.fillText('WINDING 9-CHAMBER LABYRINTH', boxX + 9, boxY + 14);
 
-      const edges = [
-        ['cell', 'east_wing'],
-        ['cell', 'corridor'],
-        ['east_wing', 'corridor'],
-        ['corridor', 'forge'],
-        ['forge', 'sanctum'],
-        ['sanctum', 'gate']
-      ];
-
-      ctx.strokeStyle = 'rgba(148, 163, 184, 0.45)';
+      ctx.strokeStyle = 'rgba(148, 163, 184, 0.52)';
       ctx.lineWidth = 1.6;
-      edges.forEach(([a, b]) => {
+      labyrinthEdges.forEach(([a, b], idx) => {
         const ra = mazeRooms[a], rb = mazeRooms[b];
         if (!ra || !rb) return;
+        const x1 = boxX + ra.x, y1 = boxY + ra.y;
+        const x2 = boxX + rb.x, y2 = boxY + rb.y;
+        const mx = (x1 + x2) * 0.5;
+        const my = (y1 + y2) * 0.5;
+        const dx = x2 - x1, dy = y2 - y1;
+        const len = Math.hypot(dx, dy) || 1;
+        const bend = (idx % 2 === 0 ? 1 : -1) * 9;
+        const cx = mx - (dy / len) * bend;
+        const cy = my + (dx / len) * bend;
         ctx.beginPath();
-        ctx.moveTo(boxX + ra.x, boxY + ra.y);
-        ctx.lineTo(boxX + rb.x, boxY + rb.y);
+        ctx.moveTo(x1, y1);
+        ctx.quadraticCurveTo(cx, cy, x2, y2);
         ctx.stroke();
       });
 
@@ -1165,25 +1883,24 @@
         const px = boxX + rm.x;
         const py = boxY + rm.y;
         const isHere = st.roomId === id;
-        const curNum = (mazeRooms[st.roomId] && mazeRooms[st.roomId].num) || 1;
-        const isBehindLocked = false;
-        ctx.fillStyle = isHere ? '#10b981' : (isBehindLocked ? '#1e293b' : (rm.num === 6 ? '#a855f7' : '#334155'));
+        ctx.fillStyle = isHere ? '#10b981' : (rm.num === 9 ? '#a855f7' : '#334155');
         ctx.beginPath();
-        ctx.arc(px, py, isHere ? 8.5 : 7.5, 0, Math.PI * 2);
+        ctx.arc(px, py, isHere ? 9 : 7.5, 0, Math.PI * 2);
         ctx.fill();
         ctx.strokeStyle = isHere ? '#ecfdf5' : '#94a3b8';
         ctx.lineWidth = 1.4;
         ctx.stroke();
 
-        ctx.fillStyle = isBehindLocked ? '#64748b' : '#f8fafc';
+        ctx.fillStyle = '#f8fafc';
         ctx.font = 'bold 9px Inter, sans-serif';
-        ctx.fillText(String(rm.num), px - 2.5, py + 3);
+        ctx.fillText(String(rm.num), px - 2.6, py + 3);
       });
 
       ctx.restore();
     }
 
-function drawHumanCharacter(px, py, opts) {
+    // v10 Character Design preserved faithfully
+    function drawHumanCharacter(px, py, opts) {
       const {
         avId, hasTorch, hasBlade, hasRelic, isEvilTwist,
         isRunning, isAttacking, isHurt, isGuarding, dirSign, phase
@@ -1191,7 +1908,7 @@ function drawHumanCharacter(px, py, opts) {
 
       ctx.save();
       ctx.translate(px, py);
-      ctx.scale(dirSign * 1.38, 1.38);
+      ctx.scale(dirSign * 1.42, 1.42);
 
       const swing = isRunning ? Math.sin(phase) : 0;
       const liftF = isRunning ? Math.max(0, -Math.cos(phase)) : 0;
@@ -1201,13 +1918,9 @@ function drawHumanCharacter(px, py, opts) {
         ctx.translate(-5, -2);
       }
 
-      // Soft cast shadow on dungeon floor
-      const shGrad = ctx.createRadialGradient(0, 2, 2, 0, 2, avId === 3 ? 28 : 22);
-      shGrad.addColorStop(0, 'rgba(0, 0, 0, 0.55)');
-      shGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-      ctx.fillStyle = shGrad;
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.42)';
       ctx.beginPath();
-      ctx.ellipse(0, 2, avId === 3 ? 28 : 22, 5.5, 0, 0, Math.PI * 2);
+      ctx.ellipse(0, 2, avId === 3 ? 28 : 22, 5, 0, 0, Math.PI * 2);
       ctx.fill();
 
       const skinBase = avId === 1 ? '#df9f72' : (avId === 2 ? '#f3c29b' : '#b27046');
@@ -1245,10 +1958,8 @@ function drawHumanCharacter(px, py, opts) {
       function drawRealisticHead(eyeY, irisCol, hairCol, optsFace) {
         const { isBroad, isSlender, hasBeard, hasFreckles, hasMustache } = optsFace;
 
-        // Shaded neck with sternocleidomastoid highlight/shadow
         drawTaperedLimb(0, -63, 1.5, -72, isBroad ? 10 : 7.2, isBroad ? 9 : 6.4, skinLinear(-7, -73, 9, -63));
 
-        // Realistic cranium & jaw contour
         const fGrad = ctx.createRadialGradient(4, eyeY + 1, 1.5, 1.5, eyeY + 1, 13.5);
         fGrad.addColorStop(0, skinHi);
         fGrad.addColorStop(0.65, skinBase);
@@ -1277,13 +1988,11 @@ function drawHumanCharacter(px, py, opts) {
         ctx.lineWidth = 0.9;
         ctx.stroke();
 
-        // Cheek & brow highlights
-        ctx.fillStyle = 'rgba(255, 240, 224, 0.22)';
+        ctx.fillStyle = 'rgba(255, 240, 224, 0.25)';
         ctx.beginPath();
         ctx.ellipse(7.2, eyeY + 3.5, 3.2, 2.2, -0.2, 0, Math.PI * 2);
         ctx.fill();
 
-        // Realistic ear with inner ridge
         ctx.fillStyle = skinLinear(-8, eyeY - 3, -2, eyeY + 6);
         ctx.beginPath();
         ctx.ellipse(-5.2, eyeY + 1.5, 3.4, 5.2, -0.12, 0, Math.PI * 2);
@@ -1294,7 +2003,6 @@ function drawHumanCharacter(px, py, opts) {
         ctx.arc(-4.8, eyeY + 1.5, 1.7, -0.8, 1.1);
         ctx.stroke();
 
-        // Eye socket shadow + sclera + colored iris + pupil + specular catchlight
         ctx.fillStyle = 'rgba(60, 30, 15, 0.22)';
         ctx.beginPath();
         ctx.ellipse(6.8, eyeY + 0.3, 3.3, 2.6, 0, 0, Math.PI * 2);
@@ -1320,7 +2028,6 @@ function drawHumanCharacter(px, py, opts) {
         ctx.arc(7.9, eyeY - 0.55, 0.55, 0, Math.PI * 2);
         ctx.fill();
 
-        // Upper eyelash & contoured eyebrow
         ctx.strokeStyle = isSlender ? hairCol : '#111827';
         ctx.lineWidth = isSlender ? 1.4 : 1.8;
         ctx.beginPath();
@@ -1339,7 +2046,6 @@ function drawHumanCharacter(px, py, opts) {
         }
         ctx.stroke();
 
-        // Sculpted nose bridge, tip & nostril
         ctx.strokeStyle = skinLo;
         ctx.lineWidth = 1.6;
         ctx.beginPath();
@@ -1362,7 +2068,6 @@ function drawHumanCharacter(px, py, opts) {
           ctx.fill();
         }
 
-        // Upper & lower lip contour
         ctx.fillStyle = isSlender ? '#e11d48' : '#b45309';
         ctx.beginPath();
         ctx.moveTo(6.6, eyeY + 7.4);
@@ -1399,17 +2104,14 @@ function drawHumanCharacter(px, py, opts) {
       }
 
       if (avId === 1) {
-        // KAELEN: Lean athletic ruin-delver, dark wavy hair, open collar, leather vest, amber scarf, dagger
         const bFootX = -swing * 18, bFootY = -liftB * 9;
         const fFootX = swing * 18, fFootY = -liftF * 9;
 
-        // Back leg & laced boot
         drawTaperedLimb(-3, -34, -swing * 10, -17 - liftB * 5, 9.2, 7.2, skinLinear(-12, -34, 8, -15), '#0f172a');
         drawTaperedLimb(-swing * 10, -17 - liftB * 5, bFootX, bFootY, 7.2, 5.4, '#1e293b', '#0f172a');
         ctx.fillStyle = '#0f172a';
         ctx.beginPath(); ctx.roundRect(bFootX - 4, bFootY - 5, 13, 6, 2); ctx.fill();
 
-        // Trailing woven amber scarf
         const scGrad = ctx.createLinearGradient(-26, -62, -2, -40);
         scGrad.addColorStop(0, isEvilTwist ? '#c084fc' : '#fbbf24');
         scGrad.addColorStop(1, isEvilTwist ? '#7e22ce' : '#d97706');
@@ -1422,7 +2124,6 @@ function drawHumanCharacter(px, py, opts) {
         ctx.closePath();
         ctx.fill();
 
-        // Shaded vest & tunic
         const tGrad = ctx.createLinearGradient(-11, -64, 11, -32);
         tGrad.addColorStop(0, isEvilTwist ? '#7c3aed' : '#475569');
         tGrad.addColorStop(0.55, isEvilTwist ? '#4c1d95' : '#2b3a4a');
@@ -1431,17 +2132,15 @@ function drawHumanCharacter(px, py, opts) {
         ctx.beginPath();
         ctx.roundRect(-11, -64, 22, 32, 7);
         ctx.fill();
-        ctx.strokeStyle = 'rgba(255,255,255,0.14)';
+        ctx.strokeStyle = 'rgba(255,255,255,0.16)';
         ctx.lineWidth = 1;
         ctx.stroke();
 
-        // Belt & buckle
         ctx.fillStyle = '#111827';
         ctx.fillRect(-11, -37, 22, 4.5);
         ctx.fillStyle = isEvilTwist ? '#e879f9' : '#f59e0b';
         ctx.fillRect(1, -37.5, 4.5, 5.5);
 
-        // Front leg & boot
         drawTaperedLimb(3, -34, swing * 10, -17 - liftF * 5, 9.6, 7.4, '#334155', '#0f172a');
         drawTaperedLimb(swing * 10, -17 - liftF * 5, fFootX, fFootY, 7.4, 5.6, '#475569', '#0f172a');
         ctx.fillStyle = '#111827';
@@ -1451,7 +2150,6 @@ function drawHumanCharacter(px, py, opts) {
           isBroad: false, isSlender: false, hasBeard: false, hasFreckles: true, hasMustache: false
         });
 
-        // Layered wavy dark hair with highlights
         const hGrad1 = ctx.createLinearGradient(-10, -93, 10, -80);
         hGrad1.addColorStop(0, '#5c3a21');
         hGrad1.addColorStop(1, '#29170c');
@@ -1464,18 +2162,16 @@ function drawHumanCharacter(px, py, opts) {
         ctx.closePath();
         ctx.fill();
 
-        // Articulated arm, hand & steel dagger
         const hx = isAttacking ? 35 : 15 + swing * 6;
         const hy = isAttacking ? -52 : -38;
         drawTaperedLimb(4, -60, isAttacking ? 20 : 12, isAttacking ? -56 : -46, 7, 5.4, skinLinear(0, -62, 22, -44), skinLo);
         drawTaperedLimb(isAttacking ? 20 : 12, isAttacking ? -56 : -46, hx, hy, 5.4, 4.2, skinLinear(10, -56, 36, -36), skinLo);
         if (hasBlade) {
           ctx.strokeStyle = '#f8fafc';
-          ctx.lineWidth = 3;
-          ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx + 16, hy - 5); ctx.stroke();
+          ctx.lineWidth = 3.2;
+          ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx + 17, hy - 5); ctx.stroke();
         }
       } else if (avId === 2) {
-        // LYRA: Slender build, soft features, flowing crimson-violet hair, silver circlet, arcane tunic & blade
         const bFootX = -swing * 20, bFootY = -liftB * 11;
         const fFootX = swing * 20, fFootY = -liftF * 11;
 
@@ -1484,7 +2180,6 @@ function drawHumanCharacter(px, py, opts) {
         drawTaperedLimb(3, -34, swing * 11, -17 - liftF * 6, 8.4, 6.2, '#2563eb', '#0f172a');
         drawTaperedLimb(swing * 11, -17 - liftF * 6, fFootX, fFootY, 6.2, 4.7, '#1d4ed8', '#0f172a');
 
-        // Shaded fitted tunic with gold/cyan trim
         const bGrad = ctx.createLinearGradient(-10, -64, 10, -32);
         bGrad.addColorStop(0, isEvilTwist ? '#8b5cf6' : '#3b82f6');
         bGrad.addColorStop(0.6, isEvilTwist ? '#581c87' : '#1d4ed8');
@@ -1505,7 +2200,6 @@ function drawHumanCharacter(px, py, opts) {
           isBroad: false, isSlender: true, hasBeard: false, hasFreckles: false, hasMustache: false
         });
 
-        // Flowing multi-strand crimson-violet hair & silver circlet
         const hGrad2 = ctx.createLinearGradient(-28, -93, 10, -45);
         hGrad2.addColorStop(0, '#f472b6');
         hGrad2.addColorStop(0.55, '#be185d');
@@ -1533,11 +2227,9 @@ function drawHumanCharacter(px, py, opts) {
         ctx.lineWidth = 3.2;
         ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx + 14, hy - 13); ctx.stroke();
       } else {
-        // THORNE: Broad muscular build, square jaw, trimmed beard, dark steel armor, emerald mantle, greataxe
         const bFootX = -swing * 13, bFootY = -liftB * 6;
         const fFootX = swing * 13, fFootY = -liftF * 6;
 
-        // Emerald mantle with shadow
         const mGrad = ctx.createLinearGradient(-28, -66, -6, -28);
         mGrad.addColorStop(0, isEvilTwist ? '#a855f7' : '#10b981');
         mGrad.addColorStop(1, isEvilTwist ? '#4c1d95' : '#065f46');
@@ -1555,7 +2247,6 @@ function drawHumanCharacter(px, py, opts) {
         drawTaperedLimb(6, -35, swing * 8, -18 - liftF * 4, 12.5, 10, '#334155', '#0f172a');
         drawTaperedLimb(swing * 8, -18 - liftF * 4, fFootX, fFootY, 10, 8, '#475569', '#0f172a');
 
-        // Shaded steel breastplate
         const aGrad = ctx.createLinearGradient(-19, -67, 19, -34);
         aGrad.addColorStop(0, isEvilTwist ? '#7e22ce' : '#94a3b8');
         aGrad.addColorStop(0.5, isEvilTwist ? '#3b0764' : '#334155');
@@ -1568,7 +2259,6 @@ function drawHumanCharacter(px, py, opts) {
         ctx.lineWidth = 1;
         ctx.stroke();
 
-        // Steel shoulder pauldrons
         const pGrad = ctx.createLinearGradient(-26, -70, 26, -54);
         pGrad.addColorStop(0, isEvilTwist ? '#c084fc' : '#64748b');
         pGrad.addColorStop(1, isEvilTwist ? '#581c87' : '#1e293b');
@@ -1582,7 +2272,6 @@ function drawHumanCharacter(px, py, opts) {
           isBroad: true, isSlender: false, hasBeard: true, hasFreckles: false, hasMustache: true
         });
 
-        // Short cropped dark hair
         ctx.fillStyle = '#1e293b';
         ctx.beginPath();
         ctx.roundRect(-9.5, -92, 20, 7, 4);
@@ -1606,23 +2295,17 @@ function drawHumanCharacter(px, py, opts) {
       }
 
       if (hasTorch) {
-        const fg = ctx.createRadialGradient(18, -64, 2, 18, -64, 22);
-        fg.addColorStop(0, '#fef08a');
-        fg.addColorStop(0.5, 'rgba(245, 158, 11, 0.7)');
-        fg.addColorStop(1, 'rgba(245, 158, 11, 0)');
-        ctx.fillStyle = fg;
-        ctx.beginPath(); ctx.arc(18, -64, 22, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = 'rgba(251, 191, 36, 0.24)';
+        ctx.beginPath(); ctx.arc(18, -64, 16, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#fef08a';
+        ctx.beginPath(); ctx.arc(18, -64, 5.5, 0, Math.PI * 2); ctx.fill();
       }
 
       if (hasRelic) {
-        const rg = ctx.createRadialGradient(-10, -46, 2, -10, -46, 22);
-        rg.addColorStop(0, '#f5d0fe');
-        rg.addColorStop(0.5, 'rgba(168, 85, 247, 0.65)');
-        rg.addColorStop(1, 'rgba(168, 85, 247, 0)');
-        ctx.fillStyle = rg;
-        ctx.beginPath(); ctx.arc(-10, -46, 22, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = 'rgba(168, 85, 247, 0.34)';
+        ctx.beginPath(); ctx.arc(-10, -46, 17, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = '#e879f9';
-        ctx.beginPath(); ctx.arc(-10, -46, 6, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(-10, -46, 5.5, 0, Math.PI * 2); ctx.fill();
       }
 
       if (isGuarding) {
@@ -1642,145 +2325,173 @@ function drawHumanCharacter(px, py, opts) {
       ctx.restore();
     }
 
-    // Distinct Villain Renderers: Demon Monkey, Shadow Wraith, Obsidian Golem, Astral Warden
     function drawVillainCharacter(ex, ey, kind, name, hp, maxHp, isAttacking, isHurt, phase) {
       ctx.save();
-      ctx.translate(ex + (isAttacking ? -46 : 0) + (isHurt ? 14 : 0), ey);
+      ctx.translate(ex + (isAttacking ? -48 : 0) + (isHurt ? 15 : 0), ey);
 
-      const pulse = Math.sin(phase) * 4;
+      const vShadow = ctx.createRadialGradient(0, 2, 4, 0, 2, 38);
+      vShadow.addColorStop(0, 'rgba(0, 0, 0, 0.65)');
+      vShadow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = vShadow;
+      ctx.beginPath();
+      ctx.ellipse(0, 2, 38, 7, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      const pulse = Math.sin(phase) * 4.5;
 
       if (kind === 'wraith') {
-        // Floating hooded Shadow Wraith with spectral scythe/claws
         ctx.translate(0, -14 + pulse);
-        const grad = ctx.createLinearGradient(0, -78, 0, 10);
-        grad.addColorStop(0, '#312e81');
-        grad.addColorStop(1, 'rgba(15, 23, 42, 0.15)');
+        const aura = ctx.createRadialGradient(0, -42, 6, 0, -42, 54);
+        aura.addColorStop(0, 'rgba(56, 189, 248, 0.32)');
+        aura.addColorStop(1, 'rgba(56, 189, 248, 0)');
+        ctx.fillStyle = aura;
+        ctx.beginPath(); ctx.arc(0, -42, 54, 0, Math.PI * 2); ctx.fill();
+
+        const grad = ctx.createLinearGradient(0, -82, 0, 12);
+        grad.addColorStop(0, '#1e1b4b');
+        grad.addColorStop(0.55, '#312e81');
+        grad.addColorStop(1, 'rgba(15, 23, 42, 0.12)');
         ctx.fillStyle = grad;
         ctx.beginPath();
-        ctx.moveTo(-20, 8);
-        ctx.quadraticCurveTo(-24, -46, 0, -74);
-        ctx.quadraticCurveTo(24, -46, 20, 8);
-        ctx.lineTo(8, 0);
-        ctx.lineTo(0, 10);
-        ctx.lineTo(-10, 0);
+        ctx.moveTo(-22, 10);
+        ctx.quadraticCurveTo(-26, -48, 0, -78);
+        ctx.quadraticCurveTo(26, -48, 22, 10);
+        ctx.lineTo(9, 1);
+        ctx.lineTo(0, 12);
+        ctx.lineTo(-10, 1);
         ctx.closePath();
         ctx.fill();
 
-        // Glowing eyes
         ctx.fillStyle = '#38bdf8';
-        ctx.fillRect(-11, -56, 5, 4);
-        ctx.fillRect(2, -56, 5, 4);
+        ctx.fillRect(-11, -58, 6, 4);
+        ctx.fillRect(2, -58, 6, 4);
 
-        // Spectral claw reach
         ctx.strokeStyle = '#93c5fd';
-        ctx.lineWidth = isAttacking ? 5 : 3.5;
+        ctx.lineWidth = isAttacking ? 5.5 : 3.8;
         ctx.beginPath();
-        ctx.moveTo(-14, -42);
-        ctx.lineTo(isAttacking ? -48 : -28, -36);
+        ctx.moveTo(-14, -44);
+        ctx.lineTo(isAttacking ? -52 : -30, -36);
         ctx.stroke();
       } else if (kind === 'golem') {
-        // Heavy blocky Obsidian Golem with glowing core
-        ctx.fillStyle = '#1e293b';
-        ctx.fillRect(-24, -76, 48, 76);
+        const gBody = ctx.createLinearGradient(-26, -80, 26, 0);
+        gBody.addColorStop(0, '#334155');
+        gBody.addColorStop(0.5, '#1e293b');
+        gBody.addColorStop(1, '#0f172a');
+        ctx.fillStyle = gBody;
+        ctx.beginPath();
+        ctx.roundRect(-26, -80, 52, 80, 6);
+        ctx.fill();
         ctx.strokeStyle = '#64748b';
         ctx.lineWidth = 2.5;
-        ctx.strokeRect(-24, -76, 48, 76);
+        ctx.stroke();
 
-        // Glowing molten chest core
-        ctx.fillStyle = '#f97316';
-        ctx.beginPath(); ctx.arc(0, -44, 8, 0, Math.PI * 2); ctx.fill();
+        const coreGlow = ctx.createRadialGradient(0, -45, 2, 0, -45, 22);
+        coreGlow.addColorStop(0, '#fef08a');
+        coreGlow.addColorStop(0.45, '#f97316');
+        coreGlow.addColorStop(1, 'rgba(249, 115, 22, 0)');
+        ctx.fillStyle = coreGlow;
+        ctx.beginPath(); ctx.arc(0, -45, 22, 0, Math.PI * 2); ctx.fill();
 
-        // Glowing eyes
         ctx.fillStyle = '#fb923c';
-        ctx.fillRect(-12, -64, 7, 4);
-        ctx.fillRect(5, -64, 7, 4);
+        ctx.fillRect(-13, -67, 8, 4.5);
+        ctx.fillRect(5, -67, 8, 4.5);
 
-        // Heavy stone fist
         ctx.fillStyle = '#334155';
-        ctx.fillRect(isAttacking ? -52 : -36, -46, 18, 18);
+        ctx.beginPath();
+        ctx.roundRect(isAttacking ? -56 : -38, -48, 20, 20, 4);
+        ctx.fill();
       } else if (kind === 'seraph') {
-        // Astral Warden with radiant halo/wings and energy spear
+        const wingGlow = ctx.createRadialGradient(0, -64, 6, 0, -64, 64);
+        wingGlow.addColorStop(0, 'rgba(244, 114, 182, 0.35)');
+        wingGlow.addColorStop(1, 'rgba(244, 114, 182, 0)');
+        ctx.fillStyle = wingGlow;
+        ctx.beginPath(); ctx.arc(0, -64, 64, 0, Math.PI * 2); ctx.fill();
+
         ctx.fillStyle = '#1e1b4b';
         ctx.beginPath();
-        ctx.moveTo(0, -58);
-        ctx.lineTo(-34, -84 + pulse);
-        ctx.lineTo(-22, -28);
+        ctx.moveTo(0, -60);
+        ctx.lineTo(-38, -88 + pulse);
+        ctx.lineTo(-24, -28);
         ctx.closePath();
         ctx.fill();
         ctx.beginPath();
-        ctx.moveTo(0, -58);
-        ctx.lineTo(34, -84 - pulse);
-        ctx.lineTo(22, -28);
+        ctx.moveTo(0, -60);
+        ctx.lineTo(38, -88 - pulse);
+        ctx.lineTo(24, -28);
         ctx.closePath();
         ctx.fill();
 
-        ctx.fillStyle = '#4338ca';
-        ctx.beginPath(); ctx.roundRect(-14, -64, 28, 38, 6); ctx.fill();
+        const sArmor = ctx.createLinearGradient(-15, -66, 15, -24);
+        sArmor.addColorStop(0, '#6366f1');
+        sArmor.addColorStop(1, '#312e81');
+        ctx.fillStyle = sArmor;
+        ctx.beginPath(); ctx.roundRect(-15, -66, 30, 40, 7); ctx.fill();
         ctx.fillStyle = '#e0e7ff';
-        ctx.beginPath(); ctx.arc(0, -76, 10, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(0, -78, 10.5, 0, Math.PI * 2); ctx.fill();
         ctx.strokeStyle = '#f472b6';
-        ctx.lineWidth = 2.5;
-        ctx.beginPath(); ctx.arc(0, -76, 15, 0, Math.PI * 2); ctx.stroke();
+        ctx.lineWidth = 2.8;
+        ctx.beginPath(); ctx.arc(0, -78, 16, 0, Math.PI * 2); ctx.stroke();
 
-        // Spear / lance
         ctx.strokeStyle = '#f472b6';
-        ctx.lineWidth = isAttacking ? 5 : 3.5;
+        ctx.lineWidth = isAttacking ? 5.5 : 3.8;
         ctx.beginPath();
-        ctx.moveTo(8, -40);
-        ctx.lineTo(isAttacking ? -54 : -34, -48);
+        ctx.moveTo(8, -42);
+        ctx.lineTo(isAttacking ? -58 : -36, -50);
         ctx.stroke();
       } else {
-        // Hunched Demon Monkey with horns & tail
         ctx.strokeStyle = '#7c2d12';
-        ctx.lineWidth = 4;
+        ctx.lineWidth = 4.5;
         ctx.beginPath();
         ctx.moveTo(14, -22);
-        ctx.bezierCurveTo(38, -32, 36, -68, 18, -64);
+        ctx.bezierCurveTo(40, -32, 38, -70, 18, -66);
         ctx.stroke();
 
-        ctx.fillStyle = '#7c2d12';
-        ctx.beginPath(); ctx.ellipse(0, -36, 17, 21, 0.2, 0, Math.PI * 2); ctx.fill();
+        const mGrad = ctx.createRadialGradient(-2, -38, 4, 0, -38, 24);
+        mGrad.addColorStop(0, '#b45309');
+        mGrad.addColorStop(1, '#7c2d12');
+        ctx.fillStyle = mGrad;
+        ctx.beginPath(); ctx.ellipse(0, -38, 18, 22, 0.2, 0, Math.PI * 2); ctx.fill();
 
         ctx.fillStyle = '#991b1b';
-        ctx.beginPath(); ctx.arc(-5, -62, 13, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(-5, -64, 13.5, 0, Math.PI * 2); ctx.fill();
 
         ctx.strokeStyle = '#fde047';
-        ctx.lineWidth = 2.5;
+        ctx.lineWidth = 2.8;
         ctx.beginPath();
-        ctx.moveTo(-11, -72); ctx.lineTo(-17, -84);
-        ctx.moveTo(2, -72); ctx.lineTo(8, -84);
+        ctx.moveTo(-11, -74); ctx.lineTo(-18, -87);
+        ctx.moveTo(2, -74); ctx.lineTo(9, -87);
         ctx.stroke();
 
         ctx.fillStyle = '#fef08a';
-        ctx.fillRect(-13, -65, 4, 4);
-        ctx.fillRect(-4, -65, 4, 4);
+        ctx.fillRect(-13, -67, 4.5, 4.5);
+        ctx.fillRect(-4, -67, 4.5, 4.5);
 
         ctx.strokeStyle = '#9a3412';
-        ctx.lineWidth = 6;
+        ctx.lineWidth = 6.5;
         ctx.beginPath();
-        ctx.moveTo(-10, -45);
-        ctx.lineTo(isAttacking ? -46 : -28, -24);
+        ctx.moveTo(-10, -46);
+        ctx.lineTo(isAttacking ? -48 : -30, -24);
         ctx.stroke();
       }
 
       if (isAttacking) {
         ctx.strokeStyle = '#ef4444';
-        ctx.lineWidth = 3.5;
+        ctx.lineWidth = 3.8;
         ctx.beginPath();
-        ctx.arc(-28, -42, 22, 2.2, 4.1);
+        ctx.arc(-30, -44, 24, 2.2, 4.1);
         ctx.stroke();
       }
 
       if (isHurt) {
-        ctx.fillStyle = 'rgba(239, 68, 68, 0.45)';
-        ctx.beginPath(); ctx.arc(0, -40, 26, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = 'rgba(239, 68, 68, 0.48)';
+        ctx.beginPath(); ctx.arc(0, -42, 28, 0, Math.PI * 2); ctx.fill();
       }
 
       ctx.restore();
 
       ctx.fillStyle = '#f5d0fe';
       ctx.font = 'bold 11px Inter, sans-serif';
-      ctx.fillText(`${name} (${hp}/${maxHp})`, ex - 60, ey + 17);
+      ctx.fillText(`${name} (${hp}/${maxHp})`, ex - 62, ey + 17);
     }
 
     function drawSpeechBubble(x, y, text) {
@@ -1789,7 +2500,7 @@ function drawHumanCharacter(px, py, opts) {
       ctx.font = 'bold 11px Inter, sans-serif';
       const padX = 10;
       const metrics = ctx.measureText(text);
-      const bw = Math.min(340, Math.max(120, metrics.width + padX * 2));
+      const bw = Math.min(350, Math.max(120, metrics.width + padX * 2));
       const bh = 26;
       const bx = Math.max(12, Math.min(canvas.width - bw - 12, x - bw * 0.4));
       const by = Math.max(8, y - bh - 12);
@@ -1802,7 +2513,6 @@ function drawHumanCharacter(px, py, opts) {
       ctx.fill();
       ctx.stroke();
 
-      // Pointer tail
       ctx.beginPath();
       ctx.moveTo(bx + 24, by + bh);
       ctx.lineTo(bx + 32, by + bh + 8);
@@ -1823,83 +2533,116 @@ function drawHumanCharacter(px, py, opts) {
         sky.addColorStop(1, '#1c0612');
       } else if (lvl === 3) {
         sky.addColorStop(0, '#1e1035');
-        sky.addColorStop(1, '#0d091a');
+        sky.addColorStop(1, '#0b0716');
       } else if (roomId === 'cistern') {
-        sky.addColorStop(0, '#072433');
-        sky.addColorStop(1, '#0c1c2c');
+        sky.addColorStop(0, '#062638');
+        sky.addColorStop(1, '#091826');
       } else if (roomId === 'forge') {
-        sky.addColorStop(0, '#2d1208');
-        sky.addColorStop(1, '#130e19');
-      } else if (roomId === 'sanctum') {
+        sky.addColorStop(0, '#331206');
+        sky.addColorStop(1, '#120c18');
+      } else if (roomId === 'sanctum' || roomId === 'vault_hall') {
         sky.addColorStop(0, '#271036');
-        sky.addColorStop(1, '#0e1424');
+        sky.addColorStop(1, '#0d1322');
       } else if (roomId === 'gate') {
         sky.addColorStop(0, '#0c2c47');
-        sky.addColorStop(1, '#131b2e');
+        sky.addColorStop(1, '#111829');
       } else {
-        sky.addColorStop(0, '#0a1922');
-        sky.addColorStop(1, '#11252e');
+        sky.addColorStop(0, '#091822');
+        sky.addColorStop(1, '#0f222c');
       }
       ctx.fillStyle = sky;
       ctx.fillRect(0, 0, w, h);
 
-      // Distinct architectural props per room
+      const rayGrad = ctx.createLinearGradient(260, 0, 340, floorY);
+      rayGrad.addColorStop(0, lvl === 3 ? 'rgba(192, 132, 252, 0.14)' : 'rgba(253, 224, 71, 0.10)');
+      rayGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = rayGrad;
+      ctx.beginPath();
+      ctx.moveTo(210, 0); ctx.lineTo(310, 0);
+      ctx.lineTo(430, floorY); ctx.lineTo(140, floorY);
+      ctx.closePath();
+      ctx.fill();
+
+      const span = 210;
+      const start = -(((scroll * 0.75) % span + span) % span) - 30;
+      for (let x = start; x < w + span; x += span) {
+        const colGrad = ctx.createLinearGradient(x - 20, 40, x + 20, 40);
+        colGrad.addColorStop(0, 'rgba(148, 163, 184, 0.16)');
+        colGrad.addColorStop(0.5, 'rgba(226, 232, 240, 0.06)');
+        colGrad.addColorStop(1, 'rgba(15, 23, 42, 0.28)');
+        ctx.fillStyle = colGrad;
+        ctx.fillRect(x - 18, 40, 36, floorY - 40);
+
+        const flicker = Math.sin(Date.now() * 0.012 + x) * 2.5;
+        const sGlow = ctx.createRadialGradient(x, 112, 2, x, 112, 34 + flicker);
+        sGlow.addColorStop(0, roomId === 'cistern' ? 'rgba(56, 189, 248, 0.55)' : 'rgba(251, 191, 36, 0.55)');
+        sGlow.addColorStop(1, 'rgba(251, 191, 36, 0)');
+        ctx.fillStyle = sGlow;
+        ctx.beginPath(); ctx.arc(x, 112, 34 + flicker, 0, Math.PI * 2); ctx.fill();
+
+        ctx.fillStyle = roomId === 'cistern' ? '#7dd3fc' : '#fde047';
+        ctx.beginPath(); ctx.arc(x, 112, 3.5, 0, Math.PI * 2); ctx.fill();
+      }
+
       if (roomId === 'cistern') {
-        // Water arches & ripples
-        ctx.strokeStyle = 'rgba(56, 189, 248, 0.25)';
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.28)';
         ctx.lineWidth = 2;
         for (let i = 0; i < 4; i++) {
           ctx.beginPath();
-          ctx.arc(140 + i * 175, floorY + 18, 28, 0, Math.PI);
+          ctx.arc(140 + i * 175, floorY + 20, 30, 0, Math.PI);
           ctx.stroke();
         }
       } else if (roomId === 'forge') {
-        // Molten glow & glowing anvil
-        const fg = ctx.createRadialGradient(450, floorY - 12, 6, 450, floorY - 12, 85);
-        fg.addColorStop(0, 'rgba(251, 146, 60, 0.45)');
+        const fg = ctx.createRadialGradient(450, floorY - 12, 6, 450, floorY - 12, 95);
+        fg.addColorStop(0, 'rgba(251, 146, 60, 0.5)');
         fg.addColorStop(1, 'rgba(251, 146, 60, 0)');
         ctx.fillStyle = fg;
-        ctx.beginPath(); ctx.arc(450, floorY - 12, 85, 0, Math.PI * 2); ctx.fill();
-      } else if (roomId === 'sanctum') {
-        // Mystic pillars & rune ring
-        ctx.strokeStyle = 'rgba(232, 121, 249, 0.24)';
-        ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.arc(540, 125, 58, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(450, floorY - 12, 95, 0, Math.PI * 2); ctx.fill();
+      } else if (roomId === 'sanctum' || roomId === 'vault_hall') {
+        ctx.strokeStyle = 'rgba(232, 121, 249, 0.28)';
+        ctx.lineWidth = 2.2;
+        ctx.beginPath(); ctx.arc(540, 125, 62, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(540, 125, 44, 0, Math.PI * 2); ctx.stroke();
       } else if (roomId === 'gate') {
-        // Towering double gates
-        ctx.strokeStyle = 'rgba(250, 204, 21, 0.45)';
-        ctx.lineWidth = 3;
-        ctx.strokeRect(365, 66, 70, floorY - 66);
+        ctx.strokeStyle = 'rgba(250, 204, 21, 0.52)';
+        ctx.lineWidth = 3.2;
+        ctx.strokeRect(365, 64, 74, floorY - 64);
       }
 
-      // Scrolling columns & floor tiles (active during North/South run)
-      const span = 210;
-      const start = -(((scroll * 0.75) % span + span) % span) - 30;
-      ctx.strokeStyle = 'rgba(226, 232, 240, 0.13)';
-      ctx.lineWidth = 2;
-      for (let x = start; x < w + span; x += span) {
-        ctx.strokeRect(x - 18, 42, 36, floorY - 42);
-      }
+      ambientEmbers.forEach(e => {
+        e.x += e.vx;
+        e.y += e.vy;
+        if (e.y < 10) { e.y = floorY - 10; e.x = Math.random() * w; }
+        ctx.fillStyle = lvl === 3
+          ? `rgba(216, 180, 254, ${e.alpha})`
+          : `rgba(253, 224, 71, ${e.alpha})`;
+        ctx.beginPath();
+        ctx.arc(e.x, e.y, e.r, 0, Math.PI * 2);
+        ctx.fill();
+      });
 
-      ctx.fillStyle = roomId === 'cistern' ? '#0b3246' : (lvl === 3 ? '#1c122b' : '#162330');
+      const floorGrad = ctx.createLinearGradient(0, floorY, 0, h);
+      floorGrad.addColorStop(0, roomId === 'cistern' ? '#0d3b52' : (lvl === 3 ? '#221536' : '#1b2b3b'));
+      floorGrad.addColorStop(1, '#070b12');
+      ctx.fillStyle = floorGrad;
       ctx.fillRect(0, floorY, w, h - floorY);
-      ctx.strokeStyle = lvl === 3 ? 'rgba(232, 121, 249, 0.42)' : 'rgba(245, 158, 11, 0.35)';
-      ctx.lineWidth = 2;
+
+      ctx.strokeStyle = lvl === 3 ? 'rgba(232, 121, 249, 0.5)' : 'rgba(245, 158, 11, 0.42)';
+      ctx.lineWidth = 2.2;
       ctx.beginPath(); ctx.moveTo(0, floorY); ctx.lineTo(w, floorY); ctx.stroke();
 
       const tSpan = 68;
       const tStart = -(((scroll * 2.2) % tSpan + tSpan) % tSpan);
-      ctx.strokeStyle = 'rgba(148, 163, 184, 0.16)';
+      ctx.strokeStyle = 'rgba(148, 163, 184, 0.18)';
       ctx.lineWidth = 1.5;
       for (let tx = tStart; tx < w + tSpan; tx += tSpan) {
-        ctx.beginPath(); ctx.moveTo(tx, floorY); ctx.lineTo(tx - 20, h); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(tx, floorY); ctx.lineTo(tx - 22, h); ctx.stroke();
       }
     }
 
-    
     function drawScene(st) {
       const w = canvas.width, h = canvas.height;
-      const floorY = 242;
+      const floorY = 254;
       ctx.save();
       if (shakeFrames > 0) {
         shakeFrames--;
@@ -1921,34 +2664,96 @@ function drawHumanCharacter(px, py, opts) {
 
       drawRoomEnvironment(w, h, floorY, st.roomId, st.lvl, scrollOffset, st.destroyed);
 
-      const lungeX = heroAttackFrames > 0 ? 140 : 0;
-      let baseWalkX = 160;
+      const lungeX = heroAttackFrames > 0 ? 145 : 0;
+      let baseWalkX = 165;
       if (isRunning) {
         const prog = 1 - runTimerFrames / 100;
-        if (facingDir === 'east') baseWalkX = 95 + prog * 180;
-        else if (facingDir === 'west') baseWalkX = 260 - prog * 165;
-        else baseWalkX = -30 + prog * 190;
+        if (facingDir === 'east') baseWalkX = 95 + prog * 185;
+        else if (facingDir === 'west') baseWalkX = 265 - prog * 170;
+        else baseWalkX = -30 + prog * 195;
       }
       const px = baseWalkX + lungeX;
 
-      drawHumanCharacter(px, floorY, {
-        avId: st.avId, hasTorch: st.hasTorch, hasBlade: st.hasBlade, hasRelic: st.hasRelic,
-        isEvilTwist: st.lvl === 3, isRunning, isAttacking: heroAttackFrames > 0,
-        isHurt: heroHurtFrames > 0, isGuarding: st.anim === 'guard' && heroAttackFrames > 0,
-        dirSign, phase: scrollOffset * 0.16
-      });
+      const isSleeping = sleepFrames > 0;
+      if (isSleeping) {
+        sleepFrames--;
+        if (sleepFrames === 0) {
+          setBubble('Awake and rested!');
+          appendCombat('[Awake] Finished sleeping; ready for action.');
+        }
+      }
+
+      if (isSleeping) {
+        ctx.save();
+        ctx.translate(px, floorY - 6);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+        ctx.beginPath();
+        ctx.ellipse(12, 6, 46, 7, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        const bedGrad = ctx.createLinearGradient(-34, -10, 58, 4);
+        bedGrad.addColorStop(0, '#1e293b');
+        bedGrad.addColorStop(1, '#0f172a');
+        ctx.fillStyle = bedGrad;
+        ctx.beginPath();
+        ctx.roundRect(-34, -8, 92, 12, 6);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.35)';
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+
+        ctx.rotate(-Math.PI / 2);
+        ctx.scale(1.15, 1.15);
+        drawHumanCharacter(0, 0, {
+          avId: st.avId, hasTorch: false, hasBlade: false, hasRelic: st.hasRelic,
+          isEvilTwist: st.lvl === 3, isRunning: false, isAttacking: false,
+          isHurt: false, isGuarding: false, dirSign: 1, phase: 0
+        });
+        ctx.restore();
+
+        const zFloat = Math.sin(Date.now() * 0.004) * 5;
+        const secsRem = Math.max(1, Math.ceil(sleepFrames / 60));
+        ctx.save();
+        ctx.fillStyle = '#bae6fd';
+        ctx.font = 'bold 13px Inter, sans-serif';
+        ctx.fillText('Z', px + 36, floorY - 36 + zFloat);
+        ctx.font = 'bold 16px Inter, sans-serif';
+        ctx.fillText('z', px + 47, floorY - 46 - zFloat);
+        ctx.font = 'bold 19px Inter, sans-serif';
+        ctx.fillText('Z', px + 57, floorY - 58 + zFloat);
+
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.roundRect(px - 52, floorY - 82, 128, 22, 6);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#e0f2fe';
+        ctx.font = 'bold 11px Inter, sans-serif';
+        ctx.fillText(`SLEEPING (${secsRem}s left)`, px - 44, floorY - 67);
+        ctx.restore();
+      } else {
+        drawHumanCharacter(px, floorY, {
+          avId: st.avId, hasTorch: st.hasTorch, hasBlade: st.hasBlade, hasRelic: st.hasRelic,
+          isEvilTwist: st.lvl === 3, isRunning, isAttacking: heroAttackFrames > 0,
+          isHurt: heroHurtFrames > 0, isGuarding: st.anim === 'guard' && heroAttackFrames > 0,
+          dirSign, phase: scrollOffset * 0.16
+        });
+      }
 
       ctx.fillStyle = '#f8fafc';
       ctx.font = 'bold 11px Inter, sans-serif';
       ctx.fillText(`${runnerProfiles[st.avId].name.toUpperCase()} (${facingDir.toUpperCase()})`, px - 38, floorY + 17);
 
       if (!isRunning && st.foeHp > 0) {
-        drawVillainCharacter(565, floorY, st.foeKind, st.foeName, st.foeHp, st.foeMaxHp, enemyAttackFrames > 0, enemyHurtFrames > 0, scrollOffset * 0.12);
+        drawVillainCharacter(575, floorY, st.foeKind, st.foeName, st.foeHp, st.foeMaxHp, enemyAttackFrames > 0, enemyHurtFrames > 0, scrollOffset * 0.12);
       }
 
       if (heroAttackFrames > 10) {
-        ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 4;
-        ctx.beginPath(); ctx.arc(380, 195, 62, -0.85, 0.75); ctx.stroke();
+        ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 4.2;
+        ctx.beginPath(); ctx.arc(385, 202, 65, -0.85, 0.75); ctx.stroke();
       }
 
       for (let i = particles.length - 1; i >= 0; i--) {
@@ -1961,7 +2766,7 @@ function drawHumanCharacter(px, py, opts) {
       }
       ctx.globalAlpha = 1;
 
-      drawSpeechBubble(px + 12, floorY - 94, bubbleText);
+      drawSpeechBubble(px + 12, floorY - 98, bubbleText);
       drawMazeMinimap(st);
       ctx.restore();
     }
@@ -1984,6 +2789,7 @@ function drawHumanCharacter(px, py, opts) {
     };
 
     window.addEventListener('DOMContentLoaded', () => {
+      startIceFireMusicLoop();
       selectRunner(1);
       newRun(1);
       setTimeout(() => {
@@ -2002,5 +2808,6 @@ function drawHumanCharacter(px, py, opts) {
     requestAnimationFrame(loopFrame);
   </script>
   <script src="dungeon.js"></script>
+  <audio id="jiosaavnTrackAudio" loop preload="auto" data-track-url="https://www.jiosaavn.com/song/a-song-of-ice-and-fire/Rww-aTdiRAA" crossorigin="anonymous"></audio>
 </body>
 </html>
