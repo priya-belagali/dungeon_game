@@ -507,7 +507,7 @@
           <div class="rule-box"><strong>Movement &amp; Energy (STM):</strong> Moving costs 10 STM. If your STM hits 0, you lose 10 HP from exhaustion. Use <em>Rest</em> or a <em>Torch</em> to recover energy.</div>
           <div class="rule-box"><strong>Health (HP) &amp; Healing:</strong> If your HP reaches 0, the current level restarts. Use <em>Use Herb</em> (+45 HP) or <em>Rest</em> (+6 HP) when wounded.</div>
           <div class="rule-box"><strong>Combat Choices:</strong> Use <em>Slash</em> for a steady hit, <em>Vault</em> (-25 STM) for heavy damage, <em>Guard &amp; Riposte</em> to cut incoming damage in half and gain +20 STM, or <em>Torch Flare</em> (-20 STM) when carrying a Torch.</div>
-          <div class="rule-box"><strong>Restart &amp; Audio:</strong> Use <em>Restart Level</em> or <em>Restart Game</em> anytime in the top bar. Toggle the <em>Music</em> or <em>SFX &amp; Voice</em> buttons whenever you like.</div>
+          <div class="rule-box"><strong>Restart &amp; Audio:</strong> Use <em>Restart Level</em> or <em>Restart Game</em> anytime in the top bar. Toggle the <em>Music</em> or <em>SFX</em> buttons whenever you like.</div>
         </div>
       </div>
     </div>
@@ -527,7 +527,7 @@
         <span class="tag timer" id="timerTag" style="display:none;">Time Left: 90s</span>
         <button class="m" id="storyBtn" onclick="reopenIntroPage()">Story &amp; Rules</button>
         <button class="m gld" id="musicBtn" onclick="toggleIceFireMusic()">Music: ON</button>
-        <button class="m" id="sfxBtn" onclick="toggleSfx()">SFX &amp; Voice: ON</button>
+        <button class="m" id="sfxBtn" onclick="toggleSfx()">SFX: ON</button>
         <button class="m gld" id="btnRestartLevel" onclick="restartLevelAction()">Restart Level</button>
         <button class="m atk" id="btnRestartGame" onclick="restartGameAction()">Restart Game</button>
       </div>
@@ -652,12 +652,7 @@
     let particles = [];
     let ambientEmbers = [];
     let facingDir = 'east';
-    let speechVoices = [];
 
-    if ('speechSynthesis' in window) {
-      const loadVoices = () => { speechVoices = window.speechSynthesis.getVoices() || []; };
-      loadVoices();
-      window.speechSynthesis.onvoiceschanged = loadVoices;
     }
 
     for (let i = 0; i < 28; i++) {
@@ -979,9 +974,7 @@
       try { unlockAudioAndStartMusic(); } catch (e) {}
       try {
         if (sfxEnabled) {
-          speakDramaticVoice('Step into the labyrinth!', 'normal', chosenRunner);
         }
-        return;
       } catch (e) {}
     }
     window.startGameFromIntro = startGameFromIntro;
@@ -996,38 +989,6 @@
     }
     window.reopenIntroPage = reopenIntroPage;
 
-    function speakDramaticVoice(line, mood = 'normal', avId = chosenRunner) {
-      if (!sfxEnabled || !('speechSynthesis' in window)) return;
-      try {
-        window.speechSynthesis.cancel();
-        const utter = new SpeechSynthesisUtterance(line);
-        const voices = speechVoices.length ? speechVoices : window.speechSynthesis.getVoices();
-        if (voices && voices.length) {
-          const enVoices = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith('en'));
-          const pool = enVoices.length ? enVoices : voices;
-          if (avId === 2) {
-            const fem = pool.find(v => /female|samantha|victoria|zira|aria|jenny|karen|moira/i.test(v.name));
-            if (fem) utter.voice = fem;
-          } else {
-            const male = pool.find(v => /male|daniel|david|alex|fred|guy|christopher|james/i.test(v.name));
-            if (male) utter.voice = male;
-          }
-        }
-        if (avId === 2) {
-          utter.pitch = mood === 'hurt' ? 1.48 : (mood === 'cheer' ? 1.38 : 1.18);
-          utter.rate  = mood === 'hurt' ? 1.18 : (mood === 'cheer' ? 1.10 : 1.02);
-        } else if (avId === 3) {
-          utter.pitch = mood === 'hurt' ? 0.92 : (mood === 'cheer' ? 0.88 : 0.76);
-          utter.rate  = mood === 'hurt' ? 1.12 : (mood === 'cheer' ? 1.02 : 0.95);
-        } else {
-          utter.pitch = mood === 'hurt' ? 1.24 : (mood === 'cheer' ? 1.16 : 0.98);
-          utter.rate  = mood === 'hurt' ? 1.16 : (mood === 'cheer' ? 1.06 : 1.00);
-        }
-        utter.volume = 0.95;
-        window.speechSynthesis.speak(utter);
-      } catch (e) {}
-    }
-
     function playHeroScream(avId = chosenRunner) {
       const cries = {
         1: ["Aaargh! That cut deep!", "Nngh! Stand back!", "Gah! I won't fall here!"],
@@ -1035,7 +996,6 @@
         3: ["Grrraagh! Is that all you have?!", "Aaargh! Steel holds firm!", "Urgh! A heavy blow!"]
       };
       const list = cries[avId] || cries[1];
-      speakDramaticVoice(list[Math.floor(Math.random() * list.length)], 'hurt', avId);
 
       const ac = getAudio();
       if (!ac || !sfxEnabled) return;
@@ -1085,7 +1045,6 @@
         3: ["For glory! The guardian is vanquished!", "Huzzah! Nothing stands in our way!", "Triumph! On to the next trial!"]
       };
       const list = cheers[avId] || cheers[1];
-      speakDramaticVoice(customLine || list[Math.floor(Math.random() * list.length)], 'cheer', avId);
 
       const ac = getAudio();
       if (!ac || !sfxEnabled) return;
@@ -1299,12 +1258,9 @@
     function toggleSfx() {
       sfxEnabled = !sfxEnabled;
       const btn = document.getElementById('sfxBtn');
-      if (btn) btn.textContent = sfxEnabled ? 'SFX & Voice: ON' : 'SFX & Voice: OFF';
+      if (btn) btn.textContent = sfxEnabled ? 'SFX: ON' : 'SFX: OFF';
       if (sfxEnabled) {
         playSfx('click');
-        speakDramaticVoice('Voice and sound active.', 'normal', chosenRunner);
-      } else if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
       }
     }
 
@@ -1360,12 +1316,6 @@
       }
       document.getElementById('runnerLore').innerHTML =
         '<strong>' + runnerProfiles[id].name + ':</strong> ' + runnerProfiles[id].bio;
-      const introLines = {
-        1: 'Kaelen ready. Into the ruins!',
-        2: 'Lyra ready. The ancient seals call.',
-        3: 'Thorne ready. My axe is yours.'
-      };
-      speakDramaticVoice(introLines[id] || 'Ready.', 'normal', id);
       if (wasmReady && !useFallback) {
         const rName = runnerProfiles[chosenRunner].name.toLowerCase();
         Module.ccall('run_command', 'string', ['string'], [`start ${rName} level${cachedState.lvl || 1}`]);
@@ -1400,13 +1350,11 @@
     function restartLevelAction() {
       const curLv = cachedState.lvl || fbState.lvl || 1;
       playSfx('click');
-      speakDramaticVoice(`Restarting Level ${curLv}. Ready once more!`, 'normal', chosenRunner);
       newRun(curLv);
     }
 
     function restartGameAction() {
       playSfx('click');
-      speakDramaticVoice('A fresh expedition begins from Level 1!', 'normal', chosenRunner);
       newRun(1);
     }
 
@@ -1660,7 +1608,6 @@
           if (r.item === 'Relic') fbState.hasRelic = true;
           appendCombat(`[Taken] Picked up ${r.item}!`);
           playSfx('pickup');
-          speakDramaticVoice(`Found the ${r.item}!`, 'normal', fbState.avId);
           spawnBurst(200, 190, '#e879f9', 20);
           r.item = null;
         } else {
@@ -1687,7 +1634,6 @@
           fbState.hp = Math.min(fbState.maxHp, fbState.hp + 45);
           appendCombat('[Herb] +45 HP.');
           playSfx('heal');
-          speakDramaticVoice('Strength restored!', 'normal', fbState.avId);
           spawnBurst(180, 190, '#10b981', 22);
         } else {
           appendCombat('[!] No Herb in pack.');
