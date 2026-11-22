@@ -353,12 +353,13 @@ private:
     std::string lastAnimAction;
 
     void wireMaze() {
-        r1.setExits(&r3, nullptr, &r2, nullptr);
-        r2.setExits(nullptr, nullptr, &r3, nullptr);
-        r3.setExits(&r4, nullptr, nullptr, nullptr);
-        r4.setExits(&r5, nullptr, &r5, nullptr);
-        r5.setExits(&r6, nullptr, nullptr, nullptr);
-        r6.setExits(nullptr, nullptr, nullptr, nullptr);
+        // Every chamber connects North, South, East, and West so the character can move in any direction
+        r1.setExits(&r3, &r5, &r2, &r4);
+        r2.setExits(&r4, &r1, &r3, &r1);
+        r3.setExits(&r4, &r1, &r2, &r2);
+        r4.setExits(&r5, &r3, &r5, &r2);
+        r5.setExits(&r6, &r4, &r4, &r1);
+        r6.setExits(&r1, &r5, &r5, &r4);
     }
 
     void restartCurrentLevel(const std::string& reason, std::ostringstream& out) {
@@ -397,11 +398,11 @@ public:
             "Stone courtyard where paths split ahead.",
             &torchItem, nullptr);
         r2.setRoomData("2. East Wing",
-            "A sharp edge helps before deeper halls; higher chambers lock behind you.",
+            "A sharp edge helps before deeper halls; explore any direction freely.",
             "An eastern side hall with weapon racks and a lurking demon.",
             &bladeItem, &monkeyEnemy);
         r3.setRoomData("3. Lantern Gallery",
-            "Higher chambers do not let you step back; save healing for deep wardens.",
+            "Save healing for deep wardens, or step back if you need to regroup.",
             "Dim arches lit by flickering wall sconces and wild herbs in the cracks.",
             &herbItem, &wraithEnemy);
         r4.setRoomData("4. Deep Hall",
@@ -458,11 +459,6 @@ public:
             }
             if (!nextRoom) {
                 out << "\n[No Path] There is no route " << dirName << " from here.\n";
-                return;
-            }
-            if (nextRoom->getChamberNum() < currentRoom->getChamberNum()) {
-                out << "\n[Locked Behind] You are in Chamber " << currentRoom->getChamberNum()
-                    << "; moving " << dirName << " cannot return you to lower chambers.\n";
                 return;
             }
             lastAnimAction = animName;

@@ -387,7 +387,7 @@
         </div>
 
         <div>
-          <div class="sec-hd">6 Chambers (1 -&gt; 6 Forward Only)</div>
+          <div class="sec-hd">6 Chambers (Free Direction Exploration)</div>
           <div class="chambers-grid">
             <div class="ch-cell here" id="ch1">1. Courtyard</div>
             <div class="ch-cell" id="ch2">2. East Wing</div>
@@ -469,12 +469,12 @@
     // Ch.5 (sanctum) -> North to Ch.6 (gate)
     // Ch.6 (gate) -> Final Gate
     const mazeRooms = {
-      cell:      { num: 1, title: '1. Courtyard',       x: 68,  y: 92, hint: 'Steel sometimes waits off the main path.',       north: 'corridor', south: null, east: 'east_wing', west: null, item: 'Torch', foe: null },
-      east_wing: { num: 2, title: '2. East Wing',       x: 138, y: 92, hint: 'A sharp edge helps before deeper halls.',       north: null,       south: null, east: 'corridor',  west: null, item: 'Blade', foe: { name: 'Demon Monkey', kind: 'monkey', hp: 64, dmg: 18 } },
-      corridor:  { num: 3, title: '3. Lantern Gallery', x: 103, y: 62, hint: 'Higher chambers do not let you step back.',   north: 'forge',      south: null, east: null,        west: null, item: 'Herb',  foe: { name: 'Shadow Wraith', kind: 'wraith', hp: 88, dmg: 24 } },
-      forge:     { num: 4, title: '4. Deep Hall',       x: 103, y: 34, hint: 'Ancient relics carry unseen strength.',         north: 'sanctum',    south: null, east: 'sanctum',   west: null, item: 'Relic', foe: { name: 'Obsidian Golem', kind: 'golem', hp: 94, dmg: 25 } },
-      sanctum:   { num: 5, title: '5. Inner Sanctum',   x: 103, y: 14, hint: 'What opens a gate often waits just before it.', north: 'gate',       south: null, east: null,        west: null, item: 'Key',   foe: { name: 'Obsidian Golem', kind: 'golem', hp: 94, dmg: 25 } },
-      gate:      { num: 6, title: '6. Final Gate',      x: 162, y: 24, hint: 'Defeat the ward and use the door once fitted.',north: null,       south: null, east: null,        west: null, item: null,    foe: { name: 'Astral Warden', kind: 'seraph', hp: 112, dmg: 28 } }
+      cell:      { num: 1, title: '1. Courtyard',       x: 68,  y: 92, hint: 'Steel sometimes waits off the main path.',       north: 'corridor', south: 'sanctum',   east: 'east_wing', west: 'forge',     item: 'Torch', foe: null },
+      east_wing: { num: 2, title: '2. East Wing',       x: 138, y: 92, hint: 'A sharp edge helps before deeper halls.',       north: 'forge',    south: 'cell',      east: 'corridor',  west: 'cell',      item: 'Blade', foe: { name: 'Demon Monkey', kind: 'monkey', hp: 72, dmg: 20 } },
+      corridor:  { num: 3, title: '3. Lantern Gallery', x: 103, y: 62, hint: 'Save healing for deep wardens, or step back.',  north: 'forge',    south: 'cell',      east: 'east_wing', west: 'east_wing', item: 'Herb',  foe: { name: 'Shadow Wraith', kind: 'wraith', hp: 88, dmg: 24 } },
+      forge:     { num: 4, title: '4. Deep Hall',       x: 103, y: 34, hint: 'Ancient relics carry unseen strength.',         north: 'sanctum',  south: 'corridor',  east: 'sanctum',   west: 'east_wing', item: 'Relic', foe: { name: 'Obsidian Golem', kind: 'golem', hp: 106, dmg: 27 } },
+      sanctum:   { num: 5, title: '5. Inner Sanctum',   x: 103, y: 14, hint: 'What opens a gate often waits just before it.', north: 'gate',     south: 'forge',     east: 'forge',     west: 'cell',      item: 'Key',   foe: { name: 'Obsidian Golem', kind: 'golem', hp: 106, dmg: 27 } },
+      gate:      { num: 6, title: '6. Final Gate',      x: 162, y: 24, hint: 'Defeat the ward and use the door once fitted.',north: 'cell',     south: 'sanctum',   east: 'sanctum',   west: 'forge',     item: null,    foe: { name: 'Astral Warden', kind: 'seraph', hp: 126, dmg: 31 } }
     };
 
     let fbState = {
@@ -785,7 +785,7 @@
         syncWasmState();
       } else {
         loadMazeLevel(lvl);
-        combatLog.textContent = `[Level ${lvl} — ${runnerProfiles[fbState.avId].name}] Start in Chamber 1. Higher chambers lock out going back to lower numbers.\n`;
+        combatLog.textContent = `[Level ${lvl} — ${runnerProfiles[fbState.avId].name}] Start in Chamber 1. Move North, South, East, or West freely to explore.\n`;
         setBubble(`Chamber 1: ${mazeRooms.cell.hint}`);
         pushFallbackState();
       }
@@ -890,17 +890,13 @@
       for (let i = 1; i <= 6; i++) {
         const el = document.getElementById('ch' + i);
         el.classList.toggle('here', i === r.num);
-        el.classList.toggle('locked', i < r.num);
+        el.classList.remove('locked');
       }
 
-      const isForwardAllowed = (targetId) => {
-        if (!targetId || !mazeRooms[targetId]) return false;
-        return mazeRooms[targetId].num >= r.num;
-      };
-      document.getElementById('btnNorth').disabled = !isForwardAllowed(r.north);
-      document.getElementById('btnSouth').disabled = !isForwardAllowed(r.south);
-      document.getElementById('btnEast').disabled  = !isForwardAllowed(r.east);
-      document.getElementById('btnWest').disabled  = !isForwardAllowed(r.west);
+      document.getElementById('btnNorth').disabled = false;
+      document.getElementById('btnSouth').disabled = false;
+      document.getElementById('btnEast').disabled  = false;
+      document.getElementById('btnWest').disabled  = false;
     }
 
     function runAction(cmd) {
@@ -986,11 +982,6 @@
           return;
         }
         const nr = mazeRooms[nextId];
-        if (nr.num < r.num) {
-          appendCombat(`[Locked Behind] Chamber ${r.num} cannot return you to Chamber ${nr.num}.`);
-          playSfx('dead_end');
-          return;
-        }
         fbState.room = nextId;
         fbState.anim = animName;
         runTimerFrames = 100;
@@ -1148,7 +1139,7 @@
 
       ctx.fillStyle = '#fde68a';
       ctx.font = 'bold 9.5px Inter, sans-serif';
-      ctx.fillText('CHAMBER MAP (1 -> 6 Forward)', boxX + 9, boxY + 13);
+      ctx.fillText('CHAMBER MAP (All Directions)', boxX + 9, boxY + 13);
 
       const edges = [
         ['cell', 'east_wing'],
@@ -1175,7 +1166,7 @@
         const py = boxY + rm.y;
         const isHere = st.roomId === id;
         const curNum = (mazeRooms[st.roomId] && mazeRooms[st.roomId].num) || 1;
-        const isBehindLocked = rm.num < curNum;
+        const isBehindLocked = false;
         ctx.fillStyle = isHere ? '#10b981' : (isBehindLocked ? '#1e293b' : (rm.num === 6 ? '#a855f7' : '#334155'));
         ctx.beginPath();
         ctx.arc(px, py, isHere ? 8.5 : 7.5, 0, Math.PI * 2);
