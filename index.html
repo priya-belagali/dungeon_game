@@ -264,6 +264,10 @@
       color: #a7f3d0;
       font-weight: 700;
     }
+    .ch-cell.locked {
+      opacity: 0.45;
+      text-decoration: line-through;
+    }
 
     .dock {
       flex: 0 0 auto;
@@ -274,29 +278,6 @@
       display: flex;
       flex-direction: column;
       gap: 5px;
-    }
-    .riddle-bar {
-      display: none;
-      align-items: center;
-      gap: 8px;
-      padding: 4px 9px;
-      border-radius: 7px;
-      background: rgba(245, 158, 11, 0.12);
-      border: 1px solid rgba(245, 158, 11, 0.45);
-      font-size: 11px;
-      color: #fde68a;
-    }
-    .riddle-bar.open { display: flex; }
-    .riddle-bar input {
-      flex: 1;
-      max-width: 220px;
-      background: #05070b;
-      border: 1px solid rgba(245, 158, 11, 0.45);
-      color: var(--text);
-      border-radius: 6px;
-      padding: 3px 8px;
-      font-size: 11.5px;
-      outline: none;
     }
     .btn-strip {
       display: flex;
@@ -314,7 +295,8 @@
       font-weight: 600;
       cursor: pointer;
     }
-    button.m:hover { background: var(--bg-3); }
+    button.m:hover:not(:disabled) { background: var(--bg-3); }
+    button.m:disabled { opacity: 0.35; cursor: not-allowed; }
     button.m.atk { background: rgba(239, 68, 68, 0.16); border-color: rgba(239, 68, 68, 0.5); color: #fecaca; }
     button.m.skl { background: rgba(34, 211, 238, 0.15); border-color: rgba(34, 211, 238, 0.48); color: #a5f3fc; }
     button.m.gld { background: rgba(245, 158, 11, 0.18); border-color: rgba(245, 158, 11, 0.52); color: #fde68a; }
@@ -348,8 +330,8 @@
       <div class="head-left">
         <h1>ECLIPSE OF THE RELIC</h1>
         <span class="tag" id="lvlTag">Level 1</span>
-        <span class="tag" id="roomTag">1. Sunlit Courtyard</span>
-        <span class="tag timer" id="timerTag" style="display:none;">Clock: 90s</span>
+        <span class="tag" id="roomTag">1. Courtyard</span>
+        <span class="tag timer" id="timerTag" style="display:none;">Time Left: 90s</span>
         <button class="m" id="sfxBtn" onclick="toggleSfx()">SFX: ON</button>
       </div>
       <div class="hud-bars">
@@ -372,7 +354,7 @@
       <div class="stage-col">
         <div class="canvas-wrap">
           <canvas id="gameCanvas" width="800" height="325"></canvas>
-          <div class="goal-line"><strong>OBJECTIVE</strong><span id="goalTxt">Starting Level 1...</span></div>
+          <div class="goal-line"><strong>HINT</strong><span id="goalTxt">Starting Level 1...</span></div>
         </div>
         <div class="log-box" id="combatLog"></div>
       </div>
@@ -405,12 +387,12 @@
         </div>
 
         <div>
-          <div class="sec-hd">6 Chambers</div>
+          <div class="sec-hd">6 Chambers (1 -&gt; 6 Forward Only)</div>
           <div class="chambers-grid">
-            <div class="ch-cell here" id="ch1">1. Start</div>
-            <div class="ch-cell" id="ch2">2. Gallery</div>
-            <div class="ch-cell" id="ch3">3. Cistern</div>
-            <div class="ch-cell" id="ch4">4. Forge</div>
+            <div class="ch-cell here" id="ch1">1. Courtyard</div>
+            <div class="ch-cell" id="ch2">2. East Wing</div>
+            <div class="ch-cell" id="ch3">3. Gallery</div>
+            <div class="ch-cell" id="ch4">4. Deep Hall</div>
             <div class="ch-cell" id="ch5">5. Sanctum</div>
             <div class="ch-cell" id="ch6">6. Final Gate</div>
           </div>
@@ -419,12 +401,6 @@
     </div>
 
     <div class="dock">
-      <div class="riddle-bar" id="riddleBar">
-        <span id="riddlePrompt">Challenge active:</span>
-        <input id="riddleAns" type="text" placeholder="Type move or answer..." />
-        <button class="m gld" onclick="submitRiddle()">Submit</button>
-      </div>
-
       <div class="btn-strip">
         <button class="m atk" onclick="runAction('slash')">Slash</button>
         <button class="m skl" onclick="runAction('vault')">Vault (-25 STM)</button>
@@ -432,16 +408,16 @@
         <button class="m gld" onclick="runAction('torch')">Torch Flare (-20 STM)</button>
         <button class="m grn" onclick="runAction('rest')">Rest (+STM)</button>
         <button class="m" onclick="runAction('take')">Take</button>
-        <button class="m" onclick="runAction('search')">Inspect / Riddle</button>
+        <button class="m" onclick="runAction('search')">Hint</button>
         <button class="m" onclick="runAction('use herb')">Use Herb</button>
         <button class="m" onclick="runAction('door')">Final Gate</button>
-        <button class="m" onclick="runAction('north')">North</button>
-        <button class="m" onclick="runAction('south')">South (-STM)</button>
-        <button class="m" onclick="runAction('east')">East</button>
-        <button class="m" onclick="runAction('west')">West</button>
+        <button class="m" id="btnNorth" onclick="runAction('north')">North</button>
+        <button class="m" id="btnSouth" onclick="runAction('south')">South (-STM)</button>
+        <button class="m" id="btnEast" onclick="runAction('east')">East</button>
+        <button class="m" id="btnWest" onclick="runAction('west')">West</button>
         <form class="cli" onsubmit="event.preventDefault(); submitCli();">
           <span>&gt;</span>
-          <input id="cliInput" type="text" placeholder="slash, vault, guard, torch, take, search, north..." autocomplete="off" />
+          <input id="cliInput" type="text" placeholder="slash, vault, guard, torch, take, search, north, east..." autocomplete="off" />
         </form>
       </div>
     </div>
@@ -485,21 +461,20 @@
       }
     };
 
-    // Clear 6-chamber forward maze:
+    // 6-chamber forward maze:
     // Ch.1 (cell) -> East to Ch.2 (east_wing) or North to Ch.3 (corridor)
     // Ch.2 (east_wing) -> East to Ch.3 (corridor)
     // Ch.3 (corridor) -> North to Ch.4 (forge)
-    // Ch.4 (forge) -> North to Ch.5 (sanctum) or East to Ch.6 (gate)
+    // Ch.4 (forge) -> North to Ch.5 (sanctum) or East to Ch.5 (sanctum)
     // Ch.5 (sanctum) -> North to Ch.6 (gate)
     // Ch.6 (gate) -> Final Gate
-    // Rule: Entering a higher chamber number locks out moving back to lower chamber numbers.
     const mazeRooms = {
-      cell:      { num: 1, title: '1. Courtyard',       x: 68,  y: 92, hint: 'Steel sometimes waits off the main path.',         north: 'corridor', south: null, east: 'east_wing', west: null, item: 'Torch', foe: null },
-      east_wing: { num: 2, title: '2. East Wing',       x: 138, y: 92, hint: 'A sharp edge helps before deeper halls.',         north: null,       south: null, east: 'corridor',  west: null, item: 'Blade', foe: { name: 'Demon Monkey', kind: 'monkey', hp: 64 } },
-      corridor:  { num: 3, title: '3. Lantern Gallery', x: 103, y: 62, hint: 'Higher chambers do not let you step back.',     north: 'forge',      south: null, east: null,        west: null, item: null,    foe: { name: 'Shadow Wraith', kind: 'wraith', hp: 78 } },
-      forge:     { num: 4, title: '4. Deep Hall',       x: 103, y: 34, hint: 'Ancient relics carry unseen strength.',           north: 'sanctum',    south: null, east: 'gate',      west: null, item: 'Relic', foe: { name: 'Obsidian Golem', kind: 'golem', hp: 94 } },
-      sanctum:   { num: 5, title: '5. Inner Sanctum',   x: 103, y: 14, hint: 'What opens a gate often waits just before it.',   north: 'gate',       south: null, east: null,        west: null, item: 'Key',   foe: { name: 'Obsidian Golem', kind: 'golem', hp: 94 } },
-      gate:      { num: 6, title: '6. Final Gate',      x: 162, y: 24, hint: 'Defeat the ward and use the door once fitted.',  north: null,       south: null, east: null,        west: null, item: null,    foe: { name: 'Astral Warden', kind: 'seraph', hp: 112 } }
+      cell:      { num: 1, title: '1. Courtyard',       x: 68,  y: 92, hint: 'Steel sometimes waits off the main path.',       north: 'corridor', south: null, east: 'east_wing', west: null, item: 'Torch', foe: null },
+      east_wing: { num: 2, title: '2. East Wing',       x: 138, y: 92, hint: 'A sharp edge helps before deeper halls.',       north: null,       south: null, east: 'corridor',  west: null, item: 'Blade', foe: { name: 'Demon Monkey', kind: 'monkey', hp: 64, dmg: 18 } },
+      corridor:  { num: 3, title: '3. Lantern Gallery', x: 103, y: 62, hint: 'Higher chambers do not let you step back.',   north: 'forge',      south: null, east: null,        west: null, item: 'Herb',  foe: { name: 'Shadow Wraith', kind: 'wraith', hp: 88, dmg: 24 } },
+      forge:     { num: 4, title: '4. Deep Hall',       x: 103, y: 34, hint: 'Ancient relics carry unseen strength.',         north: 'sanctum',    south: null, east: 'sanctum',   west: null, item: 'Relic', foe: { name: 'Obsidian Golem', kind: 'golem', hp: 94, dmg: 25 } },
+      sanctum:   { num: 5, title: '5. Inner Sanctum',   x: 103, y: 14, hint: 'What opens a gate often waits just before it.', north: 'gate',       south: null, east: null,        west: null, item: 'Key',   foe: { name: 'Obsidian Golem', kind: 'golem', hp: 94, dmg: 25 } },
+      gate:      { num: 6, title: '6. Final Gate',      x: 162, y: 24, hint: 'Defeat the ward and use the door once fitted.',north: null,       south: null, east: null,        west: null, item: null,    foe: { name: 'Astral Warden', kind: 'seraph', hp: 112, dmg: 28 } }
     };
 
     let fbState = {
@@ -527,22 +502,194 @@
       return audioCtx;
     }
 
-    function playSfx(type) {
+    function playHeroScream(avId = chosenRunner) {
       const ac = getAudio();
       if (!ac) return;
       const now = ac.currentTime;
+
+      // Vocal formant scream: pitch spike followed by strained descending cry
+      const basePitch = avId === 2 ? 520 : (avId === 3 ? 210 : 330);
+      const peakPitch = avId === 2 ? 780 : (avId === 3 ? 340 : 510);
+      const endPitch  = avId === 2 ? 290 : (avId === 3 ? 115 : 185);
+
+      const osc1 = ac.createOscillator();
+      const osc2 = ac.createOscillator();
+      const filter = ac.createBiquadFilter();
+      const gain = ac.createGain();
+
+      osc1.type = 'sawtooth';
+      osc2.type = 'triangle';
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(avId === 2 ? 1350 : 950, now);
+      filter.Q.setValueAtTime(3.2, now);
+
+      osc1.frequency.setValueAtTime(basePitch, now);
+      osc1.frequency.exponentialRampToValueAtTime(peakPitch, now + 0.07);
+      osc1.frequency.exponentialRampToValueAtTime(endPitch, now + 0.44);
+
+      osc2.frequency.setValueAtTime(basePitch * 1.5, now);
+      osc2.frequency.exponentialRampToValueAtTime(peakPitch * 1.45, now + 0.07);
+      osc2.frequency.exponentialRampToValueAtTime(endPitch * 1.35, now + 0.44);
+
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(0.22, now + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.46);
+
+      osc1.connect(filter);
+      osc2.connect(filter);
+      filter.connect(gain);
+      gain.connect(ac.destination);
+
+      osc1.start(now);
+      osc2.start(now);
+      osc1.stop(now + 0.47);
+      osc2.stop(now + 0.47);
+    }
+
+    function playCheerfulExclamation(avId = chosenRunner) {
+      const ac = getAudio();
+      if (!ac) return;
+      const now = ac.currentTime;
+      // Cheerful two-syllable rising exclamation ("Woo-hoo!" / "Huzzah!")
+      const root = avId === 2 ? 523.25 : (avId === 3 ? 329.63 : 440.0); // C5 / E4 / A4
+      const notes = [
+        { t: 0.00, dur: 0.13, f1: root,        f2: root * 1.25 },
+        { t: 0.14, dur: 0.28, f1: root * 1.25, f2: root * 1.68 }
+      ];
+      notes.forEach(n => {
+        const osc = ac.createOscillator();
+        const sub = ac.createOscillator();
+        const filter = ac.createBiquadFilter();
+        const gain = ac.createGain();
+
+        osc.type = 'triangle';
+        sub.type = 'sine';
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(1200, now + n.t);
+        filter.Q.setValueAtTime(2.0, now + n.t);
+
+        osc.frequency.setValueAtTime(n.f1, now + n.t);
+        osc.frequency.exponentialRampToValueAtTime(n.f2, now + n.t + n.dur);
+        sub.frequency.setValueAtTime(n.f1 * 2, now + n.t);
+        sub.frequency.exponentialRampToValueAtTime(n.f2 * 2, now + n.t + n.dur);
+
+        gain.gain.setValueAtTime(0.001, now + n.t);
+        gain.gain.linearRampToValueAtTime(0.18, now + n.t + 0.03);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + n.t + n.dur);
+
+        osc.connect(filter);
+        sub.connect(filter);
+        filter.connect(gain);
+        gain.connect(ac.destination);
+
+        osc.start(now + n.t);
+        sub.start(now + n.t);
+        osc.stop(now + n.t + n.dur + 0.02);
+        sub.stop(now + n.t + n.dur + 0.02);
+      });
+    }
+
+    function playVictoryMusic(isGrandFinale = false) {
+      const ac = getAudio();
+      if (!ac) return;
+      const now = ac.currentTime;
+      // Triumphant brass/chime victory fanfare melody
+      const melody = isGrandFinale
+        ? [
+            { f: 523.25, t: 0.00, d: 0.16 }, // C5
+            { f: 659.25, t: 0.17, d: 0.16 }, // E5
+            { f: 783.99, t: 0.34, d: 0.16 }, // G5
+            { f: 1046.50, t: 0.52, d: 0.34 }, // C6
+            { f: 880.00, t: 0.88, d: 0.18 }, // A5
+            { f: 1046.50, t: 1.08, d: 0.65 }  // C6
+          ]
+        : [
+            { f: 440.00, t: 0.00, d: 0.14 }, // A4
+            { f: 554.37, t: 0.15, d: 0.14 }, // C#5
+            { f: 659.25, t: 0.30, d: 0.14 }, // E5
+            { f: 880.00, t: 0.46, d: 0.48 }  // A5
+          ];
+
+      melody.forEach(note => {
+        const lead = ac.createOscillator();
+        const harmony = ac.createOscillator();
+        const gain = ac.createGain();
+
+        lead.type = 'triangle';
+        harmony.type = 'sine';
+        lead.frequency.setValueAtTime(note.f, now + note.t);
+        harmony.frequency.setValueAtTime(note.f * 0.5, now + note.t);
+
+        gain.gain.setValueAtTime(0.001, now + note.t);
+        gain.gain.linearRampToValueAtTime(0.16, now + note.t + 0.025);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + note.t + note.d);
+
+        lead.connect(gain);
+        harmony.connect(gain);
+        gain.connect(ac.destination);
+
+        lead.start(now + note.t);
+        harmony.start(now + note.t);
+        lead.stop(now + note.t + note.d + 0.02);
+        harmony.stop(now + note.t + note.d + 0.02);
+      });
+    }
+
+    function playSfx(type) {
+      const ac = getAudio();
+      if (!ac) return;
+      if (type === 'scream' || type === 'hurt') {
+        playHeroScream(cachedState.avId || chosenRunner);
+        return;
+      }
+      if (type === 'cheer') {
+        playCheerfulExclamation(cachedState.avId || chosenRunner);
+        return;
+      }
+      if (type === 'level_clear') {
+        playCheerfulExclamation(cachedState.avId || chosenRunner);
+        setTimeout(() => playVictoryMusic(false), 260);
+        return;
+      }
+      if (type === 'campaign_win') {
+        playCheerfulExclamation(cachedState.avId || chosenRunner);
+        setTimeout(() => playVictoryMusic(true), 280);
+        return;
+      }
+
+      const now = ac.currentTime;
       const osc = ac.createOscillator();
+      const osc2 = ac.createOscillator();
       const gain = ac.createGain();
       osc.connect(gain);
+      osc2.connect(gain);
       gain.connect(ac.destination);
-      const freqs = { slash: [520, 120], vault: [240, 760], guard: [340, 510], torch: [190, 65], move: [175, 105], dead_end: [250, 140], death: [220, 42], win: [440, 659], click: [380, 320] };
+
+      const freqs = {
+        slash: [640, 110],
+        vault: [220, 840],
+        guard: [390, 620],
+        torch: [210, 60],
+        move: [165, 98],
+        dead_end: [240, 130],
+        death: [240, 42],
+        win: [440, 659],
+        click: [420, 340]
+      };
       const [f1, f2] = freqs[type] || [380, 320];
-      osc.type = type === 'slash' || type === 'torch' || type === 'death' ? 'sawtooth' : 'triangle';
+      osc.type = (type === 'slash' || type === 'torch' || type === 'death') ? 'sawtooth' : 'triangle';
+      osc2.type = 'sine';
       osc.frequency.setValueAtTime(f1, now);
-      osc.frequency.exponentialRampToValueAtTime(f2, now + 0.16);
-      gain.gain.setValueAtTime(0.11, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
-      osc.start(now); osc.stop(now + 0.18);
+      osc.frequency.exponentialRampToValueAtTime(f2, now + 0.18);
+      osc2.frequency.setValueAtTime(f1 * 0.5, now);
+      osc2.frequency.exponentialRampToValueAtTime(f2 * 0.5, now + 0.18);
+
+      gain.gain.setValueAtTime(0.13, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+      osc.start(now);
+      osc2.start(now);
+      osc.stop(now + 0.2);
+      osc2.stop(now + 0.2);
     }
 
     function toggleSfx() {
@@ -589,19 +736,20 @@
       fbState.hasKey = false;
       fbState.hasRelic = false;
 
-      const s = (lv - 1) * 14;
+      const s = (lv - 1) * 18;
+      const d = (lv - 1) * 5;
       mazeRooms.cell.item = 'Torch';
       mazeRooms.cell.foe = null;
       mazeRooms.east_wing.item = 'Blade';
-      mazeRooms.east_wing.foe = { name: 'Demon Monkey', kind: 'monkey', hp: 64 + s };
-      mazeRooms.corridor.item = null;
-      mazeRooms.corridor.foe = { name: 'Shadow Wraith', kind: 'wraith', hp: 78 + s };
+      mazeRooms.east_wing.foe = { name: 'Demon Monkey', kind: 'monkey', hp: 72 + s, dmg: 20 + d };
+      mazeRooms.corridor.item = 'Herb';
+      mazeRooms.corridor.foe = { name: 'Shadow Wraith', kind: 'wraith', hp: 88 + s, dmg: 24 + d };
       mazeRooms.forge.item = 'Relic';
-      mazeRooms.forge.foe = { name: 'Obsidian Golem', kind: 'golem', hp: 94 + s };
+      mazeRooms.forge.foe = { name: 'Obsidian Golem', kind: 'golem', hp: 106 + s, dmg: 27 + d };
       mazeRooms.sanctum.item = 'Key';
-      mazeRooms.sanctum.foe = { name: 'Obsidian Golem', kind: 'golem', hp: 94 + s };
+      mazeRooms.sanctum.foe = { name: 'Obsidian Golem', kind: 'golem', hp: 106 + s, dmg: 27 + d };
       mazeRooms.gate.item = null;
-      mazeRooms.gate.foe = { name: 'Astral Warden', kind: 'seraph', hp: 112 + s };
+      mazeRooms.gate.foe = { name: 'Astral Warden', kind: 'seraph', hp: 126 + s, dmg: 31 + d };
     }
 
     function selectRunner(id) {
@@ -714,7 +862,7 @@
         timerEl.style.display = 'none';
       }
 
-      document.getElementById('goalTxt').textContent = `Hint: ${r.hint}`;
+      document.getElementById('goalTxt').textContent = r.hint;
 
       document.getElementById('hpTxt').textContent = st.hp;
       document.getElementById('maxHpTxt').textContent = st.maxHp;
@@ -740,8 +888,19 @@
       document.getElementById('relRelic').classList.toggle('got', st.hasRelic);
 
       for (let i = 1; i <= 6; i++) {
-        document.getElementById('ch' + i).classList.toggle('here', i === r.num);
+        const el = document.getElementById('ch' + i);
+        el.classList.toggle('here', i === r.num);
+        el.classList.toggle('locked', i < r.num);
       }
+
+      const isForwardAllowed = (targetId) => {
+        if (!targetId || !mazeRooms[targetId]) return false;
+        return mazeRooms[targetId].num >= r.num;
+      };
+      document.getElementById('btnNorth').disabled = !isForwardAllowed(r.north);
+      document.getElementById('btnSouth').disabled = !isForwardAllowed(r.south);
+      document.getElementById('btnEast').disabled  = !isForwardAllowed(r.east);
+      document.getElementById('btnWest').disabled  = !isForwardAllowed(r.west);
     }
 
     function runAction(cmd) {
@@ -757,23 +916,52 @@
         const prevRoom = Module.ccall('current_room', 'string', [], []);
         const prevHp = Module.ccall('current_hp', 'number', [], []);
         const prevFoeHp = Module.ccall('enemy_hp', 'number', [], []);
+        const prevLvl = Module.ccall('current_level', 'number', [], []);
         appendCombat('> ' + cmd);
         const out = Module.ccall('run_command', 'string', ['string'], [cmd]);
         appendCombat(out);
         const nextRoom = Module.ccall('current_room', 'string', [], []);
         const nextHp = Module.ccall('current_hp', 'number', [], []);
         const nextFoeHp = Module.ccall('enemy_hp', 'number', [], []);
+        const nextLvl = Module.ccall('current_level', 'number', [], []);
+        const isWon = Module.ccall('is_world_destroyed', 'number', [], []) === 1;
         const anim = Module.ccall('last_anim', 'string', [], []);
 
-        if ((c === 'north' || c === 'south' || c === 'east' || c === 'west' || c === 'retreat') && nextRoom !== prevRoom) {
+        if (isWon) {
+          playSfx('campaign_win');
+          setBubble('Huzzah! All 3 levels conquered!');
+          spawnBurst(400, 150, '#fde047', 36);
+        } else if (nextLvl > prevLvl || anim === 'level_up') {
+          playSfx('level_clear');
+          setBubble(`Woo-hoo! Level ${nextLvl} unlocked!`);
+          spawnBurst(400, 150, '#38bdf8', 28);
+        } else if ((c === 'north' || c === 'south' || c === 'east' || c === 'west' || c === 'retreat') && nextRoom !== prevRoom) {
           runTimerFrames = 100;
           setBubble((mazeRooms[nextRoom] && mazeRooms[nextRoom].hint) || 'Moving forward...');
           playSfx('move');
+          if (nextHp < prevHp) {
+            setTimeout(() => { playSfx('scream'); setBubble('Aaargh! Exhausted!'); }, 180);
+          }
         } else if (anim === 'slash' || anim === 'vault' || anim === 'guard' || anim === 'torch') {
           heroAttackFrames = 20;
           if (nextFoeHp < prevFoeHp) enemyHurtFrames = 20;
-          if (nextHp < prevHp && nextFoeHp > 0) setTimeout(() => { enemyAttackFrames = 20; heroHurtFrames = 20; }, 200);
-          playSfx(anim); shakeFrames = 8; spawnBurst(540, 195, '#fbbf24', 16);
+          playSfx(anim);
+          shakeFrames = 8;
+          spawnBurst(540, 195, '#fbbf24', 16);
+          if (prevFoeHp > 0 && nextFoeHp === 0) {
+            setTimeout(() => {
+              playSfx('cheer');
+              setBubble('Huzzah! Guardian defeated!');
+              spawnBurst(540, 180, '#a855f7', 24);
+            }, 220);
+          } else if (nextHp < prevHp && nextFoeHp > 0) {
+            setTimeout(() => {
+              enemyAttackFrames = 20;
+              heroHurtFrames = 20;
+              playSfx('scream');
+              setBubble('Aaargh! That stung!');
+            }, 220);
+          }
         } else {
           playSfx('click');
         }
@@ -846,9 +1034,9 @@
         appendCombat(`[Hint] ${r.hint}`);
         setBubble(r.hint);
       } else if (c === 'rest') {
-        fbState.stm = Math.min(fbState.maxStm, fbState.stm + 30);
-        fbState.hp = Math.min(fbState.maxHp, fbState.hp + 10);
-        appendCombat('[Rest] +30 STM, +10 HP.');
+        fbState.stm = Math.min(fbState.maxStm, fbState.stm + 25);
+        fbState.hp = Math.min(fbState.maxHp, fbState.hp + 6);
+        appendCombat('[Rest] +25 STM, +6 HP.');
       } else if (c === 'use herb') {
         if (fbState.hasHerb) {
           fbState.hasHerb = false;
@@ -859,28 +1047,49 @@
         }
       } else if (c === 'slash' || c === 'attack' || c === 'vault' || c === 'guard' || c === 'torch') {
         if (r.foe && r.foe.hp > 0) {
-          const dmg = (c === 'vault' ? 40 : (c === 'torch' ? 34 : 26)) + (fbState.hasBlade ? 14 : 0) + (fbState.hasRelic ? 14 : 0);
-          r.foe.hp = Math.max(0, r.foe.hp - dmg);
-          heroAttackFrames = 20;
-          enemyHurtFrames = 20;
-          fbState.anim = c === 'attack' ? 'slash' : c;
-          appendCombat(`[${c.toUpperCase()}] ${dmg} DMG to ${r.foe.name}!`);
-          playSfx(c === 'attack' ? 'slash' : c);
-          shakeFrames = 8;
-          spawnBurst(540, 195, '#fbbf24', 16);
-          if (r.foe.hp > 0 && c !== 'vault') {
-            const eDmg = c === 'guard' ? 10 : 18;
-            fbState.hp -= eDmg;
-            enemyAttackFrames = 20;
-            heroHurtFrames = 20;
-            appendCombat(`[${r.foe.name}] Strikes back for ${eDmg} DMG!`);
-            if (fbState.hp <= 0) {
-              appendCombat('[Restarted] Defeated! Restarting level...');
-              playSfx('death');
-              loadMazeLevel(fbState.lvl);
+          if (c === 'vault' && fbState.stm < 25) {
+            appendCombat('[Low STM] Need 25 STM for Vault.');
+          } else if (c === 'torch' && (!fbState.hasTorch || fbState.stm < 20)) {
+            appendCombat(!fbState.hasTorch ? '[No Torch] You need a Torch first.' : '[Low STM] Need 20 STM for Torch Flare.');
+          } else {
+            if (c === 'vault') fbState.stm -= 25;
+            if (c === 'torch') fbState.stm -= 20;
+            if (c === 'guard') fbState.stm = Math.min(fbState.maxStm, fbState.stm + 20);
+            const basePow = (fbState.avId === 2 ? 30 : (fbState.avId === 3 ? 22 : 24)) + (fbState.lvl - 1) * 5;
+            const bonus = (fbState.hasBlade ? 18 + fbState.lvl * 4 : 0) + (fbState.hasTorch ? 6 : 0) + (fbState.hasRelic ? (fbState.lvl === 3 ? 30 : 18) : 0);
+            const pow = basePow + bonus;
+            const dmg = c === 'vault' ? Math.floor(pow * 1.4) + 6 : (c === 'guard' ? Math.floor(pow / 2) : (c === 'torch' ? 26 + fbState.lvl * 4 : pow));
+            r.foe.hp = Math.max(0, r.foe.hp - dmg);
+            heroAttackFrames = 20;
+            enemyHurtFrames = 20;
+            fbState.anim = c === 'attack' ? 'slash' : c;
+            appendCombat(`[${c.toUpperCase()}] ${dmg} DMG to ${r.foe.name}!`);
+            playSfx(c === 'attack' ? 'slash' : c);
+            shakeFrames = 8;
+            spawnBurst(540, 195, '#fbbf24', 16);
+            if (r.foe.hp > 0) {
+              const eDmg = c === 'guard' ? Math.max(6, Math.floor(r.foe.dmg / 2)) : r.foe.dmg;
+              fbState.hp -= eDmg;
+              enemyAttackFrames = 20;
+              heroHurtFrames = 20;
+              appendCombat(`[${r.foe.name}] Strikes back for ${eDmg} DMG!`);
+              setTimeout(() => {
+                playSfx('scream');
+                setBubble('Aaargh! Hold the line!');
+              }, 160);
+              if (fbState.hp <= 0) {
+                appendCombat('[Restarted] Defeated! Restarting level...');
+                playSfx('death');
+                loadMazeLevel(fbState.lvl);
+              }
+            } else {
+              appendCombat(`[Defeated] ${r.foe.name} is down!`);
+              setTimeout(() => {
+                playSfx('cheer');
+                setBubble('Huzzah! Victory!');
+                spawnBurst(540, 180, '#a855f7', 24);
+              }, 180);
             }
-          } else if (r.foe.hp === 0) {
-            appendCombat(`[Defeated] ${r.foe.name} is down!`);
           }
         } else {
           appendCombat('[Info] No enemy here.');
@@ -893,12 +1102,16 @@
             appendCombat('[Locked] A Key is needed to open the gate.');
           } else if (fbState.lvl < 3) {
             appendCombat(`[Cleared] Advancing to Level ${fbState.lvl + 1}!`);
-            playSfx('win');
+            playSfx('level_clear');
             loadMazeLevel(fbState.lvl + 1);
+            setBubble(`Woo-hoo! Level ${fbState.lvl} unlocked!`);
+            spawnBurst(400, 150, '#38bdf8', 28);
           } else {
             fbState.destroyed = true;
             appendCombat('*** VICTORY! ALL 3 LEVELS CONQUERED! ***');
-            playSfx('win');
+            playSfx('campaign_win');
+            setBubble('Huzzah! All 3 levels conquered!');
+            spawnBurst(400, 150, '#fde047', 36);
           }
         } else {
           appendCombat('[Info] Reach Chamber 6 (Final Gate) to use \'door\'.');
@@ -908,14 +1121,6 @@
       }
 
       pushFallbackState();
-    }
-
-    function submitRiddle() {
-      const inp = document.getElementById('riddleAns');
-      const v = inp.value.trim();
-      if (!v) return;
-      runAction(v);
-      inp.value = '';
     }
 
     function submitCli() {
@@ -951,7 +1156,6 @@
         ['east_wing', 'corridor'],
         ['corridor', 'forge'],
         ['forge', 'sanctum'],
-        ['forge', 'gate'],
         ['sanctum', 'gate']
       ];
 
@@ -970,7 +1174,9 @@
         const px = boxX + rm.x;
         const py = boxY + rm.y;
         const isHere = st.roomId === id;
-        ctx.fillStyle = isHere ? '#10b981' : (rm.num === 6 ? '#a855f7' : '#334155');
+        const curNum = (mazeRooms[st.roomId] && mazeRooms[st.roomId].num) || 1;
+        const isBehindLocked = rm.num < curNum;
+        ctx.fillStyle = isHere ? '#10b981' : (isBehindLocked ? '#1e293b' : (rm.num === 6 ? '#a855f7' : '#334155'));
         ctx.beginPath();
         ctx.arc(px, py, isHere ? 8.5 : 7.5, 0, Math.PI * 2);
         ctx.fill();
@@ -978,7 +1184,7 @@
         ctx.lineWidth = 1.4;
         ctx.stroke();
 
-        ctx.fillStyle = '#f8fafc';
+        ctx.fillStyle = isBehindLocked ? '#64748b' : '#f8fafc';
         ctx.font = 'bold 9px Inter, sans-serif';
         ctx.fillText(String(rm.num), px - 2.5, py + 3);
       });
@@ -986,112 +1192,720 @@
       ctx.restore();
     }
 
-    function drawHumanCharacter(px, py, opts) {
-      const { avId, hasTorch, hasBlade, hasRelic, isEvilTwist, isRunning, isAttacking, isHurt, isGuarding, dirSign, phase } = opts;
+function drawHumanCharacter(px, py, opts) {
+      const {
+        avId, hasTorch, hasBlade, hasRelic, isEvilTwist,
+        isRunning, isAttacking, isHurt, isGuarding, dirSign, phase
+      } = opts;
+
       ctx.save();
       ctx.translate(px, py);
-      ctx.scale(dirSign * 1.35, 1.35);
+      ctx.scale(dirSign * 1.38, 1.38);
 
       const swing = isRunning ? Math.sin(phase) : 0;
       const liftF = isRunning ? Math.max(0, -Math.cos(phase)) : 0;
       const liftB = isRunning ? Math.max(0, -Math.cos(phase + Math.PI)) : 0;
-      if (isHurt) ctx.translate(-5, -2);
 
-      const shGrad = ctx.createRadialGradient(0, 2, 2, 0, 2, 22);
+      if (isHurt) {
+        ctx.translate(-5, -2);
+      }
+
+      // Soft cast shadow on dungeon floor
+      const shGrad = ctx.createRadialGradient(0, 2, 2, 0, 2, avId === 3 ? 28 : 22);
       shGrad.addColorStop(0, 'rgba(0, 0, 0, 0.55)');
       shGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
       ctx.fillStyle = shGrad;
-      ctx.beginPath(); ctx.ellipse(0, 2, 22, 5.5, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(0, 2, avId === 3 ? 28 : 22, 5.5, 0, 0, Math.PI * 2);
+      ctx.fill();
 
-      const skin = avId === 1 ? '#df9f72' : (avId === 2 ? '#f3c29b' : '#b27046');
+      const skinBase = avId === 1 ? '#df9f72' : (avId === 2 ? '#f3c29b' : '#b27046');
+      const skinHi   = avId === 1 ? '#f5c7a3' : (avId === 2 ? '#ffe5ce' : '#d6976e');
+      const skinLo   = avId === 1 ? '#9d5f36' : (avId === 2 ? '#be845b' : '#784222');
 
-      ctx.strokeStyle = '#334155'; ctx.lineWidth = 6.5;
-      ctx.beginPath(); ctx.moveTo(-3, -34); ctx.lineTo(-swing * 14, -17 - liftB * 5); ctx.lineTo(-swing * 18, -liftB * 8); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(3, -34); ctx.lineTo(swing * 14, -17 - liftF * 5); ctx.lineTo(swing * 18, -liftF * 8); ctx.stroke();
-
-      ctx.fillStyle = isEvilTwist ? '#6d28d9' : (avId === 2 ? '#2563eb' : (avId === 3 ? '#475569' : '#334155'));
-      ctx.beginPath(); ctx.roundRect(-11, -64, 22, 32, 6); ctx.fill();
-
-      ctx.fillStyle = skin;
-      ctx.beginPath(); ctx.arc(1.5, -78.5, 10.5, 0, Math.PI * 2); ctx.fill();
-
-      ctx.fillStyle = '#090d16';
-      ctx.beginPath(); ctx.arc(6.8, -79.5, 1.8, 0, Math.PI * 2); ctx.fill();
-      ctx.strokeStyle = '#1e1b4b'; ctx.lineWidth = 1.6;
-      ctx.beginPath(); ctx.moveTo(4.2, -83); ctx.lineTo(9.5, -82.2); ctx.stroke();
-      ctx.strokeStyle = '#7c2d12'; ctx.lineWidth = 1.5;
-      ctx.beginPath(); ctx.moveTo(10.5, -79.5); ctx.lineTo(12.5, -76.5); ctx.stroke();
-
-      ctx.fillStyle = avId === 2 ? '#db2777' : '#29170c';
-      ctx.beginPath(); ctx.arc(0, -81, 11, Math.PI * 0.95, Math.PI * 2.05); ctx.fill();
-
-      const hx = isAttacking ? 34 : 14 + swing * 5;
-      const hy = isAttacking ? -52 : -40;
-      ctx.strokeStyle = skin; ctx.lineWidth = 5;
-      ctx.beginPath(); ctx.moveTo(4, -59); ctx.lineTo(hx, hy); ctx.stroke();
-      if (hasBlade || avId === 2 || avId === 3) {
-        ctx.strokeStyle = isEvilTwist ? '#e879f9' : '#f8fafc';
-        ctx.lineWidth = 3;
-        ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx + 16, hy - 8); ctx.stroke();
+      function skinLinear(x1, y1, x2, y2) {
+        const g = ctx.createLinearGradient(x1, y1, x2, y2);
+        g.addColorStop(0, skinHi);
+        g.addColorStop(0.5, skinBase);
+        g.addColorStop(1, skinLo);
+        return g;
       }
+
+      function drawTaperedLimb(x1, y1, x2, y2, w1, w2, fill, strokeCol = null) {
+        const dx = x2 - x1, dy = y2 - y1;
+        const len = Math.hypot(dx, dy) || 1;
+        const nx = -dy / len, ny = dx / len;
+        ctx.fillStyle = fill;
+        ctx.beginPath();
+        ctx.moveTo(x1 + nx * w1 * 0.5, y1 + ny * w1 * 0.5);
+        ctx.lineTo(x2 + nx * w2 * 0.5, y2 + ny * w2 * 0.5);
+        ctx.arc(x2, y2, w2 * 0.5, Math.atan2(ny, nx), Math.atan2(-ny, -nx));
+        ctx.lineTo(x1 - nx * w1 * 0.5, y1 - ny * w1 * 0.5);
+        ctx.arc(x1, y1, w1 * 0.5, Math.atan2(-ny, -nx), Math.atan2(ny, nx));
+        ctx.closePath();
+        ctx.fill();
+        if (strokeCol) {
+          ctx.strokeStyle = strokeCol;
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+      }
+
+      function drawRealisticHead(eyeY, irisCol, hairCol, optsFace) {
+        const { isBroad, isSlender, hasBeard, hasFreckles, hasMustache } = optsFace;
+
+        // Shaded neck with sternocleidomastoid highlight/shadow
+        drawTaperedLimb(0, -63, 1.5, -72, isBroad ? 10 : 7.2, isBroad ? 9 : 6.4, skinLinear(-7, -73, 9, -63));
+
+        // Realistic cranium & jaw contour
+        const fGrad = ctx.createRadialGradient(4, eyeY + 1, 1.5, 1.5, eyeY + 1, 13.5);
+        fGrad.addColorStop(0, skinHi);
+        fGrad.addColorStop(0.65, skinBase);
+        fGrad.addColorStop(1, skinLo);
+
+        ctx.fillStyle = fGrad;
+        ctx.beginPath();
+        if (isBroad) {
+          ctx.moveTo(-9, eyeY - 10);
+          ctx.quadraticCurveTo(2, eyeY - 13, 11, eyeY - 9);
+          ctx.lineTo(11.5, eyeY + 5);
+          ctx.quadraticCurveTo(7, eyeY + 12.5, 1, eyeY + 11.5);
+          ctx.quadraticCurveTo(-7, eyeY + 9, -9.5, eyeY + 2);
+        } else if (isSlender) {
+          ctx.moveTo(-8.5, eyeY - 10);
+          ctx.quadraticCurveTo(1.5, eyeY - 13, 10, eyeY - 9);
+          ctx.quadraticCurveTo(10.5, eyeY + 2, 8.5, eyeY + 8);
+          ctx.quadraticCurveTo(4.5, eyeY + 12.5, 1.5, eyeY + 12);
+          ctx.quadraticCurveTo(-5.5, eyeY + 10, -8.5, eyeY + 2);
+        } else {
+          ctx.ellipse(1.5, eyeY + 1, 10.2, 11.8, 0.04, 0, Math.PI * 2);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = skinLo;
+        ctx.lineWidth = 0.9;
+        ctx.stroke();
+
+        // Cheek & brow highlights
+        ctx.fillStyle = 'rgba(255, 240, 224, 0.22)';
+        ctx.beginPath();
+        ctx.ellipse(7.2, eyeY + 3.5, 3.2, 2.2, -0.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Realistic ear with inner ridge
+        ctx.fillStyle = skinLinear(-8, eyeY - 3, -2, eyeY + 6);
+        ctx.beginPath();
+        ctx.ellipse(-5.2, eyeY + 1.5, 3.4, 5.2, -0.12, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = skinLo;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(-4.8, eyeY + 1.5, 1.7, -0.8, 1.1);
+        ctx.stroke();
+
+        // Eye socket shadow + sclera + colored iris + pupil + specular catchlight
+        ctx.fillStyle = 'rgba(60, 30, 15, 0.22)';
+        ctx.beginPath();
+        ctx.ellipse(6.8, eyeY + 0.3, 3.3, 2.6, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#f8fafc';
+        ctx.beginPath();
+        ctx.ellipse(6.8, eyeY, 2.8, 1.95, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = isEvilTwist ? '#e879f9' : irisCol;
+        ctx.beginPath();
+        ctx.arc(7.3, eyeY, 1.55, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#090d16';
+        ctx.beginPath();
+        ctx.arc(7.4, eyeY, 0.8, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(7.9, eyeY - 0.55, 0.55, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Upper eyelash & contoured eyebrow
+        ctx.strokeStyle = isSlender ? hairCol : '#111827';
+        ctx.lineWidth = isSlender ? 1.4 : 1.8;
+        ctx.beginPath();
+        ctx.arc(6.8, eyeY, 2.8, Math.PI * 1.05, Math.PI * 1.95);
+        ctx.stroke();
+
+        ctx.strokeStyle = hairCol;
+        ctx.lineWidth = isSlender ? 1.6 : 2.3;
+        ctx.beginPath();
+        if (isEvilTwist || isAttacking) {
+          ctx.moveTo(3.8, eyeY - 3.8);
+          ctx.quadraticCurveTo(7.2, eyeY - 3.3, 10.2, eyeY - 2.1);
+        } else {
+          ctx.moveTo(3.8, eyeY - 3.3);
+          ctx.quadraticCurveTo(7.2, eyeY - 4.1, 10.2, eyeY - 3.5);
+        }
+        ctx.stroke();
+
+        // Sculpted nose bridge, tip & nostril
+        ctx.strokeStyle = skinLo;
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.moveTo(10.1, eyeY - 0.6);
+        ctx.lineTo(12.6, eyeY + 3.4);
+        ctx.quadraticCurveTo(11.3, eyeY + 4.5, 9.5, eyeY + 4.2);
+        ctx.stroke();
+
+        ctx.fillStyle = skinLo;
+        ctx.beginPath();
+        ctx.arc(10.5, eyeY + 3.8, 0.9, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (hasFreckles) {
+          ctx.fillStyle = 'rgba(154, 52, 18, 0.48)';
+          ctx.beginPath();
+          ctx.arc(7.8, eyeY + 3.4, 0.75, 0, Math.PI * 2);
+          ctx.arc(9.4, eyeY + 2.8, 0.7, 0, Math.PI * 2);
+          ctx.arc(8.5, eyeY + 4.5, 0.65, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Upper & lower lip contour
+        ctx.fillStyle = isSlender ? '#e11d48' : '#b45309';
+        ctx.beginPath();
+        ctx.moveTo(6.6, eyeY + 7.4);
+        ctx.quadraticCurveTo(8.8, eyeY + 6.4, 10.9, eyeY + 7.5);
+        ctx.quadraticCurveTo(8.8, eyeY + 9.2, 6.6, eyeY + 7.4);
+        ctx.fill();
+
+        ctx.strokeStyle = '#451a03';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(6.8, eyeY + 7.5);
+        ctx.lineTo(10.7, eyeY + 7.5);
+        ctx.stroke();
+
+        if (hasMustache) {
+          ctx.fillStyle = hairCol;
+          ctx.beginPath();
+          ctx.moveTo(5.5, eyeY + 5.6);
+          ctx.quadraticCurveTo(8.8, eyeY + 4.8, 11.6, eyeY + 6.2);
+          ctx.quadraticCurveTo(8.8, eyeY + 6.4, 5.5, eyeY + 5.6);
+          ctx.fill();
+        }
+
+        if (hasBeard) {
+          ctx.fillStyle = hairCol;
+          ctx.beginPath();
+          ctx.moveTo(0.5, eyeY + 3.2);
+          ctx.quadraticCurveTo(3.5, eyeY + 12.5, 11.8, eyeY + 9.2);
+          ctx.lineTo(11.2, eyeY + 5.2);
+          ctx.quadraticCurveTo(7.5, eyeY + 6.5, 5.2, eyeY + 5.8);
+          ctx.closePath();
+          ctx.fill();
+        }
+      }
+
+      if (avId === 1) {
+        // KAELEN: Lean athletic ruin-delver, dark wavy hair, open collar, leather vest, amber scarf, dagger
+        const bFootX = -swing * 18, bFootY = -liftB * 9;
+        const fFootX = swing * 18, fFootY = -liftF * 9;
+
+        // Back leg & laced boot
+        drawTaperedLimb(-3, -34, -swing * 10, -17 - liftB * 5, 9.2, 7.2, skinLinear(-12, -34, 8, -15), '#0f172a');
+        drawTaperedLimb(-swing * 10, -17 - liftB * 5, bFootX, bFootY, 7.2, 5.4, '#1e293b', '#0f172a');
+        ctx.fillStyle = '#0f172a';
+        ctx.beginPath(); ctx.roundRect(bFootX - 4, bFootY - 5, 13, 6, 2); ctx.fill();
+
+        // Trailing woven amber scarf
+        const scGrad = ctx.createLinearGradient(-26, -62, -2, -40);
+        scGrad.addColorStop(0, isEvilTwist ? '#c084fc' : '#fbbf24');
+        scGrad.addColorStop(1, isEvilTwist ? '#7e22ce' : '#d97706');
+        ctx.fillStyle = scGrad;
+        ctx.beginPath();
+        ctx.moveTo(-4, -63);
+        ctx.quadraticCurveTo(-22, -56 + swing * 5, -27, -41 + swing * 5);
+        ctx.lineTo(-18, -38 + swing * 5);
+        ctx.quadraticCurveTo(-14, -49, -2, -59);
+        ctx.closePath();
+        ctx.fill();
+
+        // Shaded vest & tunic
+        const tGrad = ctx.createLinearGradient(-11, -64, 11, -32);
+        tGrad.addColorStop(0, isEvilTwist ? '#7c3aed' : '#475569');
+        tGrad.addColorStop(0.55, isEvilTwist ? '#4c1d95' : '#2b3a4a');
+        tGrad.addColorStop(1, '#0f172a');
+        ctx.fillStyle = tGrad;
+        ctx.beginPath();
+        ctx.roundRect(-11, -64, 22, 32, 7);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,0.14)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Belt & buckle
+        ctx.fillStyle = '#111827';
+        ctx.fillRect(-11, -37, 22, 4.5);
+        ctx.fillStyle = isEvilTwist ? '#e879f9' : '#f59e0b';
+        ctx.fillRect(1, -37.5, 4.5, 5.5);
+
+        // Front leg & boot
+        drawTaperedLimb(3, -34, swing * 10, -17 - liftF * 5, 9.6, 7.4, '#334155', '#0f172a');
+        drawTaperedLimb(swing * 10, -17 - liftF * 5, fFootX, fFootY, 7.4, 5.6, '#475569', '#0f172a');
+        ctx.fillStyle = '#111827';
+        ctx.beginPath(); ctx.roundRect(fFootX - 4, fFootY - 5, 14, 6, 2); ctx.fill();
+
+        drawRealisticHead(-79.5, '#292524', '#3b2314', {
+          isBroad: false, isSlender: false, hasBeard: false, hasFreckles: true, hasMustache: false
+        });
+
+        // Layered wavy dark hair with highlights
+        const hGrad1 = ctx.createLinearGradient(-10, -93, 10, -80);
+        hGrad1.addColorStop(0, '#5c3a21');
+        hGrad1.addColorStop(1, '#29170c');
+        ctx.fillStyle = hGrad1;
+        ctx.beginPath();
+        ctx.moveTo(-9.5, -81);
+        ctx.bezierCurveTo(-12, -94, 9, -95, 11, -83);
+        ctx.quadraticCurveTo(4, -87.5, -2, -84.5);
+        ctx.quadraticCurveTo(-6, -86.5, -9.5, -81);
+        ctx.closePath();
+        ctx.fill();
+
+        // Articulated arm, hand & steel dagger
+        const hx = isAttacking ? 35 : 15 + swing * 6;
+        const hy = isAttacking ? -52 : -38;
+        drawTaperedLimb(4, -60, isAttacking ? 20 : 12, isAttacking ? -56 : -46, 7, 5.4, skinLinear(0, -62, 22, -44), skinLo);
+        drawTaperedLimb(isAttacking ? 20 : 12, isAttacking ? -56 : -46, hx, hy, 5.4, 4.2, skinLinear(10, -56, 36, -36), skinLo);
+        if (hasBlade) {
+          ctx.strokeStyle = '#f8fafc';
+          ctx.lineWidth = 3;
+          ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx + 16, hy - 5); ctx.stroke();
+        }
+      } else if (avId === 2) {
+        // LYRA: Slender build, soft features, flowing crimson-violet hair, silver circlet, arcane tunic & blade
+        const bFootX = -swing * 20, bFootY = -liftB * 11;
+        const fFootX = swing * 20, fFootY = -liftF * 11;
+
+        drawTaperedLimb(-3, -34, -swing * 11, -17 - liftB * 6, 8, 6, '#1e3a8a', '#0f172a');
+        drawTaperedLimb(-swing * 11, -17 - liftB * 6, bFootX, bFootY, 6, 4.5, '#172554', '#0f172a');
+        drawTaperedLimb(3, -34, swing * 11, -17 - liftF * 6, 8.4, 6.2, '#2563eb', '#0f172a');
+        drawTaperedLimb(swing * 11, -17 - liftF * 6, fFootX, fFootY, 6.2, 4.7, '#1d4ed8', '#0f172a');
+
+        // Shaded fitted tunic with gold/cyan trim
+        const bGrad = ctx.createLinearGradient(-10, -64, 10, -32);
+        bGrad.addColorStop(0, isEvilTwist ? '#8b5cf6' : '#3b82f6');
+        bGrad.addColorStop(0.6, isEvilTwist ? '#581c87' : '#1d4ed8');
+        bGrad.addColorStop(1, '#0f172a');
+        ctx.fillStyle = bGrad;
+        ctx.beginPath();
+        ctx.moveTo(-10, -63);
+        ctx.quadraticCurveTo(0, -66, 10, -63);
+        ctx.lineTo(7.5, -33);
+        ctx.lineTo(-7.5, -33);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = isEvilTwist ? '#f0abfc' : '#67e8f9';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        drawRealisticHead(-79.5, '#0284c7', '#be185d', {
+          isBroad: false, isSlender: true, hasBeard: false, hasFreckles: false, hasMustache: false
+        });
+
+        // Flowing multi-strand crimson-violet hair & silver circlet
+        const hGrad2 = ctx.createLinearGradient(-28, -93, 10, -45);
+        hGrad2.addColorStop(0, '#f472b6');
+        hGrad2.addColorStop(0.55, '#be185d');
+        hGrad2.addColorStop(1, '#701a75');
+        ctx.fillStyle = hGrad2;
+        ctx.beginPath();
+        ctx.moveTo(-8.5, -82);
+        ctx.bezierCurveTo(-11, -94, 8, -94, 9.5, -83);
+        ctx.quadraticCurveTo(1, -86.5, -5, -82);
+        ctx.quadraticCurveTo(-24, -76 + swing * 7, -28, -45 + swing * 5);
+        ctx.lineTo(-17, -44 + swing * 5);
+        ctx.quadraticCurveTo(-15, -66, -7, -77);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.strokeStyle = '#f8fafc';
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(-8.5, -84.2); ctx.lineTo(9.5, -84.2); ctx.stroke();
+
+        const hx = isAttacking ? 37 : 15;
+        const hy = isAttacking ? -54 : -39 + swing * 5;
+        drawTaperedLimb(4, -60, isAttacking ? 21 : 12, isAttacking ? -57 : -47, 6, 4.6, skinLinear(0, -62, 22, -44), skinLo);
+        drawTaperedLimb(isAttacking ? 21 : 12, isAttacking ? -57 : -47, hx, hy, 4.6, 3.6, skinLinear(10, -56, 36, -36), skinLo);
+        ctx.strokeStyle = '#67e8f9';
+        ctx.lineWidth = 3.2;
+        ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx + 14, hy - 13); ctx.stroke();
+      } else {
+        // THORNE: Broad muscular build, square jaw, trimmed beard, dark steel armor, emerald mantle, greataxe
+        const bFootX = -swing * 13, bFootY = -liftB * 6;
+        const fFootX = swing * 13, fFootY = -liftF * 6;
+
+        // Emerald mantle with shadow
+        const mGrad = ctx.createLinearGradient(-28, -66, -6, -28);
+        mGrad.addColorStop(0, isEvilTwist ? '#a855f7' : '#10b981');
+        mGrad.addColorStop(1, isEvilTwist ? '#4c1d95' : '#065f46');
+        ctx.fillStyle = mGrad;
+        ctx.beginPath();
+        ctx.moveTo(-8, -66);
+        ctx.lineTo(-28, -43 + swing * 4);
+        ctx.lineTo(-22, -28 + swing * 4);
+        ctx.lineTo(-6, -34);
+        ctx.closePath();
+        ctx.fill();
+
+        drawTaperedLimb(-6, -35, -swing * 8, -18 - liftB * 4, 12, 9.5, '#1e293b', '#0f172a');
+        drawTaperedLimb(-swing * 8, -18 - liftB * 4, bFootX, bFootY, 9.5, 7.8, '#334155', '#0f172a');
+        drawTaperedLimb(6, -35, swing * 8, -18 - liftF * 4, 12.5, 10, '#334155', '#0f172a');
+        drawTaperedLimb(swing * 8, -18 - liftF * 4, fFootX, fFootY, 10, 8, '#475569', '#0f172a');
+
+        // Shaded steel breastplate
+        const aGrad = ctx.createLinearGradient(-19, -67, 19, -34);
+        aGrad.addColorStop(0, isEvilTwist ? '#7e22ce' : '#94a3b8');
+        aGrad.addColorStop(0.5, isEvilTwist ? '#3b0764' : '#334155');
+        aGrad.addColorStop(1, '#0f172a');
+        ctx.fillStyle = aGrad;
+        ctx.beginPath();
+        ctx.roundRect(-19, -67, 38, 35, 7);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(226, 232, 240, 0.25)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Steel shoulder pauldrons
+        const pGrad = ctx.createLinearGradient(-26, -70, 26, -54);
+        pGrad.addColorStop(0, isEvilTwist ? '#c084fc' : '#64748b');
+        pGrad.addColorStop(1, isEvilTwist ? '#581c87' : '#1e293b');
+        ctx.fillStyle = pGrad;
+        ctx.beginPath();
+        ctx.roundRect(-25, -69, 13, 15, 4);
+        ctx.roundRect(12, -69, 13, 15, 4);
+        ctx.fill();
+
+        drawRealisticHead(-81, '#1e293b', '#1e293b', {
+          isBroad: true, isSlender: false, hasBeard: true, hasFreckles: false, hasMustache: true
+        });
+
+        // Short cropped dark hair
+        ctx.fillStyle = '#1e293b';
+        ctx.beginPath();
+        ctx.roundRect(-9.5, -92, 20, 7, 4);
+        ctx.fill();
+
+        const hx = isAttacking ? 39 : 19;
+        const hy = isAttacking ? -48 : -37;
+        drawTaperedLimb(9, -62, isAttacking ? 24 : 15, isAttacking ? -54 : -46, 9, 7.2, skinLinear(4, -64, 38, -32), skinLo);
+        drawTaperedLimb(isAttacking ? 24 : 15, isAttacking ? -54 : -46, hx, hy, 7.2, 5.8, skinLinear(4, -64, 38, -32), skinLo);
+
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.lineWidth = 4.2;
+        ctx.beginPath(); ctx.moveTo(hx, hy + 5); ctx.lineTo(hx + 3, hy - 24); ctx.stroke();
+        ctx.fillStyle = isEvilTwist ? '#e879f9' : '#10b981';
+        ctx.beginPath();
+        ctx.moveTo(hx + 3, hy - 24);
+        ctx.lineTo(hx + 18, hy - 30);
+        ctx.lineTo(hx + 14, hy - 11);
+        ctx.closePath();
+        ctx.fill();
+      }
+
       if (hasTorch) {
-        ctx.fillStyle = '#fbbf24';
-        ctx.beginPath(); ctx.arc(18, -64, 6, 0, Math.PI * 2); ctx.fill();
+        const fg = ctx.createRadialGradient(18, -64, 2, 18, -64, 22);
+        fg.addColorStop(0, '#fef08a');
+        fg.addColorStop(0.5, 'rgba(245, 158, 11, 0.7)');
+        fg.addColorStop(1, 'rgba(245, 158, 11, 0)');
+        ctx.fillStyle = fg;
+        ctx.beginPath(); ctx.arc(18, -64, 22, 0, Math.PI * 2); ctx.fill();
       }
+
       if (hasRelic) {
+        const rg = ctx.createRadialGradient(-10, -46, 2, -10, -46, 22);
+        rg.addColorStop(0, '#f5d0fe');
+        rg.addColorStop(0.5, 'rgba(168, 85, 247, 0.65)');
+        rg.addColorStop(1, 'rgba(168, 85, 247, 0)');
+        ctx.fillStyle = rg;
+        ctx.beginPath(); ctx.arc(-10, -46, 22, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = '#e879f9';
         ctx.beginPath(); ctx.arc(-10, -46, 6, 0, Math.PI * 2); ctx.fill();
       }
+
       if (isGuarding) {
-        ctx.strokeStyle = '#22d3ee'; ctx.lineWidth = 3;
-        ctx.beginPath(); ctx.arc(16, -44, 26, -0.9, 0.9); ctx.stroke();
+        ctx.strokeStyle = '#22d3ee';
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(16, -44, 28, -0.9, 0.9); ctx.stroke();
       }
+
+      if (isHurt) {
+        ctx.strokeStyle = '#ef4444';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(-16, -65); ctx.lineTo(14, -30);
+        ctx.stroke();
+      }
+
       ctx.restore();
     }
 
+    // Distinct Villain Renderers: Demon Monkey, Shadow Wraith, Obsidian Golem, Astral Warden
     function drawVillainCharacter(ex, ey, kind, name, hp, maxHp, isAttacking, isHurt, phase) {
       ctx.save();
-      ctx.translate(ex + (isAttacking ? -42 : 0) + (isHurt ? 12 : 0), ey);
+      ctx.translate(ex + (isAttacking ? -46 : 0) + (isHurt ? 14 : 0), ey);
+
       const pulse = Math.sin(phase) * 4;
+
       if (kind === 'wraith') {
-        ctx.translate(0, -12 + pulse);
-        ctx.fillStyle = '#312e81';
-        ctx.beginPath(); ctx.moveTo(-18, 6); ctx.quadraticCurveTo(-22, -46, 0, -72); ctx.quadraticCurveTo(22, -46, 18, 6); ctx.closePath(); ctx.fill();
-        ctx.fillStyle = '#38bdf8'; ctx.fillRect(-9, -54, 4, 4); ctx.fillRect(3, -54, 4, 4);
+        // Floating hooded Shadow Wraith with spectral scythe/claws
+        ctx.translate(0, -14 + pulse);
+        const grad = ctx.createLinearGradient(0, -78, 0, 10);
+        grad.addColorStop(0, '#312e81');
+        grad.addColorStop(1, 'rgba(15, 23, 42, 0.15)');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.moveTo(-20, 8);
+        ctx.quadraticCurveTo(-24, -46, 0, -74);
+        ctx.quadraticCurveTo(24, -46, 20, 8);
+        ctx.lineTo(8, 0);
+        ctx.lineTo(0, 10);
+        ctx.lineTo(-10, 0);
+        ctx.closePath();
+        ctx.fill();
+
+        // Glowing eyes
+        ctx.fillStyle = '#38bdf8';
+        ctx.fillRect(-11, -56, 5, 4);
+        ctx.fillRect(2, -56, 5, 4);
+
+        // Spectral claw reach
+        ctx.strokeStyle = '#93c5fd';
+        ctx.lineWidth = isAttacking ? 5 : 3.5;
+        ctx.beginPath();
+        ctx.moveTo(-14, -42);
+        ctx.lineTo(isAttacking ? -48 : -28, -36);
+        ctx.stroke();
       } else if (kind === 'golem') {
-        ctx.fillStyle = '#1e293b'; ctx.fillRect(-22, -74, 44, 74);
-        ctx.fillStyle = '#f97316'; ctx.beginPath(); ctx.arc(0, -42, 7, 0, Math.PI * 2); ctx.fill();
+        // Heavy blocky Obsidian Golem with glowing core
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(-24, -76, 48, 76);
+        ctx.strokeStyle = '#64748b';
+        ctx.lineWidth = 2.5;
+        ctx.strokeRect(-24, -76, 48, 76);
+
+        // Glowing molten chest core
+        ctx.fillStyle = '#f97316';
+        ctx.beginPath(); ctx.arc(0, -44, 8, 0, Math.PI * 2); ctx.fill();
+
+        // Glowing eyes
+        ctx.fillStyle = '#fb923c';
+        ctx.fillRect(-12, -64, 7, 4);
+        ctx.fillRect(5, -64, 7, 4);
+
+        // Heavy stone fist
+        ctx.fillStyle = '#334155';
+        ctx.fillRect(isAttacking ? -52 : -36, -46, 18, 18);
       } else if (kind === 'seraph') {
-        ctx.fillStyle = '#4338ca'; ctx.beginPath(); ctx.roundRect(-14, -64, 28, 38, 6); ctx.fill();
-        ctx.fillStyle = '#e0e7ff'; ctx.beginPath(); ctx.arc(0, -76, 9, 0, Math.PI * 2); ctx.fill();
+        // Astral Warden with radiant halo/wings and energy spear
+        ctx.fillStyle = '#1e1b4b';
+        ctx.beginPath();
+        ctx.moveTo(0, -58);
+        ctx.lineTo(-34, -84 + pulse);
+        ctx.lineTo(-22, -28);
+        ctx.closePath();
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(0, -58);
+        ctx.lineTo(34, -84 - pulse);
+        ctx.lineTo(22, -28);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = '#4338ca';
+        ctx.beginPath(); ctx.roundRect(-14, -64, 28, 38, 6); ctx.fill();
+        ctx.fillStyle = '#e0e7ff';
+        ctx.beginPath(); ctx.arc(0, -76, 10, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#f472b6';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.arc(0, -76, 15, 0, Math.PI * 2); ctx.stroke();
+
+        // Spear / lance
+        ctx.strokeStyle = '#f472b6';
+        ctx.lineWidth = isAttacking ? 5 : 3.5;
+        ctx.beginPath();
+        ctx.moveTo(8, -40);
+        ctx.lineTo(isAttacking ? -54 : -34, -48);
+        ctx.stroke();
       } else {
-        ctx.fillStyle = '#7c2d12'; ctx.beginPath(); ctx.ellipse(0, -34, 16, 20, 0.2, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#991b1b'; ctx.beginPath(); ctx.arc(-4, -58, 12, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#fef08a'; ctx.fillRect(-10, -61, 4, 4); ctx.fillRect(-2, -61, 4, 4);
+        // Hunched Demon Monkey with horns & tail
+        ctx.strokeStyle = '#7c2d12';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(14, -22);
+        ctx.bezierCurveTo(38, -32, 36, -68, 18, -64);
+        ctx.stroke();
+
+        ctx.fillStyle = '#7c2d12';
+        ctx.beginPath(); ctx.ellipse(0, -36, 17, 21, 0.2, 0, Math.PI * 2); ctx.fill();
+
+        ctx.fillStyle = '#991b1b';
+        ctx.beginPath(); ctx.arc(-5, -62, 13, 0, Math.PI * 2); ctx.fill();
+
+        ctx.strokeStyle = '#fde047';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(-11, -72); ctx.lineTo(-17, -84);
+        ctx.moveTo(2, -72); ctx.lineTo(8, -84);
+        ctx.stroke();
+
+        ctx.fillStyle = '#fef08a';
+        ctx.fillRect(-13, -65, 4, 4);
+        ctx.fillRect(-4, -65, 4, 4);
+
+        ctx.strokeStyle = '#9a3412';
+        ctx.lineWidth = 6;
+        ctx.beginPath();
+        ctx.moveTo(-10, -45);
+        ctx.lineTo(isAttacking ? -46 : -28, -24);
+        ctx.stroke();
       }
+
+      if (isAttacking) {
+        ctx.strokeStyle = '#ef4444';
+        ctx.lineWidth = 3.5;
+        ctx.beginPath();
+        ctx.arc(-28, -42, 22, 2.2, 4.1);
+        ctx.stroke();
+      }
+
+      if (isHurt) {
+        ctx.fillStyle = 'rgba(239, 68, 68, 0.45)';
+        ctx.beginPath(); ctx.arc(0, -40, 26, 0, Math.PI * 2); ctx.fill();
+      }
+
       ctx.restore();
+
       ctx.fillStyle = '#f5d0fe';
       ctx.font = 'bold 11px Inter, sans-serif';
-      ctx.fillText(`${name} (${hp}/${maxHp})`, ex - 56, ey + 17);
+      ctx.fillText(`${name} (${hp}/${maxHp})`, ex - 60, ey + 17);
     }
 
     function drawSpeechBubble(x, y, text) {
       if (!text) return;
       ctx.save();
       ctx.font = 'bold 11px Inter, sans-serif';
-      const bw = Math.min(350, Math.max(120, ctx.measureText(text).width + 20));
-      const bh = 25;
+      const padX = 10;
+      const metrics = ctx.measureText(text);
+      const bw = Math.min(340, Math.max(120, metrics.width + padX * 2));
+      const bh = 26;
       const bx = Math.max(12, Math.min(canvas.width - bw - 12, x - bw * 0.4));
-      const by = Math.max(8, y - bh - 10);
+      const by = Math.max(8, y - bh - 12);
+
       ctx.fillStyle = 'rgba(15, 23, 42, 0.94)';
       ctx.strokeStyle = '#f59e0b';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 8); ctx.fill(); ctx.stroke();
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.roundRect(bx, by, bw, bh, 8);
+      ctx.fill();
+      ctx.stroke();
+
+      // Pointer tail
+      ctx.beginPath();
+      ctx.moveTo(bx + 24, by + bh);
+      ctx.lineTo(bx + 32, by + bh + 8);
+      ctx.lineTo(bx + 40, by + bh);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
       ctx.fillStyle = '#fef3c7';
-      ctx.fillText(text, bx + 10, by + 16);
+      ctx.fillText(text, bx + padX, by + 17);
       ctx.restore();
     }
 
+    function drawRoomEnvironment(w, h, floorY, roomId, lvl, scroll, destroyed) {
+      const sky = ctx.createLinearGradient(0, 0, 0, h);
+      if (destroyed) {
+        sky.addColorStop(0, '#450a0a');
+        sky.addColorStop(1, '#1c0612');
+      } else if (lvl === 3) {
+        sky.addColorStop(0, '#1e1035');
+        sky.addColorStop(1, '#0d091a');
+      } else if (roomId === 'cistern') {
+        sky.addColorStop(0, '#072433');
+        sky.addColorStop(1, '#0c1c2c');
+      } else if (roomId === 'forge') {
+        sky.addColorStop(0, '#2d1208');
+        sky.addColorStop(1, '#130e19');
+      } else if (roomId === 'sanctum') {
+        sky.addColorStop(0, '#271036');
+        sky.addColorStop(1, '#0e1424');
+      } else if (roomId === 'gate') {
+        sky.addColorStop(0, '#0c2c47');
+        sky.addColorStop(1, '#131b2e');
+      } else {
+        sky.addColorStop(0, '#0a1922');
+        sky.addColorStop(1, '#11252e');
+      }
+      ctx.fillStyle = sky;
+      ctx.fillRect(0, 0, w, h);
+
+      // Distinct architectural props per room
+      if (roomId === 'cistern') {
+        // Water arches & ripples
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.25)';
+        ctx.lineWidth = 2;
+        for (let i = 0; i < 4; i++) {
+          ctx.beginPath();
+          ctx.arc(140 + i * 175, floorY + 18, 28, 0, Math.PI);
+          ctx.stroke();
+        }
+      } else if (roomId === 'forge') {
+        // Molten glow & glowing anvil
+        const fg = ctx.createRadialGradient(450, floorY - 12, 6, 450, floorY - 12, 85);
+        fg.addColorStop(0, 'rgba(251, 146, 60, 0.45)');
+        fg.addColorStop(1, 'rgba(251, 146, 60, 0)');
+        ctx.fillStyle = fg;
+        ctx.beginPath(); ctx.arc(450, floorY - 12, 85, 0, Math.PI * 2); ctx.fill();
+      } else if (roomId === 'sanctum') {
+        // Mystic pillars & rune ring
+        ctx.strokeStyle = 'rgba(232, 121, 249, 0.24)';
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(540, 125, 58, 0, Math.PI * 2); ctx.stroke();
+      } else if (roomId === 'gate') {
+        // Towering double gates
+        ctx.strokeStyle = 'rgba(250, 204, 21, 0.45)';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(365, 66, 70, floorY - 66);
+      }
+
+      // Scrolling columns & floor tiles (active during North/South run)
+      const span = 210;
+      const start = -(((scroll * 0.75) % span + span) % span) - 30;
+      ctx.strokeStyle = 'rgba(226, 232, 240, 0.13)';
+      ctx.lineWidth = 2;
+      for (let x = start; x < w + span; x += span) {
+        ctx.strokeRect(x - 18, 42, 36, floorY - 42);
+      }
+
+      ctx.fillStyle = roomId === 'cistern' ? '#0b3246' : (lvl === 3 ? '#1c122b' : '#162330');
+      ctx.fillRect(0, floorY, w, h - floorY);
+      ctx.strokeStyle = lvl === 3 ? 'rgba(232, 121, 249, 0.42)' : 'rgba(245, 158, 11, 0.35)';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(0, floorY); ctx.lineTo(w, floorY); ctx.stroke();
+
+      const tSpan = 68;
+      const tStart = -(((scroll * 2.2) % tSpan + tSpan) % tSpan);
+      ctx.strokeStyle = 'rgba(148, 163, 184, 0.16)';
+      ctx.lineWidth = 1.5;
+      for (let tx = tStart; tx < w + tSpan; tx += tSpan) {
+        ctx.beginPath(); ctx.moveTo(tx, floorY); ctx.lineTo(tx - 20, h); ctx.stroke();
+      }
+    }
+
+    
     function drawScene(st) {
       const w = canvas.width, h = canvas.height;
       const floorY = 242;
@@ -1101,12 +1915,6 @@
         const mag = Math.min(9, shakeFrames * 0.65);
         ctx.translate((Math.random() - 0.5) * mag * 2, (Math.random() - 0.5) * mag * 2);
       }
-
-      const sky = ctx.createLinearGradient(0, 0, 0, h);
-      sky.addColorStop(0, st.lvl === 3 ? '#1e1035' : '#0a1922');
-      sky.addColorStop(1, '#11252e');
-      ctx.fillStyle = sky;
-      ctx.fillRect(0, 0, w, h);
 
       const isRunning = runTimerFrames > 0;
       const dirSign = (facingDir === 'west' || facingDir === 'south') ? -1 : 1;
@@ -1120,15 +1928,7 @@
       if (enemyHurtFrames > 0) enemyHurtFrames--;
       if (bubbleTimer > 0 && --bubbleTimer === 0) bubbleText = '';
 
-      const span = 210;
-      const start = -(((scrollOffset * 0.75) % span + span) % span) - 30;
-      ctx.strokeStyle = 'rgba(226, 232, 240, 0.14)';
-      ctx.lineWidth = 2;
-      for (let x = start; x < w + span; x += span) {
-        ctx.strokeRect(x - 18, 42, 36, floorY - 42);
-      }
-      ctx.fillStyle = '#162330';
-      ctx.fillRect(0, floorY, w, h - floorY);
+      drawRoomEnvironment(w, h, floorY, st.roomId, st.lvl, scrollOffset, st.destroyed);
 
       const lungeX = heroAttackFrames > 0 ? 140 : 0;
       let baseWalkX = 160;
@@ -1210,8 +2010,6 @@
     }
     requestAnimationFrame(loopFrame);
   </script>
-
-
   <script src="dungeon.js"></script>
 </body>
 </html>

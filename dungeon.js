@@ -860,6 +860,7 @@ async function createWasm() {
     };
   var __abort_js = () =>
       abort('native code called abort()');
+  const TZNAME_MAX = 16;
   var lengthBytesUTF8 = (str) => {
       var len = 0;
       for (var i = 0; i < str.length; ++i) {
@@ -968,15 +969,15 @@ async function createWasm() {
       var summerName = extractZone(summerOffset);
       assert(winterName);
       assert(summerName);
-      assert(lengthBytesUTF8(winterName) <= 16, `timezone name truncated to fit in TZNAME_MAX (${winterName})`);
-      assert(lengthBytesUTF8(summerName) <= 16, `timezone name truncated to fit in TZNAME_MAX (${summerName})`);
+      assert(lengthBytesUTF8(winterName) <= TZNAME_MAX, `timezone name truncated to fit in TZNAME_MAX (${winterName})`);
+      assert(lengthBytesUTF8(summerName) <= TZNAME_MAX, `timezone name truncated to fit in TZNAME_MAX (${summerName})`);
       if (summerOffset < winterOffset) {
         // Northern hemisphere
-        stringToUTF8(winterName, std_name, 17);
-        stringToUTF8(summerName, dst_name, 17);
+        stringToUTF8(winterName, std_name, TZNAME_MAX + 1);
+        stringToUTF8(summerName, dst_name, TZNAME_MAX + 1);
       } else {
-        stringToUTF8(winterName, dst_name, 17);
-        stringToUTF8(summerName, std_name, 17);
+        stringToUTF8(winterName, dst_name, TZNAME_MAX + 1);
+        stringToUTF8(summerName, std_name, TZNAME_MAX + 1);
       }
     };
   var abortOnCannotGrowMemory = (requestedSize) => {
@@ -1044,6 +1045,7 @@ async function createWasm() {
   var _fd_close = (fd) => {
       abort('fd_close called without SYSCALLS_REQUIRE_FILESYSTEM');
     };
+  const ESPIPE = 70;
   const INT53_MAX = 9007199254740992;
   const INT53_MIN = -9007199254740992;
   var bigintToI53Checked = (num) => (num < INT53_MIN || num > INT53_MAX) ? NaN : Number(num);
@@ -1051,7 +1053,7 @@ async function createWasm() {
     offset = bigintToI53Checked(offset);
   
   
-      return 70;
+      return ESPIPE;
     ;
   }
   var UTF8Decoder = globalThis.TextDecoder && new TextDecoder();
@@ -1151,6 +1153,8 @@ async function createWasm() {
       HEAPU32[((pnum)>>2)] = num;
       return 0;
     };
+  var UTF8ToString_cache = {
+  };
   
     /**
    * Given a pointer 'ptr' to a null-terminated UTF8-encoded string in the
@@ -1167,7 +1171,24 @@ async function createWasm() {
    */
   var UTF8ToString = (ptr, maxBytesToRead, ignoreNul) => {
       assert(typeof ptr === 'number', `UTF8ToString expects a number (got ${typeof ptr})`);
-      return ptr ? UTF8ArrayToString(HEAPU8, ptr, maxBytesToRead, ignoreNul) : '';
+  
+      // Only cache full string reads (when maxBytesToRead is omitted).
+      // We use `== null` here since its shorter than `=== undefined`
+      var useCache = maxBytesToRead == null && ptr >= 65536 && ptr < 83673;
+      if (useCache) {
+        var rtn = UTF8ToString_cache[ptr];
+        if (rtn != null) {
+          return rtn;
+        }
+      }
+  
+      var rtn = ptr ? UTF8ArrayToString(HEAPU8, ptr, maxBytesToRead, ignoreNul) : '';
+  
+      if (useCache) {
+        UTF8ToString_cache[ptr] = rtn;
+      }
+  
+      return rtn;
     };
   var getCFunc = (ident) => {
       var func = Module['_' + ident]; // closure exported function
@@ -1362,7 +1383,6 @@ Module['FS_createPreloadedFile'] = FS.createPreloadedFile;
   'getEmptyTableSlot',
   'updateTableMap',
   'getFunctionAddress',
-  'addFunction',
   'removeFunction',
   'setValue',
   'getValue',
@@ -1532,6 +1552,7 @@ missingLibrarySymbols.forEach(missingLibrarySymbol)
   'addOnPostRun',
   'freeTableIndexes',
   'functionsInTableMap',
+  'addFunction',
   'PATH',
   'PATH_FS',
   'UTF8Decoder',
