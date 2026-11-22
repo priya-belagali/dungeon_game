@@ -50,7 +50,7 @@ class HerbItem : public Item {
 private:
     int healAmount;
 public:
-    HerbItem(int amt = 45) : Item("Herb", "Crushed leaves that mend wounds (+45 HP on use).") {}
+    HerbItem(int amt = 45) : Item("Herb", "Crushed leaves that mend wounds (+45 HP on use)."), healAmount(amt) {}
     bool use(Player& player, std::ostringstream& out) override;
 };
 
@@ -337,13 +337,14 @@ private:
     IronGolemVillain golemEnemy;
     AstralSentinelVillain sentinelEnemy;
 
-    // 6-Chamber forward-progressing maze (Chamber 1 -> 2 -> 3 -> 4 -> 5 -> 6):
-    // Chamber 1 (cell): Start — East leads to Chamber 2, North leads to Chamber 3
-    // Chamber 2 (east_wing): East wing (Blade + Demon Monkey) — East leads to Chamber 3
-    // Chamber 3 (corridor): Gallery (Shadow Wraith) — North leads to Chamber 4, South/West cannot drop below Chamber 3
-    // Chamber 4 (forge): Deep Hall (Relic + Obsidian Golem) — North leads to Chamber 5, East is a risky turn
-    // Chamber 5 (sanctum): Sanctum (Key + Obsidian Golem) — North leads to Chamber 6
-    // Chamber 6 (gate): Final Gate (Astral Warden) — use 'door' to advance/win
+    // 6-Chamber forward-progressing maze with meaningful branching:
+    // Chamber 1 (cell): Courtyard [Torch] -> East to Chamber 2 (east_wing) or North to Chamber 3 (corridor)
+    // Chamber 2 (east_wing): East Wing [Blade + Demon Monkey] -> East to Chamber 3 (corridor)
+    // Chamber 3 (corridor): Lantern Gallery [Shadow Wraith] -> North to Chamber 4 (forge)
+    // Chamber 4 (forge): Deep Hall [Relic + Obsidian Golem] -> North to Chamber 5 (sanctum) or East to Chamber 5.5/side shrine (herb_shrine)
+    // Chamber 5 (sanctum): Inner Sanctum [Key + Obsidian Golem] -> North to Chamber 6 (gate)
+    // Chamber 6 (gate): Final Gate [Astral Warden] -> 'door' advances/wins (requires Key)
+    // Rule: Moving to any room with chamberNum < currentRoom.chamberNum is strictly blocked.
     Room r1, r2, r3, r4, r5, r6;
     Room* currentRoom;
     int levelNumber;
@@ -355,7 +356,7 @@ private:
         r1.setExits(&r3, nullptr, &r2, nullptr);
         r2.setExits(nullptr, nullptr, &r3, nullptr);
         r3.setExits(&r4, nullptr, nullptr, nullptr);
-        r4.setExits(&r5, nullptr, &r6, nullptr);
+        r4.setExits(&r5, nullptr, &r5, nullptr);
         r5.setExits(&r6, nullptr, nullptr, nullptr);
         r6.setExits(nullptr, nullptr, nullptr, nullptr);
     }
@@ -384,35 +385,36 @@ public:
         lastAnimAction = "idle";
         currentRoom = &r1;
 
-        int scale = (levelNumber - 1) * 14;
-        monkeyEnemy.resetEnemy(64 + scale, 18 + (levelNumber - 1) * 4, "A sharp blade helps before the deeper halls.");
-        wraithEnemy.resetEnemy(78 + scale, 22 + (levelNumber - 1) * 4, "No turning back once higher chambers claim you.");
-        golemEnemy.resetEnemy(94 + scale, 25 + (levelNumber - 1) * 4, "Ancient wardens test strength and relics.");
-        sentinelEnemy.resetEnemy(112 + scale, 28 + (levelNumber - 1) * 4, "A heavy ward key opens the way ahead.");
+        int scale = (levelNumber - 1) * 18;
+        int dmgScale = (levelNumber - 1) * 5;
+        monkeyEnemy.resetEnemy(72 + scale, 20 + dmgScale, "A sharp blade helps before the deeper halls.");
+        wraithEnemy.resetEnemy(88 + scale, 24 + dmgScale, "No turning back once higher chambers claim you.");
+        golemEnemy.resetEnemy(106 + scale, 27 + dmgScale, "Ancient wardens test strength and relics.");
+        sentinelEnemy.resetEnemy(126 + scale, 31 + dmgScale, "A heavy ward key opens the way ahead.");
 
         r1.setRoomData("1. Courtyard",
-            "Steel often waits slightly off the main line before deeper shadows.",
+            "Steel sometimes waits off the main path before deeper shadows.",
             "Stone courtyard where paths split ahead.",
             &torchItem, nullptr);
         r2.setRoomData("2. East Wing",
-            "A well-timed strike clears the path onward; higher chambers lock behind you.",
+            "A sharp edge helps before deeper halls; higher chambers lock behind you.",
             "An eastern side hall with weapon racks and a lurking demon.",
             &bladeItem, &monkeyEnemy);
         r3.setRoomData("3. Lantern Gallery",
-            "Once past a threshold, the maze only lets you press forward.",
-            "Dim arches lit by flickering wall sconces.",
-            nullptr, &wraithEnemy);
+            "Higher chambers do not let you step back; save healing for deep wardens.",
+            "Dim arches lit by flickering wall sconces and wild herbs in the cracks.",
+            &herbItem, &wraithEnemy);
         r4.setRoomData("4. Deep Hall",
-            "An old relic carries power; watch for sudden hazards if you stray.",
+            "Ancient relics carry unseen strength; both North and East lead toward the sanctum.",
             "A sunken hall with a glowing relic and heavy guardian.",
             &relicItem, &golemEnemy, false, "");
         r5.setRoomData("5. Inner Sanctum",
-            "What opens a gate is often found just before the final threshold.",
+            "What opens a gate often waits just before it.",
             "Quiet sanctum where an iron ward glints near the altar.",
             &keyItem, &golemEnemy);
         r6.setRoomData("6. Final Gate",
-            "Face the gatekeeper, then test the door once you hold what fits it.",
-            " Towering doors marking the end of the level.",
+            "Defeat the ward and use the door once fitted.",
+            "Towering doors marking the end of the level.",
             nullptr, &sentinelEnemy);
 
         out << "\n=== LEVEL " << levelNumber << " ===\n";
@@ -495,9 +497,9 @@ public:
         } else if (lower.rfind("use ", 0) == 0) {
             player.useItem(trimStr(input.substr(4)), out);
         } else if (lower == "rest") {
-            player.gainStamina(30);
-            player.heal(10, out);
-            out << "\n[Rest] +30 STM, +10 HP.\n";
+            player.gainStamina(25);
+            player.heal(6, out);
+            out << "\n[Rest] +25 STM, +6 HP.\n";
         } else if (lower == "search") {
             out << "\n[Hint] " << currentRoom->getHint() << "\n";
         } else if (lower == "slash" || lower == "attack") {
@@ -523,6 +525,8 @@ public:
                     int dmg = static_cast<int>(player.getAttackPower(levelNumber) * 1.4) + 6;
                     out << "\n[Vault] " << dmg << " DMG to " << foe->getName() << "! (-25 STM)\n";
                     foe->takeDamage(dmg, out);
+                    if (foe->isAlive()) foe->strikePlayer(player, out, false);
+                    else out << "\n[Defeated] " << foe->getName() << " is down!\n";
                 }
             } else {
                 out << "\n[Info] No enemy here.\n";
@@ -536,6 +540,7 @@ public:
                 out << "\n[Guard] Riposte for " << cDmg << " DMG (+20 STM)!\n";
                 foe->takeDamage(cDmg, out);
                 if (foe->isAlive()) foe->strikePlayer(player, out, true);
+                else out << "\n[Defeated] " << foe->getName() << " is down!\n";
             } else {
                 out << "\n[Info] No enemy here.\n";
             }
@@ -551,7 +556,8 @@ public:
                     int dmg = 26 + levelNumber * 4;
                     out << "\n[Torch Flare] " << dmg << " DMG to " << foe->getName() << "! (-20 STM)\n";
                     foe->takeDamage(dmg, out);
-                    if (foe->isAlive()) player.takeDamage(foe->getAttackDamage() / 2, out);
+                    if (foe->isAlive()) foe->strikePlayer(player, out, false);
+                    else out << "\n[Defeated] " << foe->getName() << " is down!\n";
                 }
             } else {
                 player.useItem("Torch", out);
